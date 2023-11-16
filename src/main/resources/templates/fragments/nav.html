@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <div th:fragment="fragment-nav">
+        <nav class="navbar navbar-expand-lg bg-body-tertiary">
+            <div class="container-fluid">
+                <a class="navbar-brand ms-2" href="#"><img src="https://cdn-icons-png.flaticon.com/256/49/49039.png" alt="logo"
+                                                           width="32" height="32"></a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" th:href="@{/}">Home</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                               aria-expanded="false">
+                                Man
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">상의</a></li>
+                                <li><a class="dropdown-item" href="#">바지</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" href="#">액세서리</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                               aria-expanded="false">
+                                Women
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">상의</a></li>
+                                <li><a class="dropdown-item" href="#">바지</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" href="#">액세서리</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <ul class="navbar-nav ">
+<!--                        <li><a class="dropdown-item" href="https://www.instagram.com/ddooochii/"><img
+                                src="https://cdn-icons-png.flaticon.com/256/3955/3955024.png" class="img-fluid ms-2" width="30"
+                                height="30"></a></li>
+                        <li><a class="dropdown-item" href="https://github.com/Imadeveloperrr"><img
+                                src="https://cdn-icons-png.flaticon.com/256/25/25231.png" class="img-fluid ms-2 me-2" width="30"
+                                height="30"></a></li>-->
+                        <li class="nav-item"><a class="nav-link text-dark" aria-current="page" th:href="@{/login}">로그인</a></li>
+                        <li class="nav-item"><a class="nav-link text-dark" aria-current="page" th:href="@{/register}">회원가입</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </div>
+</html>

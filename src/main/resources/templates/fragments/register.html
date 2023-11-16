@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <div th:replace="~{/fragments/header.html :: fragment-header}"></div>
+</head>
+<body>
+<div th:insert="~{/fragments/nav.html :: fragment-nav}"></div>
+<section class="min-vh-100" style="background-color: #eee;">
+    <div class="container h-100">
+        <div class="row d-flex justify-content-center align-items-center h-100">
+            <div class="col-lg-12 col-xl-11">
+                <div class="card text-black " style="border-radius: 25px; margin-bottom: 100px; margin-top: 100px;">
+                    <div class="card-body p-md-5">
+                        <div class="row justify-content-center">
+                            <div class="col-md-10 col-lg-6 col-xl-5 order-2 order-lg-1">
+
+                                <p class="text-center h1 fw-bold mb-5 mx-1 mx-md-4 mt-4">회원가입</p>
+
+                                <form class="mx-1 mx-md-4" action="/register" method="post" id="regForm">
+
+                                    <div class="d-flex flex-row align-items-center mb-4">
+                                        <i class="fas fa-user fa-lg me-3 fa-fw"></i>
+                                        <div class="form-outline flex-fill mb-0">
+                                            <label class="form-label" for="name">이름</label>
+                                            <input type="text" id="name" class="form-control" required/>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex flex-row align-items-center mb-4">
+                                        <i class="fas fa-envelope fa-lg me-3 fa-fw"></i>
+                                        <div class="form-outline flex-fill mb-0">
+                                            <label class="form-label" for="email">이메일</label>
+                                            <input type="email" id="email" class="form-control" required/>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex flex-row align-items-center mb-4">
+                                        <i class="fas fa-lock fa-lg me-3 fa-fw"></i>
+                                        <div class="form-outline flex-fill mb-0">
+                                            <label class="form-label" for="password">비밀번호</label>
+                                            <input type="password" id="password" class="form-control" required/>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex flex-row align-items-center mb-4">
+                                        <i class="fas fa-key fa-lg me-3 fa-fw"></i>
+                                        <div class="form-outline flex-fill mb-0">
+                                            <label class="form-label" for="password2">비밀번호 재입력</label>
+                                            <input type="password" id="password2" class="form-control" />
+                                        </div>
+                                    </div>
+
+                                    <div class="form-check d-flex justify-content-center mb-5">
+                                        <input class="form-check-input me-2" type="checkbox" value="" id="regAgree" />
+                                        <label class="form-check-label" for="regAgree">
+                                            <a href="#!">서비스 제공</a>을 위한 개인정보 수집 및 이용에 동의합니다.
+                                        </label>
+                                    </div>
+
+                                    <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4">
+                                        <button type="submit" class="btn btn-primary btn-lg">회원가입</button>
+                                    </div>
+
+                                </form>
+
+                            </div>
+                            <div class="col-md-10 col-lg-6 col-xl-7 d-flex align-items-center order-1 order-lg-2">
+
+                                <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-registration/draw1.webp"
+                                     class="img-fluid" alt="Sample image">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+    <script> <!-- 데이터 유효성 검사 및 비동기 데이터 전송 (Ajax) -->
+    document.getElementById('regForm').addEventListener('submit', function (event) {
+        event.preventDefault(); // 폼의 기본 제출 막기
+
+        var name = document.getElementById('name').value;
+        var email = document.getElementById('email').value;
+        var password = document.getElementById('password').value;
+        var password2 = document.getElementById('password2').value;
+
+        if (password !== password2) {
+            alert("비밀번호가 일치하지 않습니다.");
+            return;
+        }
+
+        // -------- XMLHttpRequest 객체를 사용한 AJAX 요청 설정 --------
+        var xhr = new XMLHttpRequest();
+        xhr.open("post", "/register", true)
+        xhr.setRequestHeader("Content-Type", "application/json")
+
+        xhr.onload = function () {
+            // 요청처리
+            if (xhr.status === 200) { // Success
+
+            } else {
+
+            }
+        };
+
+        var data = JSON.stringify({
+            name: name,
+            email: email,
+            password: password
+        });
+        xhr.send(data);
+
+        // -------- Fetch API를 사용한 AJAX 요청 설정  --------
+        /*var formData = {
+          name: document.getElementById("name").value,
+          email: document.getElementById("email").value,
+          password: document.getElementById("password").value
+        };
+
+        fetch('/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => { // 응답이 Promise 객체로 반환됨. .then, .catch를 통해 비동기적 처리
+            if(!response.ok) { // HTTP 상태 코드가 성공적인지 확인
+                throw new Error('회원가입 실패: ' + response.statusText);
+            }
+            return response.text();
+        })
+        .then(data => {
+            // 회원가입 성공 로직
+        })
+        .catch(error => { // 오류처리를 위해 catch 사용
+            // error
+        });*/
+    });
+    </script>
+</body>
+</html>

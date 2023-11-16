@@ -1,0 +1,22 @@
+
+header.firsthead {
+    padding-top: 15.5rem;
+    padding-bottom: 6rem;
+    text-align: center;
+    background-image: url("https://cdn.pixabay.com/photo/2016/03/27/07/32/clouds-1282314_1280.jpg");
+    height: 600px;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+}
+
+header.firsthead .firsthead-subheading {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+header.firsthead .firsthead-heading {
+    font-size: 4rem;
+    font-weight: 700;
+
+}
