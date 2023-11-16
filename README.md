@@ -24,8 +24,8 @@ Return value of username of UserDetails interface in Entity has been overridden 
 private String email;
 
 @Override
-    public String getUsername() {
-        return this.email;
+public String getUsername() {
+    return this.email;
     }
 
 ----------------- Future Updates -------------- 
