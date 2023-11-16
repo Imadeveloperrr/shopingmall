@@ -11,8 +11,11 @@ Frontend Stack
 3. thymeleaf
 
 Backend Stack
-1. Spring boot
-2. Spring Security JWT 토큰
+1. Spring boot 3.1.4
+2. Spring Security 5.6.0 + JWT 토큰
 3. JPA
 4. Loombok
 5. Maria db
+
+
+----------------- 차후 업데이트 내용 -------------- 
