@@ -12,7 +12,7 @@ Frontend Stack
 
 Backend Stack
 1. Spring boot 3.1.4
-2. Spring Security 5.6.0 + JWT 토큰
+2. Spring Security 5.6.2 + JWT 토큰
 3. JPA
 4. Loombok
 5. Maria db
