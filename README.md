@@ -8,7 +8,7 @@ Frontend Stack
 
 1. bootstrap
 2. Ajax (XMLHttpRequest 객체와 Fetch API 둘다 사용, Fetch API는 주석처리해놈 공부목적)
-
+3. thymeleaf
 
 Backend Stack
 1. Spring boot 3.1.4
@@ -16,7 +16,7 @@ Backend Stack
 3. JPA
 4. Loombok
 5. Maria db
-6. thymeleaf
+
 
 ----------------- Notes  -------------- 
 
