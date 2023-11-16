@@ -7,15 +7,23 @@
 Frontend Stack
 
 1. bootstrap
-2. 비동기 데이터 처리 (XMLHttpRequest 객체와 Fetch API 둘다 사용, Fetch API는 주석처리해놈 공부목적)
+2. Ajax (XMLHttpRequest 객체와 Fetch API 둘다 사용, Fetch API는 주석처리해놈 공부목적)
 3. thymeleaf
 
 Backend Stack
 1. Spring boot 3.1.4
-2. Spring Security 5.6.2 + JWT 토큰
+2. Spring Security 5.6.2 + JWT Token
 3. JPA
 4. Loombok
 5. Maria db
 
+----------------- Notes  -------------- 
 
------------------ 차후 업데이트 내용 -------------- 
+Return value of username of UserDetails interface in Entity has been overridden into email field
+
+@Override
+    public String getUsername() {
+        return this.email;
+    }
+
+----------------- Future Updates -------------- 
