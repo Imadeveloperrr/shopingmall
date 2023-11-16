@@ -21,6 +21,7 @@ Backend Stack
 
 Return value of username of UserDetails interface in Entity has been overridden into email field
 
+private String email;
 @Override
     public String getUsername() {
         return this.email;
