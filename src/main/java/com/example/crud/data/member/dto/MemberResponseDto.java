@@ -1,17 +1,16 @@
 package com.example.crud.data.member.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class MemberResponseDto {
     private int number;
-    private int password;
+    private String password;
+    private String name;
     private String email;
-    private String nickName;
+    private String nickname;
 }

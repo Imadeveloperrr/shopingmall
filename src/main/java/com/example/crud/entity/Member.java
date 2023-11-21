@@ -33,6 +33,9 @@ public class Member implements UserDetails {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
+    private String nickname;
+
     private LocalDateTime createAt;
     private LocalDateTime updateAt;
 

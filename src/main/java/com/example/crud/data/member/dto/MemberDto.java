@@ -1,17 +1,19 @@
 package com.example.crud.data.member.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class MemberDto {
-    private int password;
+    private String password;
+    private String name;
     private String email;
-    private String nickName;
-
+    private String nickname;
+    private List<String> roles = new ArrayList<>();
 }

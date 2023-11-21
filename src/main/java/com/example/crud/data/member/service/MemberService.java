@@ -1,7 +1,11 @@
 package com.example.crud.data.member.service;
 
+import com.example.crud.data.member.dto.MemberDto;
+import com.example.crud.data.member.dto.MemberResponseDto;
 import com.example.crud.security.JwtToken;
 
 public interface MemberService {
-    JwtToken signln(String username, String password);
+    JwtToken signIn(String username, String password);
+
+    MemberResponseDto signUp(MemberDto memberDto);
 }
