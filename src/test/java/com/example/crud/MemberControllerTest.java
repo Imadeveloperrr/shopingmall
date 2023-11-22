@@ -3,6 +3,7 @@ package com.example.crud;
 import com.example.crud.data.member.dto.MemberDto;
 import com.example.crud.data.member.dto.MemberResponseDto;
 import com.example.crud.data.member.service.MemberService;
+import com.example.crud.repository.MemberRepository;
 import com.example.crud.security.JwtToken;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
@@ -27,6 +28,8 @@ public class MemberControllerTest {
     MemberService memberService;
     @Autowired
     TestRestTemplate testRestTemplate;
+    @Autowired
+    MemberRepository memberRepository;
     @LocalServerPort
     int randomServerPort;
 
@@ -46,6 +49,7 @@ public class MemberControllerTest {
     @AfterEach
     void afterEach() {
         // Test 실행 후 초기화
+        memberRepository.deleteAll();
     }
 
     @Test
@@ -79,10 +83,11 @@ public class MemberControllerTest {
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
 
         //log.info("httpHeaders = {}", httpHeaders);
+        HttpEntity<MemberDto> requestEntity = new HttpEntity<>(memberRequestDto, httpHeaders);
 
         // API 요청 설정
         String url = "http://localhost:" + randomServerPort + "/login";
-        ResponseEntity<String> responseEntity = testRestTemplate.postForEntity(url, new HttpEntity<> (httpHeaders), String.class);
+        ResponseEntity<String> responseEntity = testRestTemplate.postForEntity(url, requestEntity, String.class);
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         assertEquals(responseEntity.getBody(), memberRequestDto.getEmail());
     }
