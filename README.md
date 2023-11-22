@@ -16,6 +16,7 @@
 3. JPA
 4. Loombok
 5. Maria db
+6. Jupiter
 
 
 ----------------- Notes  -------------- 
