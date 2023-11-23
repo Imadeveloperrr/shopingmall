@@ -7,11 +7,13 @@ import com.example.crud.entity.Member;
 import com.example.crud.security.JwtToken;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 @Slf4j
@@ -34,7 +36,8 @@ public class IndexController {
         return "fragments/login";
     }
 
-    @PostMapping("/login")
+    @PostMapping(value = "/login")
+    @ResponseBody
     public JwtToken loginPost(@RequestBody MemberDto memberDto) {
         String email = memberDto.getEmail();
         String password = memberDto.getPassword();
