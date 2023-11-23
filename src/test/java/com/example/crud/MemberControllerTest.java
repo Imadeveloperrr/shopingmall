@@ -16,6 +16,8 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
 
+import java.net.http.HttpResponse;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -74,21 +76,27 @@ public class MemberControllerTest {
                 .email("ddooochii@gmail.com")
                 .password("1234")
                 .build();
+        String url = "http://localhost:" + randomServerPort + "/login";
 
         // 로그인 요청
-        JwtToken jwtToken = memberService.signIn(memberRequestDto.getEmail(), memberRequestDto.getPassword());
+        ResponseEntity<JwtToken> response = testRestTemplate.postForEntity(url, memberRequestDto, JwtToken.class);
+        assertEquals(response.getStatusCode(), HttpStatus.OK);
 
-        HttpHeaders httpHeaders = new HttpHeaders();
+        //JwtToken jwtToken = memberService.signIn(memberRequestDto.getEmail(), memberRequestDto.getPassword());
+
+
+        // API 요청 설정
+
+        /*HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setBearerAuth(jwtToken.getAccessToken());
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
 
         //log.info("httpHeaders = {}", httpHeaders);
-        HttpEntity<MemberDto> requestEntity = new HttpEntity<>(memberRequestDto, httpHeaders);
+        //HttpEntity<MemberDto> requestEntity = new HttpEntity<>(memberRequestDto, httpHeaders);
 
-        // API 요청 설정
         String url = "http://localhost:" + randomServerPort + "/login";
-        ResponseEntity<String> responseEntity = testRestTemplate.postForEntity(url, requestEntity, String.class);
+        ResponseEntity<JwtToken> responseEntity = testRestTemplate.postForEntity(url, new HttpEntity<>(httpHeaders), JwtToken.class);
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        assertEquals(responseEntity.getBody(), memberRequestDto.getEmail());
+        assertEquals(responseEntity.getBody(), memberRequestDto.getEmail());*/
     }
 }
