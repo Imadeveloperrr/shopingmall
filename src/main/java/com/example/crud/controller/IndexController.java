@@ -52,6 +52,7 @@ public class IndexController {
     }
 
     @PostMapping("/register") //
+    @ResponseBody
     public ResponseEntity<?> registerPost(@RequestBody MemberDto memberDto) { // AJAX 요청은 ResponseEntity 객체가 GOOD.
         MemberResponseDto memberResponseDto = memberService.signUp(memberDto);
         return ResponseEntity.ok().body(memberResponseDto); // HTTP 상태 코드와 응답 본문 설정
