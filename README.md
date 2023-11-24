@@ -36,7 +36,7 @@
 8. 비교가 완료되면 사용자 정보를 가진 Authentication 객체를 SecurityContextHolder에 담은 이후 AuthenticationSuccessHandle를 실행한다.(실패시 AuthenticationFailureHandler를 실행한다.)
 
 
-Return value of username of UserDetails interface in Entity has been overridden into email field
+* UserDetails 인터페이스의 username 필드를 email로 변경하였음
 
 private String email;
 
