@@ -109,6 +109,7 @@
             // 요청처리
             if (xhr.status === 200) { // Success
                 console.log(xhr.responseText); // 서버로 부터 받은 응답 본문 출력
+                window.location.href = '/'; // ../index.html
             } else {
                 console.log("Error, status code: " + xhr.status);
             }

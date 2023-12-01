@@ -16,21 +16,21 @@
 
                                 <p class="text-center h1 fw-bold mb-5 mx-1 mx-md-4 mt-4">로그인</p>
 
-                                <form class="mx-1 mx-md-4">
+                                <form class="mx-1 mx-md-4" action="/login" method="post" id="loginForm">
 
                                     <div class="d-flex flex-row align-items-center mb-4">
                                         <i class="fas fa-envelope fa-lg me-3 fa-fw"></i>
                                         <div class="form-outline flex-fill mb-0">
-                                            <input type="email" id="form3Example3c" class="form-control" />
-                                            <label class="form-label" for="form3Example3c">이메일</label>
+                                            <input type="email" id="email" class="form-control" required/>
+                                            <label class="form-label" for="email">이메일</label>
                                         </div>
                                     </div>
 
                                     <div class="d-flex flex-row align-items-center mb-4">
                                         <i class="fas fa-lock fa-lg me-3 fa-fw"></i>
                                         <div class="form-outline flex-fill mb-0">
-                                            <input type="password" id="form3Example4c" class="form-control" />
-                                            <label class="form-label" for="form3Example4c">비밀번호</label>
+                                            <input type="password" id="password" class="form-control" required/>
+                                            <label class="form-label" for="password">비밀번호</label>
                                         </div>
                                     </div>
 
@@ -42,7 +42,7 @@
                                     </div>
 
                                     <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4">
-                                        <button type="button" class="btn btn-primary btn-lg">로그인</button>
+                                        <button type="submit" class="btn btn-primary btn-lg">로그인</button>
                                     </div>
 
                                 </form>
@@ -61,5 +61,38 @@
         </div>
     </div>
 </section>
+<script>
+    document.getElementById('loginForm').addEventListener('submit', function (event) {
+        event.preventDefault() // 폼의 기본 제출 막기
+
+        var formData = {
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value
+        };
+
+        fetch('login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('로그인 실패. ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            localStorage.setItem('accessToken', data.accessToken);
+            console.log('Client Message accessToken : ', data.accessToken)
+            window.location.href = '/';
+        })
+        .catch(error => {
+            // 에러처리 로직
+            console.error('로그인 에러 : ', error);
+        })
+    });
+</script>
 </body>
 </html>

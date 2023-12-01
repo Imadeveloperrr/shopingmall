@@ -60,6 +60,7 @@ public class MemberControllerTest {
         String url = "http://localhost:" + randomServerPort + "/register";
         ResponseEntity<MemberResponseDto> response = testRestTemplate.postForEntity(url, memberDto, MemberResponseDto.class);
 
+        //log.info("response : {}", response.getBody());
         // 응답 검증
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
