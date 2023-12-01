@@ -17,6 +17,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+
+    // signIn 메서드의 UsernamePasswordAuthenticationToken에 저장된 사용자 이름이 인자로 전달!
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return memberRepository.findByEmail(username)

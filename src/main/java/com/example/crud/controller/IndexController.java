@@ -5,6 +5,8 @@ import com.example.crud.data.member.dto.MemberResponseDto;
 import com.example.crud.data.member.service.MemberService;
 import com.example.crud.entity.Member;
 import com.example.crud.security.JwtToken;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -19,7 +21,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Slf4j
 public class IndexController {
 
-    private MemberService memberService;
+    private final MemberService memberService;
 
     @Autowired
     public IndexController(MemberService memberService) {
@@ -38,13 +40,18 @@ public class IndexController {
 
     @PostMapping(value = "/login")
     @ResponseBody
-    public JwtToken loginPost(@RequestBody MemberDto memberDto) {
+    public JwtToken loginPost(@RequestBody MemberDto memberDto, HttpServletResponse response) {
         String email = memberDto.getEmail();
         String password = memberDto.getPassword();
         JwtToken jwtToken = memberService.signIn(email, password);
         log.info("request email = {}, password = {}", email, password);
         log.info("JwtToken accessToken = {}, refreshToken = {}", jwtToken.getAccessToken(), jwtToken.getRefreshToken());
-        return jwtToken;
+
+        Cookie refreshCookie = new Cookie("refreshToken", jwtToken.getRefreshToken());
+        refreshCookie.setHttpOnly(true);
+        response.addCookie(refreshCookie); // refreshToken은 쿠키에 저장
+
+        return new JwtToken(jwtToken.getGrantType(), jwtToken.getAccessToken(), null);
     }
     @GetMapping("/register")
     public String register() {
