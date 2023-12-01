@@ -50,11 +50,26 @@
                         <li><a class="dropdown-item" href="https://github.com/Imadeveloperrr"><img
                                 src="https://cdn-icons-png.flaticon.com/256/25/25231.png" class="img-fluid ms-2 me-2" width="30"
                                 height="30"></a></li>-->
-                        <li class="nav-item"><a class="nav-link text-dark" aria-current="page" th:href="@{/login}">로그인</a></li>
-                        <li class="nav-item"><a class="nav-link text-dark" aria-current="page" th:href="@{/register}">회원가입</a></li>
+                        <li class="nav-item" id="navLogin" ><a class="nav-link text-dark" aria-current="page" th:href="@{/login}">로그인</a></li>
+                        <li class="nav-item" id="navRegister" ><a class="nav-link text-dark" aria-current="page" th:href="@{/register}">회원가입</a></li>
+                        <li class="nav-item" id="navMyPage" style="display: none;" ><a class="nav-link text-dark" aria-current="page" th:href="@{/mypage}">마이페이지</a></li>
                     </ul>
                 </div>
             </div>
         </nav>
     </div>
+<script>
+    //document.addEventListener('DOMContentLoaded', function () {
+    window.onload = function () {
+        var accessToken = localStorage.getItem('accessToken');
+        document.getElementById('navMyPage').style.display = accessToken ? 'block' : 'none';
+        document.getElementById('navLogin').style.display = accessToken ? 'none' : 'block';
+        document.getElementById('navRegister').style.display = accessToken ? 'none' : 'block';
+        if (accessToken) {
+            console.log('accessToken have')
+        } else {
+            console.log('no accessToken')
+        }
+    };
+</script>
 </html>
