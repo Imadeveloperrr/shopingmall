@@ -122,33 +122,6 @@
             password: password
         });
         xhr.send(data);
-
-        // -------- Fetch API를 사용한 AJAX 요청 설정  --------
-        /*var formData = {
-          name: document.getElementById("name").value,
-          email: document.getElementById("email").value,
-          password: document.getElementById("password").value
-        };
-
-        fetch('/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => { // 응답이 Promise 객체로 반환됨. .then, .catch를 통해 비동기적 처리
-            if(!response.ok) { // HTTP 상태 코드가 성공적인지 확인
-                throw new Error('회원가입 실패: ' + response.statusText);
-            }
-            return response.text();
-        })
-        .then(data => {
-            // 회원가입 성공 로직
-        })
-        .catch(error => { // 오류처리를 위해 catch 사용
-            // error
-        });*/
     });
     </script>
 </body>

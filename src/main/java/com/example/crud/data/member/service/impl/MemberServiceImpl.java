@@ -14,12 +14,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -92,6 +95,22 @@ public class MemberServiceImpl implements MemberService {
                 .nickname(saveMember.getNickname())
                 .build();
         return memberResponseDto;
+    }
+
+    @Override
+    public MemberResponseDto getMember() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Member member = memberDao.getMember(authentication.getName())
+                .orElseThrow(() -> new NoSuchElementException("Error : 존재하지 않는 이메일 주소"));
+
+        return MemberResponseDto.builder()
+                .number(member.getNumber())
+
+                .email(member.getEmail())
+                .name(member.getName())
+                .password(member.getPassword())
+                .nickname(member.getNickname())
+                .build();
     }
 }
 
