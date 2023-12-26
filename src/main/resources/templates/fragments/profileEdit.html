@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <div th:replace="~{/fragments/header.html :: fragment-header}"></div>
+</head>
+<body>
+<div th:insert="~{/fragments/nav.html :: fragment-nav}"></div>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 mb-4">
+            <div class="card mb-4">
+                <div class="card-header text-center py-3">
+                    <h5 class="mb-0 justify-content-center">프로필 수정</h5>
+                </div>
+                <div class="card-body">
+                    <form>
+                        <!-- 2 column grid layout with text inputs for the first and last names -->
+                        <div class="row mb-4">
+                            <div class="col">
+                                <div class="form-outline">
+                                    <input type="text" id="form7Example1" class="form-control" th:value="${member.name}" placeholder="수정할 이름 입력" />
+                                    <label class="form-label" for="form7Example1">이름</label>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="form-outline">
+                                    <input type="text" id="form7Example2" class="form-control" th:value="${member.nickname}" placeholder="수정할 별명 입력"/>
+                                    <label class="form-label" for="form7Example2" >별명</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Text input -->
+                        <div class="form-outline mb-4">
+                            <input type="text" id="form7Example3" class="form-control" th:value="${member.password}"/>
+                            <label class="form-label" for="form7Example3">비밀번호</label>
+                        </div>
+
+                        <!-- Text input -->
+                        <div class="form-outline mb-4">
+                            <input type="text" id="form7Example4" class="form-control" />
+                            <label class="form-label" for="form7Example4">주소</label>
+                        </div>
+
+                        <!-- Email input -->
+                        <div class="form-outline mb-4">
+                            <input type="email" id="form7Example5" class="form-control" th:value="${member.email}"/>
+                            <label class="form-label" for="form7Example5">이메일</label>
+                        </div>
+
+                        <!-- Number input -->
+                        <div class="form-outline mb-4">
+                            <input type="number" id="form7Example6" class="form-control" />
+                            <label class="form-label" for="form7Example6">핸드폰 번호</label>
+                        </div>
+
+                        <!-- Message input -->
+                        <div class="form-outline mb-4">
+                            <textarea class="form-control" id="form7Example7" rows="4"></textarea>
+                            <label class="form-label" for="form7Example7">자기 소개서</label>
+                        </div>
+
+                        <!-- Checkbox -->
+                        <div class="form-check d-flex justify-content-center mb-2">
+                            <input class="form-check-input me-2" type="checkbox" value="" id="form7Example8" checked />
+                            <label class="form-check-label" for="form7Example8">
+                                Create an account?
+                            </label>
+                        </div>
+
+                        <div class="card-footer text-center bg-white">
+                            <button type="button" class="btn btn-primary btn-lg btn-block">
+                                수정하기
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+</body>
+</html>

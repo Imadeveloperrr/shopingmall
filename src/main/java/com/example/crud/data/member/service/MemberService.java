@@ -8,4 +8,6 @@ public interface MemberService {
     JwtToken signIn(String username, String password);
 
     MemberResponseDto signUp(MemberDto memberDto);
+
+    MemberResponseDto getMember();
 }

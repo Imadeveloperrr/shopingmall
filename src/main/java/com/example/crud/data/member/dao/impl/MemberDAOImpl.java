@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Builder
 @RequiredArgsConstructor
 @Component
@@ -16,5 +18,10 @@ public class MemberDAOImpl implements MemberDAO {
     @Override
     public Member saveMember(Member member) {
         return memberRepository.save(member);
+    }
+
+    @Override
+    public Optional<Member> getMember(String memberName) {
+        return memberRepository.findByEmail(memberName);
     }
 }

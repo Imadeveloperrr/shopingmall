@@ -77,27 +77,29 @@ public class MemberControllerTest {
                 .email("ddooochii@gmail.com")
                 .password("1234")
                 .build();
-        String url = "http://localhost:" + randomServerPort + "/login";
 
         // 로그인 요청
+        /*
+        String url = "http://localhost:" + randomServerPort + "/login";
         ResponseEntity<JwtToken> response = testRestTemplate.postForEntity(url, memberRequestDto, JwtToken.class);
-        assertEquals(response.getStatusCode(), HttpStatus.OK);
+        assertEquals(response.getStatusCode(), HttpStatus.OK);*/
 
-        //JwtToken jwtToken = memberService.signIn(memberRequestDto.getEmail(), memberRequestDto.getPassword());
+        JwtToken jwtToken = memberService.signIn(memberRequestDto.getEmail(), memberRequestDto.getPassword());
 
 
         // API 요청 설정
 
-        /*HttpHeaders httpHeaders = new HttpHeaders();
+        HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setBearerAuth(jwtToken.getAccessToken());
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
 
-        //log.info("httpHeaders = {}", httpHeaders);
-        //HttpEntity<MemberDto> requestEntity = new HttpEntity<>(memberRequestDto, httpHeaders);
-
-        String url = "http://localhost:" + randomServerPort + "/login";
-        ResponseEntity<JwtToken> responseEntity = testRestTemplate.postForEntity(url, new HttpEntity<>(httpHeaders), JwtToken.class);
+        String url = "http://localhost:" + randomServerPort + "/mypage";
+        ResponseEntity<String> responseEntity = testRestTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                new HttpEntity<>(httpHeaders),
+                String.class);
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        assertEquals(responseEntity.getBody(), memberRequestDto.getEmail());*/
+        //assertEquals(responseEntity.getBody(), memberRequestDto.getEmail());
     }
 }

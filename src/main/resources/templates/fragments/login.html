@@ -84,8 +84,6 @@
             return response.json();
         })
         .then(data => {
-            localStorage.setItem('accessToken', data.accessToken);
-            console.log('Client Message accessToken : ', data.accessToken)
             window.location.href = '/';
         })
         .catch(error => {

@@ -11,11 +11,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.List;
 
 @Controller
 @Slf4j
@@ -29,7 +35,7 @@ public class IndexController {
     }
 
     @GetMapping("/")
-    public String index() {
+    public String index(Model model) {
         return "index";
     }
 
@@ -40,7 +46,7 @@ public class IndexController {
 
     @PostMapping(value = "/login")
     @ResponseBody
-    public JwtToken loginPost(@RequestBody MemberDto memberDto, HttpServletResponse response) {
+    public JwtToken loginPost(@RequestBody MemberDto memberDto, HttpServletResponse response, Model model) {
         String email = memberDto.getEmail();
         String password = memberDto.getPassword();
         JwtToken jwtToken = memberService.signIn(email, password);
@@ -51,8 +57,13 @@ public class IndexController {
         refreshCookie.setHttpOnly(true);
         response.addCookie(refreshCookie); // refreshToken은 쿠키에 저장
 
-        return new JwtToken(jwtToken.getGrantType(), jwtToken.getAccessToken(), null);
+        Cookie accessToken = new Cookie("accessToken", jwtToken.getAccessToken());
+        accessToken.setHttpOnly(true);
+        response.addCookie(accessToken);
+
+        return new JwtToken(jwtToken.getGrantType(), jwtToken.getAccessToken(), jwtToken.getRefreshToken());
     }
+
     @GetMapping("/register")
     public String register() {
         return "fragments/register";
@@ -64,5 +75,6 @@ public class IndexController {
         MemberResponseDto memberResponseDto = memberService.signUp(memberDto);
         return ResponseEntity.ok().body(memberResponseDto); // HTTP 상태 코드와 응답 본문 설정
     }
+
 
 }
