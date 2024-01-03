@@ -10,4 +10,6 @@ public interface MemberService {
     MemberResponseDto signUp(MemberDto memberDto);
 
     MemberResponseDto getMember();
+
+    MemberResponseDto updateMemBer(MemberDto memberDto);
 }

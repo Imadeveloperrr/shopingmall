@@ -67,9 +67,9 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     @Override
     public MemberResponseDto signUp(MemberDto memberDto) {
-        if (memberRepository.existsByEmail(memberDto.getEmail())) {
+        if (memberDao.existsByEmail(memberDto.getEmail())) {
             throw new IllegalArgumentException("이미 사용 중인 이메일 입니다.");
-        } else if (memberRepository.existsByNickname(memberDto.getNickname())) {
+        } else if (memberDao.existsByNickname(memberDto.getNickname())) {
             throw new IllegalArgumentException("이미 사용 중인 닉네임 입니다.");
         }
 
@@ -105,11 +105,48 @@ public class MemberServiceImpl implements MemberService {
 
         return MemberResponseDto.builder()
                 .number(member.getNumber())
-
                 .email(member.getEmail())
                 .name(member.getName())
                 .password(member.getPassword())
                 .nickname(member.getNickname())
+                .address(member.getAddress())
+                .phoneNumber(member.getPhoneNumber())
+                .introduction(member.getIntroduction())
+                .build();
+    }
+
+    @Override
+    public MemberResponseDto updateMemBer(MemberDto memberDto) {
+        if (memberDao.existsByEmail(memberDto.getEmail())) {
+            throw new IllegalArgumentException("이미 사용 중인 이메일 입니다.");
+        } else if (memberDao.existsByNickname(memberDto.getNickname())) {
+            throw new IllegalArgumentException("이미 사용 중인 닉네임 입니다.");
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Member member = memberDao.getMember(authentication.getName())
+                .orElseThrow(() -> new NoSuchElementException("ERROR : 존재하지 않는 이메일"));
+
+        member.setUpdateAt(LocalDateTime.now());
+        member.setName(memberDto.getName());
+        member.setEmail(memberDto.getEmail());
+        member.setNickname(memberDto.getNickname());
+        member.setPassword(memberDto.getPassword());
+        member.setAddress(memberDto.getAddress());
+        member.setIntroduction(memberDto.getIntroduction());
+        member.setPhoneNumber(memberDto.getPhoneNumber());
+
+        Member saveMember = memberDao.saveMember(member);
+
+        return MemberResponseDto.builder()
+                .number(saveMember.getNumber())
+                .email(saveMember.getEmail())
+                .name(saveMember.getName())
+                .password(saveMember.getPassword())
+                .nickname(saveMember.getNickname())
+                .address(saveMember.getAddress())
+                .phoneNumber(saveMember.getPhoneNumber())
+                .introduction(saveMember.getIntroduction())
                 .build();
     }
 }

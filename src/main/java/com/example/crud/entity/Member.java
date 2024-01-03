@@ -33,6 +33,16 @@ public class Member implements UserDetails {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = true)
+    private String address;
+
+    @Column(nullable = true)
+    private int phoneNumber;
+
+    @Column(nullable = true)
+    @Lob
+    private String introduction;
+
     @Column(nullable = false)
     private String nickname;
 

@@ -15,13 +15,29 @@ import java.util.Optional;
 public class MemberDAOImpl implements MemberDAO {
 
     private final MemberRepository memberRepository;
+
+    @Override
+    public void deleteMember(String email) {
+        memberRepository.deleteByEmail(email);
+    }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return memberRepository.existsByEmail(email);
+    }
+
+    @Override
+    public boolean existsByNickname(String nickname) {
+        return memberRepository.existsByNickname(nickname);
+    }
+
     @Override
     public Member saveMember(Member member) {
         return memberRepository.save(member);
     }
 
     @Override
-    public Optional<Member> getMember(String memberName) {
-        return memberRepository.findByEmail(memberName);
+    public Optional<Member> getMember(String email) {
+        return memberRepository.findByEmail(email);
     }
 }
