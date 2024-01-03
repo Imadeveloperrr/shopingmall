@@ -15,5 +15,8 @@ public class MemberDto {
     private String name;
     private String email;
     private String nickname;
+    private String address;
+    private int phoneNumber;
+    private String introduction;
     private List<String> roles = new ArrayList<>();
 }

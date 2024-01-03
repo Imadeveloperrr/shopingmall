@@ -76,5 +76,4 @@ public class IndexController {
         return ResponseEntity.ok().body(memberResponseDto); // HTTP 상태 코드와 응답 본문 설정
     }
 
-
 }
