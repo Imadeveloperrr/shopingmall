@@ -16,5 +16,6 @@ public class ProductResponseDto {
     private int number;
     private String brandName;
     private String imgUrl;
-
+    private String description;
+    private String categoryName;
 }

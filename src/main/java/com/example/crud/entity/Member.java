@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class Member implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int number;
+    private Long number;
 
     @Column(nullable = false)
     private String password;

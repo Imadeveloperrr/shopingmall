@@ -38,29 +38,28 @@ public class MemberServiceImpl implements MemberService {
     @Transactional // 새로운 @Transactional 어노테이션을 사용하여 기본 설정을 오버라이딩함. 즉, 이 메서드에서는 데이터를 변경할 수 있음.
     @Override
     public JwtToken signIn(String username, String password) {
-        // 1. username + password 를 기반으로 Authentication 객체 생성
-        // 이때 authentication은 인증 여부를 확인하는 authenticated 값이 false
+        // 1. 사용자 이름과 비밀번호를 기반으로 UsernamePasswordAuthenticationToken 객체 생성
+        // 이 단계에서의 authenticationToken은 아직 인증되지 않았으므로, authenticated 값이 false입니다.
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
 
-        /* 2. 실제 검증.
-        AuthenticationManager가 authenticate() 메서드를 통해 요청된 User 대한 검증 진행
-        - AuthenticationProvider 내부에서 UserDetailesService의 loadUserByUsername 메서드가 호출됨.
-        - 이 과정에서 authenticationToken 인스턴스에 저장된 사용자 이름이 loadUserByUsername 인자로 전달!
-        - 그 후 Override한 loadUserByUsername은 UserDetails 객체를 반환 AuthenticationProvider는 반환된 UserDetails 객체와
-        authenticationToken 인스턴스 즉 UsernamePasswordAuthenticationToken 의 자격증명을 비교하여 인증 과정을 완료.
-        비밀번호가 일치하면 사용자는 인증되고 authentication은 authenticated 값이 true로 업데이트됩니다잉
-        */
+    /* 2. 실제 인증 과정을 처리합니다.
+       AuthenticationManager의 authenticate 메서드를 호출하여 인증을 시도합니다.
+       - 이 과정에서 설정된 AuthenticationProvider가 사용됩니다.
+       - AuthenticationProvider 내부에서는 UserDetailsService의 loadUserByUsername 메서드가 호출되어 사용자 정보를 불러옵니다.
+       - 불러온 UserDetails 객체와 UsernamePasswordAuthenticationToken 내의 자격 증명(비밀번호)을 비교합니다.
+       - 비밀번호가 일치하면, authentication 객체의 authenticated 값이 true로 설정되어 인증 과정을 성공적으로 마칩니다.
+    */
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
 
-        // 3. 인증 정보를 기반으로 JWT 토큰 생성
+        // 3. 인증된 Authentication 객체를 기반으로 JWT 토큰을 생성합니다.
         JwtToken jwtToken = jwtTokenProvider.generateToken(authentication);
 
-        /*
-        * UsernamePasswordAuthenticationToken 객체의 username, password를 입력받아
-        * Authentication 객체를 생성한후 그 객체를 다시 AuthenticationManager의 authenticate 메서드를
-        * 사용해서 Authentication 객체를 입력시킨뒤 인증된 사용자의 정보를 담고있는 Authentication 객체를
-        * 반환하고 !!!! 나서 JwtTokenProvider의 generateToken 메서드로 토큰을 만들어버린다...
-        * */
+    /* 요약:
+       - UsernamePasswordAuthenticationToken 객체에 사용자 이름과 비밀번호를 입력하여 Authentication 객체를 생성합니다.
+       - 이 객체를 AuthenticationManager의 authenticate 메서드에 전달하여 인증을 시도합니다.
+       - 인증이 성공하면, 인증된 사용자 정보를 담고 있는 Authentication 객체가 반환됩니다.
+       - JwtTokenProvider의 generateToken 메서드를 사용하여 이 인증 정보를 기반으로 JWT 토큰을 생성합니다.
+    */
         return jwtToken;
     }
 
@@ -116,16 +115,19 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    @Transactional
     public MemberResponseDto updateMemBer(MemberDto memberDto) {
-        if (memberDao.existsByEmail(memberDto.getEmail())) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일 입니다.");
-        } else if (memberDao.existsByNickname(memberDto.getNickname())) {
-            throw new IllegalArgumentException("이미 사용 중인 닉네임 입니다.");
-        }
-
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Member member = memberDao.getMember(authentication.getName())
                 .orElseThrow(() -> new NoSuchElementException("ERROR : 존재하지 않는 이메일"));
+
+        if (!member.getEmail().equals(memberDto.getEmail()) && memberDao.existsByEmail(memberDto.getEmail())) {
+            throw new IllegalArgumentException("이미 사용 중인 이메일 입니다.");
+        }
+
+        if (!member.getNickname().equals(memberDto.getNickname()) && memberDao.existsByNickname(memberDto.getNickname())) {
+            throw new IllegalArgumentException("이미 사용 중인 닉네임 입니다.");
+        }
 
         member.setUpdateAt(LocalDateTime.now());
         member.setName(memberDto.getName());
