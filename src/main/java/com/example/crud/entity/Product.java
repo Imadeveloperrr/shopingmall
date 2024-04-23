@@ -27,6 +27,12 @@ public class Product {
     @Column(nullable = false)
     private String imgUrl;
 
+    @Column(nullable = false)
+    private String description;
+
+    @Column(nullable = false)
+    private String categoryName;
+
     /*
         ManyToOne = 여러개의 Product가 하나의 Member에 연관될수 있음을 나타냄 다대일 관계
         FetchType.Lazy = 연관된 엔티티를 실제로 사용할 때까지 로드하지 않는 전략.

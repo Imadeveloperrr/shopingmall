@@ -8,7 +8,7 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 public class MemberResponseDto {
-    private int number;
+    private Long number;
     private String password;
     private String name;
     private String email;
