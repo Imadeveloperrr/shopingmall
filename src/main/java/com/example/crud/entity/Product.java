@@ -19,19 +19,19 @@ public class Product {
     private String name;
 
     @Column(nullable = false)
-    private String brandName;
+    private String brand;
 
     @Column(nullable = false)
     private Integer price;
 
     @Column(nullable = false)
-    private String imgUrl;
+    private String imageUrl;
 
     @Column(nullable = false)
     private String description;
 
     @Column(nullable = false)
-    private String categoryName;
+    private String category;
 
     /*
         ManyToOne = 여러개의 Product가 하나의 Member에 연관될수 있음을 나타냄 다대일 관계

@@ -46,7 +46,9 @@ public class SecurityConfig {
 
                     // USER 권한이 있어야 요청할 수 있음.
                     .requestMatchers("/mypage").hasRole("USER")
-                .requestMatchers("/mypage/profileEdit").hasRole("USER")
+                    .requestMatchers("/mypage/profileEdit").hasRole("USER")
+                    .requestMatchers("/product").hasRole("USER")
+                    .requestMatchers("/product/add").hasRole("USER")
                     //  정적 파일에 대한 권한 허용을 설정
                     .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                     // 이 밖에 모든 요청에 대해서 인증을 필요로 한다는 설정.

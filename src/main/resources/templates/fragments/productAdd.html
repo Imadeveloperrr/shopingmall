@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <div th:replace="~{/fragments/header.html :: fragment-header}"></div>
+</head>
+<body>
+<div th:insert="~{/fragments/nav.html :: fragment-nav}"></div>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 mb-4">
+            <div class="card mb-4">
+                <div class="card-header text-center py-3">
+                    <h5 class="mb-0 justify-content-center">상품 등록</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/product/add" method="post" id="productForm">
+                        <!-- 2 column grid layout with text inputs for the first and last names -->
+                        <div class="row mb-4 mt-4">
+                            <div class="col">
+                                <div class="form-outline">
+                                    <input type="text" id="name" class="form-control" placeholder="" />
+                                    <label class="form-label" for="name">상품 이름</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Text input -->
+                        <div class="form-outline mb-4">
+                            <input type="text" id="brand-name" class="form-control" />
+                            <label class="form-label" for="brand-name">상품 브랜드</label>
+                        </div>
+
+                        <!-- Text input -->
+                        <div class="form-outline mb-4">
+                            <input type="number" id="price" class="form-control" />
+                            <label class="form-label" for="price">가격(원화)</label>
+                        </div>
+
+                        <!-- Message input -->
+                        <div class="form-outline mb-4">
+                            <textarea class="form-control" id="description" rows="4" ></textarea>
+                            <label class="form-label" for="description">상품 상세설명</label>
+                        </div>
+
+                        <!-- Category input -->
+                        <div class="form-outline mb-4">
+                            <select id="category" class="form-select" >
+                                <option value="">카테고리를 선택하세요</option>
+                                <option value="T-shirt">티</option>
+                                <option value="Pants">바지</option>
+                                <option value="Shoes">신발</option>
+                                <option value="Knit">니트</option>
+                                <option value="Skirt">치마</option>
+                                <option value="Boots">부츠</option>
+                            </select>
+                            <label class="form-label" for="category">카테고리</label>
+                        </div>
+
+                        <!-- Image upload -->
+                        <div class="form-outline mb-4">
+                            <input type="file" id="productImage" class="form-control" accept="image/*" />
+                            <label class="form-label" for="productImage">상품 이미지</label>
+                        </div>
+
+                        <div class="form-outline text-center mb-4">
+                            <button type="submit" class="btn btn-outline-dark me-4" data-mdb-ripple-color="dark" style="z-index: 1;">
+                                추가하기
+                            </button>
+                            <a th:href="@{/mypage}" class="btn btn-outline-dark" data-mdb-ripple-color="dark" style="z-index: 1;">
+                                취소하기
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById('productForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const fields = {
+            name: '상품 이름',
+            'brand-name': '상품 브랜드',
+            price: '가격',
+            description: '상품 설명',
+            category: '카테고리',
+            productImage: '상품 이미지',
+        }
+
+        for (let id in fields) {
+            const input = document.getElementById(id);
+            if (input.value.trim() === '') {
+                alert(fields[id] + '을(를) 입력하세요.');
+                input.focus();
+                return;
+            }
+        }
+
+        var formData = {
+            name: document.getElementById('name').value,
+            brand: document.getElementById('brand-name').value,
+            price: document.getElementById('price').value,
+            description: document.getElementById('description').value,
+            category: document.getElementById('category').value,
+            imageUrl: "none",
+        };
+
+        fetch('/product/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('에러 발생 : ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(message => {
+                alert(message);
+            })
+            .catch(error => {
+                console.error('Error : ', error);
+            })
+    });
+
+</script>
+
+</body>
+</html>

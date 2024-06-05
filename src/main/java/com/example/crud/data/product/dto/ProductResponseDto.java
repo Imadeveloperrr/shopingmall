@@ -13,9 +13,9 @@ import lombok.Setter;
 public class ProductResponseDto {
     private String name;
     private int price;
-    private int number;
-    private String brandName;
-    private String imgUrl;
+    private Long number;
+    private String brand;
+    private String imageUrl;
     private String description;
-    private String categoryName;
+    private String category;
 }

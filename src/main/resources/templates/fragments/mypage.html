@@ -28,7 +28,7 @@
                     <div class="p-4 text-black" style="background-color: #f8f9fa;">
                         <div class="d-flex justify-content-end text-center py-1">
                             <div>
-                                <p class="mb-1 h5">253</p>
+                                <p class="mb-1 h5" th:text="${products.size()}"></p>
                                 <p class="small text-muted mb-0">Product</p>
                             </div>
                             <div class="px-3">
@@ -49,31 +49,18 @@
                             </div>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <p class="lead fw-normal mb-0">최근 상품</p>
-                            <button type="button" class="btn btn-outline-dark" data-mdb-ripple-color="dark"
-                                    style="z-index: 1;">
-                                상품등록하기
-                            </button>
+                            <p class="lead fw-normal mb-0">내 상품</p>
+                            <a th:href="@{/product}" class="btn btn-outline-dark" data-mdb-ripple-color="dark"
+                               style="z-index: 1;">
+                                상품 등록하기
+                            </a>
                             <p class="mb-0"><a href="#!" class="text-muted">Show all</a></p>
                         </div>
-                        <div class="row g-2">
-                            <div class="col mb-2">
-                                <img src="https://mdbcdn.b-cdn.net/img/Photos/Lightbox/Original/img%20(112).webp"
-                                     alt="image 1" class="w-100 rounded-3">
-                            </div>
-                            <div class="col mb-2">
-                                <img src="https://mdbcdn.b-cdn.net/img/Photos/Lightbox/Original/img%20(107).webp"
-                                     alt="image 1" class="w-100 rounded-3">
-                            </div>
-                        </div>
-                        <div class="row g-2">
-                            <div class="col">
-                                <img src="https://mdbcdn.b-cdn.net/img/Photos/Lightbox/Original/img%20(108).webp"
-                                     alt="image 1" class="w-100 rounded-3">
-                            </div>
-                            <div class="col">
-                                <img src="https://mdbcdn.b-cdn.net/img/Photos/Lightbox/Original/img%20(114).webp"
-                                     alt="image 1" class="w-100 rounded-3">
+                        <div class="row g-2 d-flex flex-wrap">
+                            <div th:each="product : ${products}" class="col mb-2 flex-fill" style="max-width: 50%;">
+<!--                                <img src="https://mdbcdn.b-cdn.net/img/Photos/Lightbox/Original/img%20(112).webp"-->
+<!--                                     alt="Product Image" class="w-100 rounded-3">-->
+                                <img th:src="@{${product.imageUrl}}" alt="Product Image" class="w-100 rounded-3">
                             </div>
                         </div>
                     </div>
