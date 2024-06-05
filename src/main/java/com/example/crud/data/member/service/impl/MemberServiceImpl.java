@@ -78,8 +78,8 @@ public class MemberServiceImpl implements MemberService {
                 .email(memberDto.getEmail())
                 .name(memberDto.getName())
                 .password(memberDto.getPassword())
-                .createAt(LocalDateTime.now())
-                .updateAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .nickname(memberDto.getNickname())
                 .roles(rolse)
                 .build();
@@ -129,7 +129,7 @@ public class MemberServiceImpl implements MemberService {
             throw new IllegalArgumentException("이미 사용 중인 닉네임 입니다.");
         }
 
-        member.setUpdateAt(LocalDateTime.now());
+        member.setUpdatedAt(LocalDateTime.now());
         member.setName(memberDto.getName());
         member.setEmail(memberDto.getEmail());
         member.setNickname(memberDto.getNickname());

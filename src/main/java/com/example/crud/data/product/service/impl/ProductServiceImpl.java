@@ -1,19 +1,24 @@
 package com.example.crud.data.product.service.impl;
 
+import com.example.crud.data.product.dto.ProductDto;
 import com.example.crud.data.product.dto.ProductResponseDto;
 import com.example.crud.data.product.service.ProductService;
 import com.example.crud.entity.Member;
 import com.example.crud.entity.Product;
 import com.example.crud.repository.MemberRepository;
 import com.example.crud.repository.ProductRepository;
+import com.fasterxml.jackson.databind.util.BeanUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +36,10 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public List<ProductResponseDto> getProductsByMemberId(Long memberId) {
-        return productRepository.findByMemberId(memberId);
+        List<Product> product = productRepository.findByMemberNumber(memberId);
+        return product.stream()
+                .map(this::convertToProductResponseDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -41,6 +49,55 @@ public class ProductServiceImpl implements ProductService {
         String useremail = authentication.getName();
         Member member = memberRepository.findByEmail(useremail)
                 .orElseThrow(() -> new NoSuchElementException("ERROR : 존재 하지 않는 사용자"));
-        return productRepository.findByMemberId(member.getNumber());
+
+        List<Product> products = productRepository.findByMemberNumber(member.getNumber());
+        return products.stream()
+                .map(this::convertToProductResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public ProductResponseDto getAddProduct(ProductDto productDto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String useremail = authentication.getName();
+        Member member = memberRepository.findByEmail(useremail)
+                .orElseThrow(() -> new NoSuchElementException("ERROR : 존재 하지 않는 사용자"));
+
+        Product product = converToProductEntity(productDto, member);
+        productRepository.save(product);
+        return convertToProductResponseDTO(product);
+    }
+
+    @Override
+    public ProductResponseDto getUpdateProduct(ProductDto productDto) {
+        return null;
+    }
+
+    @Override
+    public ProductResponseDto getDeleteProduct(ProductDto productDto) {
+        return null;
+    }
+
+    @Override
+    public ProductResponseDto getProductById(Long id) {
+        return null;
+    }
+
+    @Override
+    public ProductResponseDto getProductByName(String name) {
+        return null;
+    }
+
+    private ProductResponseDto convertToProductResponseDTO(Product product) {
+        ProductResponseDto productResponseDto = new ProductResponseDto();
+        BeanUtils.copyProperties(product, productResponseDto);
+        return productResponseDto;
+    }
+
+    private Product converToProductEntity(ProductDto productDto, Member member) {
+        Product product = new Product();
+        BeanUtils.copyProperties(productDto, product);
+        product.setMember(member);
+        return product;
     }
 }
