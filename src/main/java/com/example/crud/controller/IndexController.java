@@ -3,10 +3,14 @@ package com.example.crud.controller;
 import com.example.crud.data.member.dto.MemberDto;
 import com.example.crud.data.member.dto.MemberResponseDto;
 import com.example.crud.data.member.service.MemberService;
+import com.example.crud.data.product.dto.ProductResponseDto;
+import com.example.crud.data.product.service.ProductService;
 import com.example.crud.entity.Member;
+import com.example.crud.entity.Product;
 import com.example.crud.security.JwtToken;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -24,18 +28,17 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import java.util.List;
 
 @Controller
+@RequiredArgsConstructor
 @Slf4j
 public class IndexController {
 
     private final MemberService memberService;
-
-    @Autowired
-    public IndexController(MemberService memberService) {
-        this.memberService = memberService;
-    }
+    private final ProductService productService;
 
     @GetMapping("/")
     public String index(Model model) {
+        List<ProductResponseDto> products = productService.getProducts();
+        model.addAttribute("products", products);
         return "index";
     }
 
