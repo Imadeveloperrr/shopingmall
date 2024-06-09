@@ -9,10 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Controller
 @RequestMapping("/product")
@@ -28,12 +26,17 @@ public class ProductController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<?> addProduct(@RequestBody ProductDto productDto) {
+    public ResponseEntity<?> addProduct(@ModelAttribute ProductDto productDto, @RequestParam("imageUrl") MultipartFile file) {
         try {
-            log.info("프로필 업데이트 : {}", productDto);
-            ProductResponseDto productResponseDto = productService.getAddProduct(productDto);
+            log.info("Received product: {}", productDto);
+            if (file.isEmpty()) {
+                log.error("File is empty");
+                return ResponseEntity.badRequest().body("File is empty");
+            }
+            ProductResponseDto productResponseDto = productService.getAddProduct(productDto, file);
             return ResponseEntity.ok().body(productResponseDto);
         } catch (Exception e) {
+            log.error("Error while adding product", e);
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

@@ -108,8 +108,8 @@
             }
             return response.json();
         })
-        .then(message => {
-            alert(message);
+        .then(data => {
+            alert('프로필이 변경되었습니다.');
             window.location.href = '/mypage';
         })
         .catch(error => {

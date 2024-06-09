@@ -14,12 +14,12 @@
                     <h5 class="mb-0 justify-content-center">상품 등록</h5>
                 </div>
                 <div class="card-body">
-                    <form action="/product/add" method="post" id="productForm">
+                    <form action="/product/add" method="post" id="productForm" enctype="multipart/form-data">
                         <!-- 2 column grid layout with text inputs for the first and last names -->
                         <div class="row mb-4 mt-4">
                             <div class="col">
                                 <div class="form-outline">
-                                    <input type="text" id="name" class="form-control" placeholder="" />
+                                    <input type="text" id="name" class="form-control" name="name" placeholder="" />
                                     <label class="form-label" for="name">상품 이름</label>
                                 </div>
                             </div>
@@ -27,25 +27,25 @@
 
                         <!-- Text input -->
                         <div class="form-outline mb-4">
-                            <input type="text" id="brand-name" class="form-control" />
-                            <label class="form-label" for="brand-name">상품 브랜드</label>
+                            <input type="text" id="brand" name="brand" class="form-control" />
+                            <label class="form-label" for="brand">상품 브랜드</label>
                         </div>
 
                         <!-- Text input -->
                         <div class="form-outline mb-4">
-                            <input type="number" id="price" class="form-control" />
+                            <input type="number" id="price" name="price" class="form-control" />
                             <label class="form-label" for="price">가격(원화)</label>
                         </div>
 
                         <!-- Message input -->
                         <div class="form-outline mb-4">
-                            <textarea class="form-control" id="description" rows="4" ></textarea>
+                            <textarea class="form-control" id="description" name="description" rows="4" ></textarea>
                             <label class="form-label" for="description">상품 상세설명</label>
                         </div>
 
                         <!-- Category input -->
                         <div class="form-outline mb-4">
-                            <select id="category" class="form-select" >
+                            <select id="category" name="category" class="form-select" >
                                 <option value="">카테고리를 선택하세요</option>
                                 <option value="T-shirt">티</option>
                                 <option value="Pants">바지</option>
@@ -59,8 +59,8 @@
 
                         <!-- Image upload -->
                         <div class="form-outline mb-4">
-                            <input type="file" id="productImage" class="form-control" accept="image/*" />
-                            <label class="form-label" for="productImage">상품 이미지</label>
+                            <input type="file" id="imageUrl" class="form-control" accept="image/*" name="imageUrl" />
+                            <label class="form-label" for="imageUrl">상품 이미지</label>
                         </div>
 
                         <div class="form-outline text-center mb-4">
@@ -83,11 +83,11 @@
 
         const fields = {
             name: '상품 이름',
-            'brand-name': '상품 브랜드',
+            brand: '상품 브랜드',
             price: '가격',
             description: '상품 설명',
             category: '카테고리',
-            productImage: '상품 이미지',
+            imageUrl: '상품 이미지',
         }
 
         for (let id in fields) {
@@ -99,34 +99,27 @@
             }
         }
 
-        var formData = {
-            name: document.getElementById('name').value,
-            brand: document.getElementById('brand-name').value,
-            price: document.getElementById('price').value,
-            description: document.getElementById('description').value,
-            category: document.getElementById('category').value,
-            imageUrl: "none",
-        };
+        const form = document.getElementById('productForm');
+        const formData = new FormData(form);
+
 
         fetch('/product/add', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
+            body: formData
         })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('에러 발생 : ' + response.statusText);
-                }
-                return response.json();
-            })
-            .then(message => {
-                alert(message);
-            })
-            .catch(error => {
-                console.error('Error : ', error);
-            })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('상품 추가 실패 : ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert('상품이 성공적으로 추가되었습니다.');
+            window.location.href = '/mypage';
+        })
+        .catch(error => {
+            console.error('Error : ', error);
+        });
     });
 
 </script>
