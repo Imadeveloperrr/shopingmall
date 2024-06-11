@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <div th:replace="~{/fragments/header.html :: fragment-header}"></div>
+    <link href="/css/productDetail.css" rel="stylesheet"/>
+</head>
+
+<body>
+    <div th:insert="~{/fragments/nav.html :: fragment-nav}"></div>
+
+    <div class="product-container">
+
+        <div class="product-image">
+            <img th:src="@{${product.imageUrl}}" alt="상품 이미지">
+        </div>
+
+        <div class="product-info">
+            <p class="product-info-title" th:text="${product.name}">상품 이름</p>
+            <p class="product-info-price" th:text="${'가격: ' + product.price}">가격 정보</p>
+            <p class="product-info-description" th:text="${product.description}">상품 설명</p>
+            <hr>
+        </div>
+
+    </div>
+
+
+    <script>
+
+    </script>
+
+</body>
+</html>

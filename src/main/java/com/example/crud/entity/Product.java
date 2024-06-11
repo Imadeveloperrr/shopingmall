@@ -28,6 +28,7 @@ public class Product {
     private String imageUrl;
 
     @Column(nullable = false)
+    @Lob
     private String description;
 
     @Column(nullable = false)
