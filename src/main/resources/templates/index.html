@@ -25,22 +25,18 @@
         <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
 
             <!-- gx-4 = x축(수평)간격, row-cols-2 = 한 행에 최대 2개의 열, md = medium일때 3개의 열, justify.. = 수평 중앙-->
-            <div th:each="product : ${products}" class="col mb-5" style="width:300px; height: auto;"> <!-- mb = 마진바텀 -->
+            <div th:each="product : ${products}" class="col mb-5" style="width:350px; height: 600px;"> <!-- mb = 마진바텀 -->
                 <div class="card h-100" >
                     <!-- Product image -->
-                    <img th:src="@{${product.imageUrl}}" class="card-img-top" style="height: 300px;"/>
+                    <img th:src="@{${product.imageUrl}}" class="card-img-top" style="height: 450px;"/>
                     <!-- Product details -->
                     <div class="card-body p-4"> <!-- p-크기 = 모든 방향의 패딩 -->
-                        <div class="text-center">
-                            <!-- Product Name -->
-                            <h5 th:text="${product.name}" class="fw-bold">Product Name</h5>
-                            <!-- Product Brand -->
-                            <p th:text="${product.brand}">Brand</p>
-                        </div>
+                        <p th:text="${product.name}" class="fw-bold">Product Name</p>
+                        <hr>
+                        <p class="text-muted mb-0" th:text="${product.description}">Product Description</p>
                     </div>
                     <div class="card-footer p-4 pt-0 border-top-0 bg-transparent"> <!-- border-top-0 = 상단 테두리 제거, bg-transparent = 배경색 투명 -->
-                        <div class="text-center" th:text="${product.price} + '원'">Price</div>
-                        <p class="text-muted mb-0" th:text="${product.description}">Product Description</p>
+                        <p th:text="${product.price}">Price</p>
                     </div>
                 </div>
             </div>

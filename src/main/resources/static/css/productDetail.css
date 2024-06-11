@@ -1,0 +1,68 @@
+/* style.css 파일 */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Work Sans', 'Noto Sans KR', sans-serif;
+}
+
+.product-container {
+    display: flex;
+    max-width: 1200px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: white;
+}
+
+.product-image {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.product-image img {
+    width: 100%;
+    max-width: 500px;
+    height: 700px;
+}
+
+.product-info {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.product-info p {
+    margin: 0;
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+.product-info .product-info-title {
+    font-weight: 500;
+    font-size: 17px;
+    margin-bottom: 5px;
+}
+
+.product-info .product-info-price {
+    padding-bottom: 24px;
+}
+
+.product-info .product-info-description {
+    font-size: 13px;
+    color:#999999;
+}
+
+@media (max-width: 768px) {
+    .product-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .product-info {
+        text-align: center;
+    }
+}

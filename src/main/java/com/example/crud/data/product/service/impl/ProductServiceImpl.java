@@ -38,6 +38,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public List<ProductResponseDto> getProducts() {
         List<Product> products = productRepository.findAll();
+
         return products.stream()
                 .map(this::convertToProductResponseDTO)
                 .collect(Collectors.toList());
@@ -93,7 +94,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductResponseDto getProductById(Long id) {
-        return null;
+        Product product = productRepository.findById(id).orElseThrow(
+                () -> new NoSuchElementException("ERROR : 없는 상품 번호 입니다."));
+        return convertToProductResponseDTO(product);
     }
 
     @Override

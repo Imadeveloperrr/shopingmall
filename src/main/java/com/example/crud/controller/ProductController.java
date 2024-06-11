@@ -40,4 +40,11 @@ public class ProductController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @GetMapping("/detail/{id}")
+    public String detail(@PathVariable Long id, Model model) {
+        ProductResponseDto productResponseDto = productService.getProductById(id);
+        model.addAttribute("product", productResponseDto);
+        return "fragments/productDetail";
+    }
 }
