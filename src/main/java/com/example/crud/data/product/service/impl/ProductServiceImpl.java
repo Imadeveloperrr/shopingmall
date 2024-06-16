@@ -22,9 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.UUID;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.text.NumberFormat;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -83,8 +82,23 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponseDto getUpdateProduct(ProductDto productDto) {
-        return null;
+    public ProductResponseDto getUpdateProduct(ProductDto productDto, MultipartFile image) throws IOException {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = authentication.getName();
+        Member member = memberRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new NoSuchElementException("ERROR : 존재하지 않는 사용자"));
+
+        Product product = productRepository.findById(productDto.getNumber())
+                .orElseThrow(() -> new NoSuchElementException("ERROR : 없는 상품입니다."));
+        deletedImageFromFirebase(product.getImageUrl());
+
+        String imageUrl = uploadImageToFirebase(image);
+
+        Product responseProduct = converToProductEntity(productDto, member);
+        responseProduct.setImageUrl(imageUrl);
+        productRepository.save(responseProduct);
+
+        return convertToProductResponseDTO(product);
     }
 
     @Override
@@ -94,14 +108,28 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductResponseDto getProductById(Long id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = authentication.getName();
+
         Product product = productRepository.findById(id).orElseThrow(
                 () -> new NoSuchElementException("ERROR : 없는 상품 번호 입니다."));
-        return convertToProductResponseDTO(product);
+        ProductResponseDto productResponseDto = convertToProductResponseDTO(product);
+        productResponseDto.setPermission(Objects.equals(userEmail, product.getMemberEmail()));
+        return productResponseDto;
     }
 
     @Override
     public ProductResponseDto getProductByName(String name) {
         return null;
+    }
+
+
+    private void deletedImageFromFirebase(String imageUrl) throws IOException {
+        String fileName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1, imageUrl.indexOf("?"));
+        Storage storage = StorageClient.getInstance().bucket().getStorage();
+        BlobId blobId = BlobId.of("webproject-83837.appspot.com", fileName);
+
+        storage.delete(blobId);
     }
 
     private String uploadImageToFirebase(MultipartFile image) throws IOException {
@@ -119,6 +147,9 @@ public class ProductServiceImpl implements ProductService {
     private ProductResponseDto convertToProductResponseDTO(Product product) {
         ProductResponseDto productResponseDto = new ProductResponseDto();
         BeanUtils.copyProperties(product, productResponseDto);
+        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.KOREA);
+        productResponseDto.setPrice(formatter.format(product.getPrice()) + "원");
+        productResponseDto.setDescription(product.getDescription().replace("\n", "<br>"));
         return productResponseDto;
     }
 

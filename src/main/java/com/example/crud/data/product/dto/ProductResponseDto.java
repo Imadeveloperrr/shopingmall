@@ -12,10 +12,16 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ProductResponseDto {
     private String name;
-    private int price;
+    private String price;
     private Long number;
     private String brand;
+    private String intro;
     private String imageUrl;
     private String description;
     private String category;
+    private boolean permission;
+
+    public void setDescription(String description) {
+        this.description = description.replace("\n", "<br>");
+    }
 }

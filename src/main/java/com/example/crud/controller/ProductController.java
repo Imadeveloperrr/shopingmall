@@ -25,6 +25,11 @@ public class ProductController {
         return "fragments/productAdd";
     }
 
+    @GetMapping("/buy")
+    public String productBuy() {
+        return "fragments/productBuy";
+    }
+
     @PostMapping("/add")
     public ResponseEntity<?> addProduct(@ModelAttribute ProductDto productDto, @RequestParam("imageUrl") MultipartFile file) {
         try {
@@ -37,6 +42,28 @@ public class ProductController {
             return ResponseEntity.ok().body(productResponseDto);
         } catch (Exception e) {
             log.error("Error while adding product", e);
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/update/{id}")
+    public String update(@PathVariable Long id, Model model) {
+        ProductResponseDto productResponseDto = productService.getProductById(id);
+        model.addAttribute("product", productResponseDto);
+        return "fragments/productUpdate";
+    }
+
+    @PostMapping("/update")
+    public ResponseEntity<?> updateProduct(@ModelAttribute ProductDto productDto, @RequestParam("imageUrl") MultipartFile file) {
+        try {
+            log.info("Received product: {}", productDto);
+            if (file.isEmpty()) {
+                log.error("File is empty");
+                return ResponseEntity.badRequest().body("File is Empty");
+            }
+            ProductResponseDto productResponseDto = productService.getUpdateProduct(productDto, file);
+            return ResponseEntity.ok().body(productResponseDto);
+        } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

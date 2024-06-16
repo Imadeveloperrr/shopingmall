@@ -1,0 +1,50 @@
+body {
+    min-width: 320px;
+    font-size: 16px;
+    font-family: NotoSansKR, "맑은 고딕", "Malgun Gothic", AppleSDGothicNeo, 돋움, Dotum, sans-serif;
+    font-weight: 400;
+    line-height: 1.4em;
+    letter-spacing: -0.4px;
+    color: rgb(102, 102, 102);
+    text-size-adjust: none;
+    background: rgb(237, 237, 237);
+}
+
+#header {
+    position: fixed;
+    z-index: 120;
+    top: 100px;
+    left: 0;
+    right: 0;
+    min-width: 320px;
+}
+
+#header .titleArea h1 {
+    position: relative;
+    padding: 0 42px;
+    line-height: 61px;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 500;
+    text-align: center;
+    border: 1px solid #D7D7D7;
+    border-right: 0;
+    border-left: 0;
+    background-color: #000;
+}
+
+@media (min-width: 1024px) {
+    #header {
+        max-width: 898px;
+        width: inherit;
+        margin: 0 auto;
+    }
+}
+
+@media (min-width: 1024px) {
+    body {
+        width: 100%;
+        margin: 0 auto;
+        background: #fff;
+    }
+}
