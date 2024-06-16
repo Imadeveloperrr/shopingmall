@@ -3,6 +3,7 @@
 <head>
     <div th:replace="~{/fragments/header.html :: fragment-header}"></div>
     <link href="/css/productDetail.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
 </head>
 
 <body>
@@ -17,9 +18,23 @@
         <div class="product-info">
             <p class="product-info-title" th:text="${product.name}">상품 이름</p>
             <p class="product-info-price" th:text="${'가격: ' + product.price}">가격 정보</p>
-            <p class="product-info-description" th:text="${product.description}">상품 설명</p>
+            <p class="product-info-description" th:utext="${product.description}">상품 설명</p>
             <hr>
+            <div class="product-info-action">
+                <a class="product-info-action-buy">Buy it Now</a>
+                <button type="button" id="actionCart" class="product-info-action-cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    Cart</button>
+                <button type="button" id="wishList" class="product-info-action-wish">
+                    <i class="fas fa-heart"></i>
+                    Wish List</button>
+            </div>
+            <div th:if="${product.permission}" class="product-info-edit">
+                <a th:href="@{/product/update/{id}(id=${product.number})}" class="product-info-edit-update">수정하기</a>
+                <a th:href="@{/product/delete/{id}(id=${product.number})}" class="product-info-edit-delete">삭제하기</a>
+            </div>
         </div>
+
 
     </div>
 

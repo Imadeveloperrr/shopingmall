@@ -12,9 +12,11 @@ import org.springframework.web.multipart.MultipartFile;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProductDto {
+    private Long number;
     private String name;
     private int price;
     private String brand;
+    private String intro;
     private String description;
     private String category;
 }

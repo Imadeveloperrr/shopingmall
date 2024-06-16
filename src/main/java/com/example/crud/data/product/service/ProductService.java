@@ -15,7 +15,7 @@ public interface ProductService {
     List<ProductResponseDto> getMyProducts();
 
     ProductResponseDto getAddProduct(ProductDto productDto, MultipartFile file) throws IOException;
-    ProductResponseDto getUpdateProduct(ProductDto productDto);
+    ProductResponseDto getUpdateProduct(ProductDto productDto, MultipartFile file) throws IOException;
     ProductResponseDto getDeleteProduct(ProductDto productDto);
     ProductResponseDto getProductById(Long id);
     ProductResponseDto getProductByName(String name);

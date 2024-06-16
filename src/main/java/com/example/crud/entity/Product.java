@@ -28,6 +28,9 @@ public class Product {
     private String imageUrl;
 
     @Column(nullable = false)
+    private String intro;
+
+    @Column(nullable = false)
     @Lob
     private String description;
 
@@ -43,6 +46,10 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
+
+    public String getMemberEmail() {
+        return member.getEmail();
+    }
 
     public String getMemberName() {
         return member.getName();
