@@ -31,7 +31,7 @@
             </div>
             <div th:if="${product.permission}" class="product-info-edit">
                 <a th:href="@{/product/update/{id}(id=${product.number})}" class="product-info-edit-update">수정하기</a>
-                <a th:href="@{/product/delete/{id}(id=${product.number})}" class="product-info-edit-delete">삭제하기</a>
+                <a href="javascript:void(0);" onclick="confirmDelete(`${product.number}`)" class="product-info-edit-delete">삭제하기</a>
             </div>
         </div>
 
@@ -40,7 +40,11 @@
 
 
     <script>
-
+        function confirmDelete(productId) {
+            if (confirm("정말 삭제하시겠습니까?")) {
+                window.location.href = `product/delete/${productId}';`
+            }
+        }
     </script>
 
 </body>
