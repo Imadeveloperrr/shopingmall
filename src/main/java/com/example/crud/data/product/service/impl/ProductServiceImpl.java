@@ -15,6 +15,7 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.firebase.cloud.StorageClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -55,10 +56,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public List<ProductResponseDto> getMyProducts() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String useremail = authentication.getName();
-        Member member = memberRepository.findByEmail(useremail)
-                .orElseThrow(() -> new NoSuchElementException("ERROR : 존재 하지 않는 사용자"));
+        Member member = getAuthenticatedUser();
 
         List<Product> products = productRepository.findByMemberNumber(member.getNumber());
         return products.stream()
@@ -68,10 +66,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductResponseDto getAddProduct(ProductDto productDto, MultipartFile image) throws IOException {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String useremail = authentication.getName();
-        Member member = memberRepository.findByEmail(useremail)
-                .orElseThrow(() -> new NoSuchElementException("ERROR : 존재 하지 않는 사용자"));
+
+        Member member = getAuthenticatedUser();
 
         String imageUrl = uploadImageToFirebase(image);
 
@@ -83,10 +79,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductResponseDto getUpdateProduct(ProductDto productDto, MultipartFile image) throws IOException {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userEmail = authentication.getName();
-        Member member = memberRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new NoSuchElementException("ERROR : 존재하지 않는 사용자"));
+        Member member = getAuthenticatedUser();
 
         Product product = productRepository.findById(productDto.getNumber())
                 .orElseThrow(() -> new NoSuchElementException("ERROR : 없는 상품입니다."));
@@ -102,19 +95,23 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponseDto getDeleteProduct(ProductDto productDto) {
-        return null;
+    public void getDeleteProduct(Long id) throws IOException {
+        Member member = getAuthenticatedUser();
+
+        Product product = productRepository.findById(id).orElseThrow(
+                () -> new NoSuchElementException("ERROR  : 없는 상품 번호 입니다."));
+        deletedImageFromFirebase(product.getImageUrl());
+        productRepository.delete(product);
     }
 
     @Override
     public ProductResponseDto getProductById(Long id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userEmail = authentication.getName();
+        Member member = getAuthenticatedUser();
 
         Product product = productRepository.findById(id).orElseThrow(
                 () -> new NoSuchElementException("ERROR : 없는 상품 번호 입니다."));
         ProductResponseDto productResponseDto = convertToProductResponseDTO(product);
-        productResponseDto.setPermission(Objects.equals(userEmail, product.getMemberEmail()));
+        productResponseDto.setPermission(Objects.equals(member.getEmail(), product.getMemberEmail()));
         return productResponseDto;
     }
 
@@ -123,6 +120,14 @@ public class ProductServiceImpl implements ProductService {
         return null;
     }
 
+    private Member getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
+            throw new NoSuchElementException("ERROR : is not Authenticated User");
+        }
+        String userEmail = authentication.getName();
+        return memberRepository.findByEmail(userEmail).orElseThrow(() -> new NoSuchElementException("ERROR : Unknown User"));
+    }
 
     private void deletedImageFromFirebase(String imageUrl) throws IOException {
         String fileName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1, imageUrl.indexOf("?"));

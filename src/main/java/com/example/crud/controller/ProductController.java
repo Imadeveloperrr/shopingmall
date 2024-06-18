@@ -12,6 +12,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
 @Controller
 @RequestMapping("/product")
 @RequiredArgsConstructor
@@ -44,6 +46,12 @@ public class ProductController {
             log.error("Error while adding product", e);
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @GetMapping("/delete/{id}")
+    public String deleteProduct(@PathVariable Long id) throws IOException {
+        productService.getDeleteProduct(id);
+        return "fragments/mypage";
     }
 
     @GetMapping("/update/{id}")
