@@ -25,7 +25,7 @@
         <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
 
             <!-- gx-4 = x축(수평)간격, row-cols-2 = 한 행에 최대 2개의 열, md = medium일때 3개의 열, justify.. = 수평 중앙-->
-            <div th:each="product : ${products}" class="col mb-5" style="width:350px; height: 600px;"> <!-- mb = 마진바텀 -->
+            <div th:each="product : ${products}" class="col mb-5" style="width:370px; height: 600px;"> <!-- mb = 마진바텀 -->
                 <a th:href="@{/product/detail/{id}(id=${product.number})}">
                     <div class="card h-100" >
                         <!-- Product image -->

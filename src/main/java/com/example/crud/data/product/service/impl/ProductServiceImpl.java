@@ -65,16 +65,23 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public ProductResponseDto getAddProduct(ProductDto productDto, MultipartFile image) throws IOException {
+        String imageUrl = "";
+        try {
+            Member member = getAuthenticatedUser();
+            imageUrl = uploadImageToFirebase(image);
 
-        Member member = getAuthenticatedUser();
-
-        String imageUrl = uploadImageToFirebase(image);
-
-        Product product = converToProductEntity(productDto, member);
-        product.setImageUrl(imageUrl);
-        productRepository.save(product);
-        return convertToProductResponseDTO(product);
+            Product product = converToProductEntity(productDto, member);
+            product.setImageUrl(imageUrl);
+            productRepository.save(product);
+            return convertToProductResponseDTO(product);
+        } catch (Exception e) {
+            if(!image.isEmpty()){
+                deletedImageFromFirebase(imageUrl);
+            }
+            throw e;
+        }
     }
 
     @Override
