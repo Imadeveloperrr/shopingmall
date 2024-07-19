@@ -30,8 +30,7 @@ public class Product {
     @Column(nullable = false)
     private String intro;
 
-    @Column(nullable = false)
-    @Lob
+    @Column(nullable = false, columnDefinition="TEXT")
     private String description;
 
     @Column(nullable = false)
