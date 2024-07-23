@@ -26,10 +26,12 @@ public class Cart {
     private List<CartItem> cartItems = new ArrayList<>();
 
     public void addCartItem(CartItem cartItem) {
-
+        cartItems.add(cartItem);
+        cartItem.setCart(this);
     }
 
     public void removeCartItem(CartItem cartItem) {
-
+        cartItems.remove(cartItem);
+        cartItem.setCart(null);
     }
 }
