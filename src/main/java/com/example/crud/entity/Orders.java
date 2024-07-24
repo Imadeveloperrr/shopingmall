@@ -13,8 +13,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "order")
-public class Order {
+@Table(name = "orders")
+public class Orders {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,7 +24,7 @@ public class Order {
     @JoinColumn(name = "member_id")
     private Member member;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "orders", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @Column(nullable = false)
@@ -38,11 +38,11 @@ public class Order {
 
     public void addOrderItem(OrderItem orderItem) {
         orderItems.add(orderItem);
-        orderItem.setOrder(this);
+        orderItem.setOrders(this);
     }
 
     public void removeOrderItem(OrderItem orderItem) {
         orderItems.remove(orderItem);
-        orderItem.setOrder(null);
+        orderItem.setOrders(null);
     }
 }
