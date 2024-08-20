@@ -35,8 +35,8 @@
                                     </div>
 
                                     <div class="form-check d-flex justify-content-center mb-5">
-                                        <input class="form-check-input me-2" type="checkbox" value="" id="form2Example3c" />
-                                        <label class="form-check-label" for="form2Example3c">
+                                        <input class="form-check-input me-2" type="checkbox" value="" id="rememberMe" name="rememberMe" />
+                                        <label class="form-check-label" for="rememberMe">
                                             로그인상태 유지하기
                                         </label>
                                     </div>
@@ -45,7 +45,17 @@
                                         <button type="submit" class="btn btn-primary btn-lg">로그인</button>
                                     </div>
 
+                                    <div class="text-center mt-3">
+                                        <a th:href="@{/forgot-password}" class="text-primary text-decoration-none">비밀번호를 잊으셨나요?</a>
+                                    </div>
+
+                                    <div class="text-center mt-3">
+                                        <p class="mb-0">계정이 없으신가요? <a th:href="@{/register}" class="text-primary fw-bold text-decoration-none">회원가입</a></p>
+                                    </div>
+
                                 </form>
+
+                                <div id="errorMessage" class="alert alert-danger mt-3" style="display: none;"></div>
 
                             </div>
                             <div class="col-md-10 col-lg-6 col-xl-7 d-flex align-items-center order-1 order-lg-2">
@@ -67,13 +77,25 @@
 
         var formData = {
             email: document.getElementById('email').value,
-            password: document.getElementById('password').value
+            password: document.getElementById('password').value,
+            rememberMe: document.getElementById('rememberMe').value
         };
+
+        if (!validateEmail(formData.email)) {
+            showError('유효한 이메일 주소를 입력해주세요.');
+            return ;
+        }
+
+        if (formData.password.length < 8) {
+            showError('비밀번호는 8자 이상이어야 합니다.');
+            return ;
+        }
 
         fetch('login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': getCsrfToken()
             },
             body: JSON.stringify(formData)
         })
@@ -91,6 +113,21 @@
             console.error('로그인 에러 : ', error);
         })
     });
+
+    function validateEmail(email) {
+        var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(String(email).toLowerCase());
+    }
+
+    function showError(message) {
+        var errorDiv = document.getElementById("errorMessage");
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+    }
+
+    function getCsrfToken() {
+        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    }
 </script>
 </body>
 </html>
