@@ -5,32 +5,82 @@ body {
     font-weight: 400;
     line-height: 1.4em;
     letter-spacing: -0.4px;
-    color: rgb(102, 102, 102);
+    color: black;
     text-size-adjust: none;
-    background: rgb(237, 237, 237);
+    background: #f6f4ee;
 }
 
 #header {
-    position: fixed;
-    z-index: 120;
-    top: 100px;
-    left: 0;
-    right: 0;
-    min-width: 320px;
+    min-height: 170px;
 }
 
-#header .titleArea h1 {
-    position: relative;
-    padding: 0 42px;
-    line-height: 61px;
-    color: #fff;
-    font-size: 20px;
-    font-weight: 500;
+#header .title {
+    margin-top: 50px;
+    font-size: 38px;
+    font-weight: 600;
     text-align: center;
-    border: 1px solid #D7D7D7;
-    border-right: 0;
-    border-left: 0;
-    background-color: #000;
+}
+
+#container .total {
+    padding-bottom: 10px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+#container .total span {
+    color: #d0591f;
+    font-size: inherit;
+    font-weight: inherit;
+}
+
+#container {
+    max-width: 1300px;
+    width: 100%;
+    padding: 30px 50px;
+    background: #fff;
+    border-radius: 20px;
+    margin: 0 auto; /* 상하 여백 0, 좌우 여백 자동설정*/
+    box-sizing: border-box;
+}
+
+.tbl_col {
+    table-layout: fixed;
+    clear: both;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tbl_col > thead > tr > th {
+    padding: 16px 0 15px;
+    border-top: 1px solid #dbdbdb;
+    border-bottom: 1px solid #dbdbdb;
+    font-size: 13px;
+    font-weight: bold;
+    text-align: center;
+    vertical-align: middle;
+    color: #333;
+}
+
+.tbl_col > tbody > tr > td {
+    padding: 0;
+    color: #888;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.tbl_col > tbody > tr > td.img img {
+    width: 110px;
+    height: auto;
+}
+
+.tbl_col > tbody > tr > td.tal {
+    padding-left: 20px !important;
+    text-align: left !important;
+}
+
+.tbl_col > tbody > tr > td a {
+    color: #212121;
+    font-size: 14px;
 }
 
 @media (min-width: 1024px) {
@@ -45,6 +95,6 @@ body {
     body {
         width: 100%;
         margin: 0 auto;
-        background: #fff;
+        background: #f6f4ee;
     }
 }

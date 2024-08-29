@@ -94,8 +94,7 @@
         fetch('login', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': getCsrfToken()
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(formData)
         })
@@ -111,6 +110,10 @@
         .catch(error => {
             // 에러처리 로직
             console.error('로그인 에러 : ', error);
+            if (error.response) {
+                console.error('응답 상태 : ', error.response.status);
+                console.error('응답 데이터 : ', error.response.data);
+            }
         })
     });
 
@@ -125,9 +128,6 @@
         errorDiv.style.display = 'block';
     }
 
-    function getCsrfToken() {
-        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    }
 </script>
 </body>
 </html>
