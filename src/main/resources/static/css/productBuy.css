@@ -83,6 +83,215 @@ body {
     font-size: 14px;
 }
 
+#order .area_left {
+    float: left;
+    width: 840px;
+    box-sizing: border-box;
+    text-align: left;
+}
+
+.tbl_order {
+    table-layout: fixed;
+    width: 100%;
+    margin: 0 auto;
+    border-top: 1px solid #e0e0e0;
+}
+
+.tbl_order th {
+    text-align: center;
+    padding: 10px 20px;
+    border: 1px solid #e0e0e0;
+    border-width: 0 1px 1px 0;
+    font-size: 14px;
+    font-weight: normal;
+    vertical-align: middle;
+}
+
+.tbl_order td {
+    padding: 10px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.tbl_order td .msg {
+    margin-top: 14px;
+    color: #999;
+    font-size: 13px;
+}
+
+.tbl_order td .form_input {
+    width: 271px;
+    height: 35px;
+    padding: 0 10px;
+    border: 1px solid #dcdcdc;
+    font-size: 14px;
+    line-height: 35px;
+    vertical-align: middle;
+}
+
+.tbl_order td .check {
+    display: inline-block;
+    margin-left: 15px;
+    line-height: 35px;
+    vertical-align: middle;
+}
+
+.tbl_order td .addbtn {
+    margin-bottom: 10px;
+}
+
+.tbl_order td .form_input.form_addr0 {
+    width: 120px;
+}
+
+.box_btn {
+    display: inline-block;
+    text-align: center;
+    vertical-align: top;
+}
+
+.tbl_order td .form_input {
+    width: 271px;
+    height: 35px;
+    padding: 0 10px;
+    border: 1px solid #dcdcdc;
+    font-size: 14px;
+    line-height: 35px;
+    vertical-align: middle;
+}
+
+.box_btn.strong * {
+    font-weight: bold;
+}
+
+.box_btn.fs13 > * {
+    font-size: 13px !important;
+}
+.box_btn.white * {
+    border-color: #c3c3c3;
+    background: #fff;
+    color: #666 !important;
+}
+.box_btn.h35 > * {
+    height: 35px;
+    padding: 0;
+    line-height: 33px;
+}
+.box_btn.w136 > * {
+    width: 136px;
+}
+
+input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: inline-block;
+    overflow: hidden;
+    width: 17px;
+    height: 17px;
+    margin: 0;
+    padding: 0;
+    background: url('/static/img/checkbox.gif') no-repeat center #fff;
+}
+
+#container .tab_method li {
+    float: left;
+    width: 25%;
+    border: 1px solid #e0e0e0;
+    border-width: 0 0 1px 1px;
+    text-align: center;
+}
+
+#container .tab_method {
+    border-top: 1px solid #333;
+    border-right: 1px solid #e0e0e0;
+}
+
+#container .tab_method li.deposit a {
+    background-image: url('/static/img/icon_method_deposit.png');
+    background-position: center top 39px;
+}
+
+#container .tab_method li a {
+    display: block;
+    padding: 101px 0 25px;
+    background-position: center top;
+    background-repeat: no-repeat;
+    color: #3e3e3e;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+#container .tab_method li {
+    float: left;
+    width: 25%;
+    border: 1px solid #e0e0e0;
+    border-width: 0 0 1px 1px;
+    text-align: center;
+}
+
+#container .check label {
+    display: inline-block;
+    padding-left: 5px;
+    color: #999;
+    font-size: 13px;
+    font-weight: 400;
+    vertical-align: middle;
+}
+
+#container h3.title {
+    position: relative;
+    padding: 56px 0 13px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.tbl_order_info {
+    table-layout: fixed;
+    width: 100%;
+    margin: 0 auto;
+    border-top: 1px solid #e0e0e0;
+}
+
+.tbl_order_info th {
+    padding: 10px 20px;
+    border: 1px solid #e0e0e0;
+    border-width: 0 1px 1px 0;
+    font-size: 14px;
+    font-weight: normal;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.tbl_order_info td {
+    padding: 10px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.tbl_order_info td .form_input {
+    width: 271px;
+    height: 35px;
+    padding: 0 10px;
+    border: 1px solid #dcdcdc;
+    font-size: 14px;
+    line-height: 35px;
+    vertical-align: middle;
+}
+
+#container .select {
+    position: absolute;
+    left: 128px;
+    top: 60px;
+}
+
+#container .select label {
+    padding: 0 22px 0 4px;
+    color: #666;
+    font-size: 14px;
+}
+
 @media (min-width: 1024px) {
     #header {
         max-width: 898px;
