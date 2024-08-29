@@ -7,6 +7,7 @@ body {
     letter-spacing: -0.4px;
     color: black;
     text-size-adjust: none;
+    box-sizing: border-box;
     background: #f6f4ee;
 }
 
@@ -191,7 +192,7 @@ input[type="checkbox"] {
     height: 17px;
     margin: 0;
     padding: 0;
-    background: url('/static/img/checkbox.gif') no-repeat center #fff;
+    background: url('/img/checkbox.gif') no-repeat center #fff;
 }
 
 #container .tab_method li {
@@ -200,34 +201,124 @@ input[type="checkbox"] {
     border: 1px solid #e0e0e0;
     border-width: 0 0 1px 1px;
     text-align: center;
+    list-style: none;
 }
 
 #container .tab_method {
     border-top: 1px solid #333;
     border-right: 1px solid #e0e0e0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    color: #333;
+    font-size: 12px;
+    line-height: 1.6;
+    vertical-align: baseline;
+    display: block;
+    clear: both;
+    content: '';
+}
+
+#container .method2 .choice {
+    padding-bottom: 29px;
+    color: #3e3e3e;
+    font-size: 14px;
+}
+
+#container .method2 .choice strong {
+    font-size: 14px;
+    color: #ff8e77 !important;
+}
+
+#container .method2 .info_method li {
+    padding: 3px 0;
+    font-size: 12px;
+    line-height: 1.6;
+    vertical-align: baseline;
+}
+
+#container .method2 .info_method li dl dt {
+    position: relative;
+    width: 140px;
+    padding-left: 10px;
+    color: #3e3e3e;
+    font-size: 14px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+#container .method2 .info_method li dl dd {
+    color: #888;
+    font-size: 14px;
+}
+
+#container .method2 .info_method li dl > * {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+#container .method2 {
+    padding-top: 30px;
 }
 
 #container .tab_method li.deposit a {
-    background-image: url('/static/img/icon_method_deposit.png');
+    background-image: url('/img/icon_method_deposit.png');
     background-position: center top 39px;
-}
-
-#container .tab_method li a {
     display: block;
     padding: 101px 0 25px;
-    background-position: center top;
     background-repeat: no-repeat;
     color: #3e3e3e;
     font-size: 14px;
     font-weight: 700;
 }
 
-#container .tab_method li {
-    float: left;
-    width: 25%;
-    border: 1px solid #e0e0e0;
-    border-width: 0 0 1px 1px;
-    text-align: center;
+#container .tab_method li.credit a {
+    background-image: url('/img/icon_method_credit.png');
+    background-position: center top 39px;
+}
+
+#container .tab_method li.realtime a {
+    background-image: url('/img/icon_method_realtime.png');
+    background-position: center top 37px;
+}
+
+#container .tab_method li.mobile a {
+    background-image: url('/img/icon_method_mobile.png');
+    background-position: center top 31px;
+}
+
+#container .tab_method li.samsung a {
+    background-image: url('/img/icon_method_samsung.png');
+    background-position: center top 34px;
+}
+
+#container .tab_method li.payco a {
+    background-image: url('/img/icon_method_payco.png');
+    background-position: center top 50px;
+}
+
+#container .tab_method li.kakao a {
+    background-image: url('/img/icon_method_kakao.png');
+    background-position: center top 47px;
+}
+
+#container .tab_method li.smile a {
+    background-image: url('/img/smilepay_icon2.png');
+    background-position: center top 43px;
+}
+
+a {
+    text-decoration: none;
+}
+
+#container .tab_method li a {
+    display: block;
+    padding: 101px 0 25px;
+    background-repeat: no-repeat;
+    color: #3e3e3e;
+    font-size: 14px;
+    font-weight: 700;
 }
 
 #container .check label {
