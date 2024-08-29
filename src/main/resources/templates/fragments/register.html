@@ -100,6 +100,11 @@
             return;
         }
 
+        if (password.length < 8) {
+            showError("비밀번호는 8자 이상어야야 합니다.");
+            return ;
+        }
+
         // -------- XMLHttpRequest 객체를 사용한 AJAX 요청 설정 --------
         var xhr = new XMLHttpRequest();
         xhr.open("post", "/register", true)
@@ -122,7 +127,14 @@
             password: password
         });
         xhr.send(data);
+
     });
+
+    function showError(message) {
+        var errorDiv = document.getElementById("errorMessage");
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+    }
     </script>
 </body>
 </html>
