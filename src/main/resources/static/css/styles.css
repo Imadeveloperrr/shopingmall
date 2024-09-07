@@ -6,11 +6,12 @@ header.firsthead {
     padding-top: 15.5rem;
     padding-bottom: 6rem;
     text-align: center;
-    background-image: url("https://cdn.pixabay.com/photo/2016/03/27/07/32/clouds-1282314_1280.jpg");
+    background-image: url("https://img.freepik.com/free-photo/abstract-blur-shopping-mall-interior_1203-8238.jpg?w=1380&t=st=1724991309~exp=1724991909~hmac=f2d8b99930412443781fe322e4ed66ce8c293f829d9d222298b9793b01172525");
     height: 550px;
     background-repeat: no-repeat;
     background-position: center center;
     background-size: cover;
+    color: #323232;
 }
 
 header.firsthead .firsthead-subheading {
