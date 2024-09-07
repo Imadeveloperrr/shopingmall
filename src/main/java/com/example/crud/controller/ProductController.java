@@ -3,6 +3,7 @@ package com.example.crud.controller;
 import com.example.crud.data.product.dto.ProductDto;
 import com.example.crud.data.product.dto.ProductResponseDto;
 import com.example.crud.data.product.service.ProductService;
+import com.example.crud.entity.Product;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,9 @@ public class ProductController {
     }
 
     @GetMapping("/buy")
-    public String productBuy() {
+    public String productBuy(@RequestParam("id") Long productId, Model model) {
+        ProductResponseDto productResponseDto = productService.getProductById(productId);
+        model.addAttribute("product", productResponseDto);
         return "fragments/productBuy";
     }
 

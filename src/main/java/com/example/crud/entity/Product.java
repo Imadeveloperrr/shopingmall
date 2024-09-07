@@ -30,6 +30,9 @@ public class Product {
     @Column(nullable = false)
     private String intro;
 
+    @Column(nullable = false)
+    private String color;
+
     @Column(nullable = false, columnDefinition="TEXT")
     private String description;
 

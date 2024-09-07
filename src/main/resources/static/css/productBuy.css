@@ -84,7 +84,7 @@ body {
     font-size: 14px;
 }
 
-#order .area_left {
+#container .area_left {
     float: left;
     width: 840px;
     box-sizing: border-box;
@@ -96,6 +96,92 @@ body {
     width: 100%;
     margin: 0 auto;
     border-top: 1px solid #e0e0e0;
+}
+
+#container .method2 {
+    padding-top: 30px;
+}
+
+.method2 > div:first-child {
+    border-top: 1px solid #e0e0e0;
+}
+
+#container .method2 > div select.deposit {
+    width: 680px;
+}
+
+#container .method2 > div select {
+    display: inline-block;
+    color: #333;
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+option {
+    font-weight: normal;
+    display: block;
+    padding-block-start: 0px;
+    padding-block-end: 1px;
+    min-block-size: 1.2em;
+    padding-inline: 2px;
+    white-space: nowrap;
+}
+
+#container .method2 > div select {
+    display: inline-block;
+    color: #333;
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+#container .method2 > div .form_input.provider {
+    width: 305px;
+}
+#container .method2 > div .form_input {
+    vertical-align: middle;
+}
+.form_input {
+    height: 34px;
+    padding: 4px 10px;
+    border: 1px solid #c5c5c5;
+    background: #fff;
+    color: #888;
+    font-family: 'Poppins', Malgun Gothic, '맑은 고딕', Dotum, '돋움', sans-serif;
+    font-size: 12px;
+    transition: all .3s ease;
+}
+#container .method2 > div .msg {
+    margin-left: 15px;
+    line-height: 19px;
+}
+#container .method2 > div .bar, #container .method2 > div .msg {
+    display: inline-block;
+    color: #888;
+    font-size: 14px;
+    vertical-align: middle;
+    letter-spacing: -1px;
+}
+select {
+    max-width: 100%;
+    height: 34px;
+    padding: 4px 6px;
+    border: 1px solid #dcdcdc;
+    background: #fff;
+    font: inherit;
+}
+
+#container .method2 > div label {
+    display: inline-block;
+    width: 152px;
+    padding-left: 20px;
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+#container .method2 > div {
+    padding: 11px 0;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 0;
 }
 
 .tbl_order th {
@@ -248,6 +334,16 @@ input[type="checkbox"] {
     vertical-align: middle;
 }
 
+#container .method2 > div:first-child {
+    border-top: 1px solid #e0e0e0;
+}
+
+#container .method2 > div {
+    padding: 11px 0;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 0;
+}
+
 #container .method2 .info_method li dl dd {
     color: #888;
     font-size: 14px;
@@ -260,6 +356,10 @@ input[type="checkbox"] {
 
 #container .method2 {
     padding-top: 30px;
+    font-size: 12px;
+    line-height: 1.6;
+    vertical-align: baseline;
+    font-family: 'Outfit', 'Noto Sans KR', Dotum, AppleGothic, Malgun Gothic, sans-serif;
 }
 
 #container .tab_method li.deposit a {
