@@ -45,7 +45,7 @@
                         <td class="img">
                             <div style="padding: 10px 0;">
                                 <a href="" target="_blank">
-                                    <img src="">
+                                    <img th:src="@{${product.imageUrl}}" alt="상품 이미지">
                                 </a>
                             </div>
                         </td>
@@ -162,23 +162,21 @@
                         </tr>
                     </tbody>
                 </table>
-            </div>
 
+                <h3 class="title">
+                    주문자 정보
+                    <p class="select check" style="display:none">
+                        <input type="checkbox" id="orderMemberUdt" name="member_update" value="Y" checked="">
+                        <label for="orderMemberUdt">주문자 정보로 회원정보를 업데이트 합니다.</label>
+                    </p>
+                </h3>
 
-            <h3 class="title">
-                주문자 정보
-                <p class="select check" style="display:none">
-                    <input type="checkbox" id="orderMemberUdt" name="member_update" value="Y" checked="">
-                    <label for="orderMemberUdt">주문자 정보로 회원정보를 업데이트 합니다.</label>
-                </p>
-            </h3>
-
-            <table class="tbl_order_info">
-                <colgroup>
-                    <col style="width:131px;">
-                    <col>
-                </colgroup>
-                <tbody>
+                <table class="tbl_order_info">
+                    <colgroup>
+                        <col style="width:131px;">
+                        <col>
+                    </colgroup>
+                    <tbody>
                     <tr>
                         <th scope="row">이름</th>
                         <td>
@@ -252,295 +250,410 @@
                             </div>
                         </td>
                     </tr>
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
 
 
 
 
-            <h3 class="title">
-                배송지 정보
-                <p class="select check">
-                    <input type="radio" value="1" name="del_loc" id="del_loc1" class="del_loc_obj" onclick="BuyProc.deliChange()" checked="">
-                    <label for="del_loc1">국내배송</label>
+                <h3 class="title">
+                    배송지 정보
+                    <p class="select check">
+                        <input type="radio" value="1" name="del_loc" id="del_loc1" class="del_loc_obj" onclick="BuyProc.deliChange()" checked="">
+                        <label for="del_loc1">국내배송</label>
 
-                    <input type="radio" value="2" name="del_loc" id="del_loc2" class="del_loc_obj" onclick="BuyProc.deliChange()">
-                    <label for="del_loc2">해외배송</label>
-                </p>
-            </h3>
+                        <input type="radio" value="2" name="del_loc" id="del_loc2" class="del_loc_obj" onclick="BuyProc.deliChange()">
+                        <label for="del_loc2">해외배송</label>
+                    </p>
+                </h3>
 
-            <table class="tbl_order">
-                <colgroup>
-                    <col style="width:131px;">
-                    <col>
-                </colgroup>
-                <tbody>
-                <tr style="display:none">
-                    <th scope="row">배송지</th>
-                    <td class="address">
-                        <select class="memberDelZone_obj" onchange="BuyProc.delZoneSelect()">
-                            <option value="">배송지를 선택해주세요</option>
+                <table class="tbl_order">
+                    <colgroup>
+                        <col style="width:131px;">
+                        <col>
+                    </colgroup>
+                    <tbody>
+                    <tr style="display:none">
+                        <th scope="row">배송지</th>
+                        <td class="address">
+                            <select class="memberDelZone_obj" onchange="BuyProc.delZoneSelect()">
+                                <option value="">배송지를 선택해주세요</option>
 
-                        </select>
-                        <span class="box_btn w136 h35 white fs13 strong"><a href="/member/address.php" target="_blank">배송지 관리</a></span>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">이름</th>
-                    <td>
-                        <input type="text" class="form_input form_name required" name="del_name" value="" data-require_msg="수취인명을">
-                        <p class="check">
-                            <input type="checkbox" id="name_same" name="name_same" onclick="">
-                            <label for="name_same">주문인 정보와 동일</label>
-                        </p>
-                    </td>
-                </tr>
+                            </select>
+                            <span class="box_btn w136 h35 white fs13 strong"><a href="/member/address.php" target="_blank">배송지 관리</a></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">이름</th>
+                        <td>
+                            <input type="text" class="form_input form_name required" name="del_name" value="" data-require_msg="수취인명을">
+                            <p class="check">
+                                <input type="checkbox" id="name_same" name="name_same" onclick="">
+                                <label for="name_same">주문인 정보와 동일</label>
+                            </p>
+                        </td>
+                    </tr>
 
-                <tr>
-                    <th scope="row">전화번호</th>
-                    <td>
-                        <input type="text" class="form_input form_phone" name="del_phone[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()"> -
-                        <input type="text" class="form_input form_phone" name="del_phone[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()"> -
-                        <input type="text" class="form_input form_phone" name="del_phone[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()">
-                    </td>
-                </tr>
+                    <tr>
+                        <th scope="row">전화번호</th>
+                        <td>
+                            <input type="text" class="form_input form_phone" name="del_phone[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()"> -
+                            <input type="text" class="form_input form_phone" name="del_phone[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()"> -
+                            <input type="text" class="form_input form_phone" name="del_phone[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()">
+                        </td>
+                    </tr>
 
-                <tr>
-                    <th scope="row">휴대폰번호</th>
-                    <td>
-                        <select name="del_cp[]">
-                            <option value="010">010</option>
-                            <option value="011">011</option>
-                            <option value="016">016</option>
-                            <option value="017">017</option>
-                            <option value="019">019</option>
-                        </select> -
-                        <input type="text" class="form_input form_phone required" name="del_cp[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()" data-require_msg="휴대폰번호를"> -
-                        <input type="text" class="form_input form_phone required" name="del_cp[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()" data-require_msg="휴대폰번호를">
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">주소</th>
-                    <td>
-                        <!-- 국내배송 -->
-                        <div class="delTypeBox">
-                            <div class="addbtn">
-                                <div>
-                                    <input type="text" class="form_input form_addr0 zip_obj" id="del_zip" name="del_zip" value="" readonly="" placeholder="우편번호">
-                                    <span class="box_btn w136 h35 white fs13 strong"><a href="javascript:" onclick="zippop()">우편번호 찾기</a></span>
-                                    <div id="find_zip" style="display:none;border:1px solid;position: relative;">
-                                        <img src="//t1.daumcdn.net/postcode/resource/images/close.png" id="btnFoldWrap" style="cursor:pointer;position:absolute;right:0px;top:-1px;z-index:1" onclick="foldDaumPostcode()" alt="접기 버튼">
+                    <tr>
+                        <th scope="row">휴대폰번호</th>
+                        <td>
+                            <select name="del_cp[]">
+                                <option value="010">010</option>
+                                <option value="011">011</option>
+                                <option value="016">016</option>
+                                <option value="017">017</option>
+                                <option value="019">019</option>
+                            </select> -
+                            <input type="text" class="form_input form_phone required" name="del_cp[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()" data-require_msg="휴대폰번호를"> -
+                            <input type="text" class="form_input form_phone required" name="del_cp[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()" data-require_msg="휴대폰번호를">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">주소</th>
+                        <td>
+                            <!-- 국내배송 -->
+                            <div class="delTypeBox">
+                                <div class="addbtn">
+                                    <div>
+                                        <input type="text" class="form_input form_addr0 zip_obj" id="del_zip" name="del_zip" value="" readonly="" placeholder="우편번호">
+                                        <span class="box_btn w136 h35 white fs13 strong"><a href="javascript:" onclick="zippop()">우편번호 찾기</a></span>
+                                        <div id="find_zip" style="display:none;border:1px solid;position: relative;">
+                                            <img src="//t1.daumcdn.net/postcode/resource/images/close.png" id="btnFoldWrap" style="cursor:pointer;position:absolute;right:0px;top:-1px;z-index:1" onclick="foldDaumPostcode()" alt="접기 버튼">
+                                        </div>
+                                        <p class="check" style="display:none">
+                                            <input type="checkbox" id="addr_save" name="addr_save" value="Y" checked="">
+                                            <label for="addr_save">현재 배송지를 회원정보로 저장</label>
+                                        </p>
                                     </div>
-                                    <p class="check" style="display:none">
-                                        <input type="checkbox" id="addr_save" name="addr_save" value="Y" checked="">
-                                        <label for="addr_save">현재 배송지를 회원정보로 저장</label>
-                                    </p>
                                 </div>
+                                <input type="text" class="form_input form_addr1" id="del_addr1" name="del_addr1" value="" placeholder="주소" readonly="">
+                                <input type="text" class="form_input form_addr2" id="del_addr2" name="del_addr2" value="" placeholder="상세주소">
                             </div>
-                            <input type="text" class="form_input form_addr1" id="del_addr1" name="del_addr1" value="" placeholder="주소" readonly="">
-                            <input type="text" class="form_input form_addr2" id="del_addr2" name="del_addr2" value="" placeholder="상세주소">
-                        </div>
 
-                        <!-- 해외배송 -->
-                        <div class="delTypeBox" style="display: none;">
-                            <div class="addbtn">
-                                <div>
-                                    <div style="margin-bottom: 10px;">
-                                        <input type="hidden" name="country" id="country" value="">
-                                        <select name="area_code" id="area_code" class="area_code_obj" onchange="BuyProc.calcul()">
-                                            <option value="">- 국가선택 -</option>
-                                            <option value="3">그루지아 (GEORGIA)</option>
-                                            <option value="3">그리스 (GREECE)</option>
-                                            <option value="4">나이지리아 (NIGERIA)</option>
-                                            <option value="3">네덜란드 (NETHERLANDS)</option>
-                                            <option value="4">네덜란드령앤틸리스(네덜란드) (ANTILLES)</option>
-                                            <option value="2">네팔 (NEPAL)</option>
-                                            <option value="3">노르웨이 (NORWAY)</option>
-                                            <option value="15">뉴질랜드 (NEW ZEALAND)</option>
-                                            <option value="20">대만 (TAIWAN)</option>
-                                            <option value="3">덴마크 (DENMARK)</option>
-                                            <option value="4">도미니카공화국 (DOMINICAN REPUBLIC)</option>
-                                            <option value="10">독일 (GERMANY)</option>
-                                            <option value="1">라오스 (LAO PEOPLE'S DEM REP)</option>
-                                            <option value="3">라트비아 (LATVIA)</option>
-                                            <option value="17">러시아 (RUSSIA)</option>
-                                            <option value="3">루마니아 (ROMANIA)</option>
-                                            <option value="3">룩셈부르크 (LUXEMBOURG)</option>
-                                            <option value="4">르완다 (RWANDA)</option>
-                                            <option value="1">마카오 (MACAO)</option>
-                                            <option value="3">마케도니아 (MACEDONIA)</option>
-                                            <option value="14">말레이시아 (MALAYSIA)</option>
-                                            <option value="4">멕시코 (MEXICO)</option>
-                                            <option value="4">모로코 (MOROCCO)</option>
-                                            <option value="4">모리셔스 (MAURITIUS)</option>
-                                            <option value="4">모잠비크 (MOZAMBIQUE)</option>
-                                            <option value="2">몰디브 (MALDIVES)</option>
-                                            <option value="1">몽골 (MONGOLIA)</option>
-                                            <option value="22">미국 (U.S.A)</option>
-                                            <option value="1">미얀마 (MYANMAR)</option>
-                                            <option value="3">바레인 (BAHRAIN)</option>
-                                            <option value="2">방글라데시 (BANGLADESH)</option>
-                                            <option value="24">베트남 (VIET NAM)</option>
-                                            <option value="3">벨기에 (BELGIUM)</option>
-                                            <option value="3">벨라루스 (BELARUS)</option>
-                                            <option value="3">보스니아헤르체코비나 (Bosnia and Herzegovina)</option>
-                                            <option value="4">보츠와나 (BOTSWANA)</option>
-                                            <option value="2">부탄 (BHUTAN)</option>
-                                            <option value="3">불가리아 (BULGARIA(REP))</option>
-                                            <option value="6">브라질 (BRAZIL)</option>
-                                            <option value="2">브루나이 (BRUNEI DARUSSALAM)</option>
-                                            <option value="3">사우디아라비아 (SAUDI ARABIA)</option>
-                                            <option value="3">사이프러스 (CYPRUS)</option>
-                                            <option value="2">스리랑카 (SRI LANKA)</option>
-                                            <option value="3">스웨덴 (SWEDEN)</option>
-                                            <option value="3">스위스 (SWITZERLAND)</option>
-                                            <option value="19">스페인 (SPAIN)</option>
-                                            <option value="3">슬로바키아 (SLOVAKIA)</option>
-                                            <option value="3">슬로베니아 (SLOVENIA)</option>
-                                            <option value="18">싱가폴 (SINGAPORE)</option>
-                                            <option value="3">아랍에미리트연합국 (UNITED ARAB EMIRATES)</option>
-                                            <option value="3">아르메니아 (ARMENIA)</option>
-                                            <option value="4">아르헨티나 (ARGENTINA)</option>
-                                            <option value="3">아일란드 (IRELAND)</option>
-                                            <option value="3">아제르바이잔 (AZERBAIJAN)</option>
-                                            <option value="3">알바니아 (ALBANIA)</option>
-                                            <option value="4">알제리 (ALGERIA)</option>
-                                            <option value="3">에스토니아 (ESTONIA)</option>
-                                            <option value="4">에콰도르 (ECUADOR)</option>
-                                            <option value="4">에티오피아 (ETHIOPIA)</option>
-                                            <option value="23">영국 (UNITED KINGDOM)</option>
-                                            <option value="3">오만 (OMAN)</option>
-                                            <option value="3">오스트리아 (AUSTRIA)</option>
-                                            <option value="3">요르단 (JORDAN)</option>
-                                            <option value="3">우즈베키스탄 (UZBEKISTAN)</option>
-                                            <option value="3">우크라이나 (UKRAINE)</option>
-                                            <option value="3">이란 (IRAN)</option>
-                                            <option value="3">이스라엘 (ISRAEL)</option>
-                                            <option value="4">이집트 (EGYPT)</option>
-                                            <option value="2">인도 (INDIA)</option>
-                                            <option value="12">인도네시아 (INDONESIA)</option>
-                                            <option value="13">일본 (JAPAN)</option>
-                                            <option value="4">잠비아 (ZAMBIA)</option>
-                                            <option value="8">중국 (CHINA)</option>
-                                            <option value="4">지부티 (DJIBOUTI)</option>
-                                            <option value="3">체코 (CZECH REP)</option>
-                                            <option value="4">칠레 (CHILE)</option>
-                                            <option value="4">카보베르데 (CAPE VERDE)</option>
-                                            <option value="3">카자흐스탄 (KAZAKHSTAN)</option>
-                                            <option value="3">카타르 (QATAR)</option>
-                                            <option value="1">캄보디아 (CAMBODIA)</option>
-                                            <option value="7">캐나다 (CANADA)</option>
-                                            <option value="4">케냐 (KENYA)</option>
-                                            <option value="4">코스타리카 (COSTA RICA)</option>
-                                            <option value="4">쿠바 (CUBA)</option>
-                                            <option value="3">크로아티아 (CROATIA)</option>
-                                            <option value="4">탄자니아 (TANZANIA(UNITED REP))</option>
-                                            <option value="21">태국 (THAILAND)</option>
-                                            <option value="3">터키 (TURKEY)</option>
-                                            <option value="4">튀니지 (TUNISIA)</option>
-                                            <option value="4">파나마 (PANAMA(REP))</option>
-                                            <option value="3">파키스탄 (PAKISTAN)</option>
-                                            <option value="3">포르투갈 (PORTUGAL)</option>
-                                            <option value="3">폴란드 (POLAND(REP))</option>
-                                            <option value="9">프랑스 (FRANCE)</option>
-                                            <option value="4">피지 (FIJI)</option>
-                                            <option value="3">핀란드 (FINLAND)</option>
-                                            <option value="16">필리핀 (PHILIPPINES)</option>
-                                            <option value="3">헝가리 (HUNGARY(REP))</option>
-                                            <option value="5">호주 (AUSTRALIA)</option>
-                                            <option value="11">홍콩 (HONGKONG)</option>
-                                        </select>
+                            <!-- 해외배송 -->
+                            <div class="delTypeBox" style="display: none;">
+                                <div class="addbtn">
+                                    <div>
+                                        <div style="margin-bottom: 10px;">
+                                            <input type="hidden" name="country" id="country" value="">
+                                            <select name="area_code" id="area_code" class="area_code_obj" onchange="BuyProc.calcul()">
+                                                <option value="">- 국가선택 -</option>
+                                                <option value="3">그루지아 (GEORGIA)</option>
+                                                <option value="3">그리스 (GREECE)</option>
+                                                <option value="4">나이지리아 (NIGERIA)</option>
+                                                <option value="3">네덜란드 (NETHERLANDS)</option>
+                                                <option value="4">네덜란드령앤틸리스(네덜란드) (ANTILLES)</option>
+                                                <option value="2">네팔 (NEPAL)</option>
+                                                <option value="3">노르웨이 (NORWAY)</option>
+                                                <option value="15">뉴질랜드 (NEW ZEALAND)</option>
+                                                <option value="20">대만 (TAIWAN)</option>
+                                                <option value="3">덴마크 (DENMARK)</option>
+                                                <option value="4">도미니카공화국 (DOMINICAN REPUBLIC)</option>
+                                                <option value="10">독일 (GERMANY)</option>
+                                                <option value="1">라오스 (LAO PEOPLE'S DEM REP)</option>
+                                                <option value="3">라트비아 (LATVIA)</option>
+                                                <option value="17">러시아 (RUSSIA)</option>
+                                                <option value="3">루마니아 (ROMANIA)</option>
+                                                <option value="3">룩셈부르크 (LUXEMBOURG)</option>
+                                                <option value="4">르완다 (RWANDA)</option>
+                                                <option value="1">마카오 (MACAO)</option>
+                                                <option value="3">마케도니아 (MACEDONIA)</option>
+                                                <option value="14">말레이시아 (MALAYSIA)</option>
+                                                <option value="4">멕시코 (MEXICO)</option>
+                                                <option value="4">모로코 (MOROCCO)</option>
+                                                <option value="4">모리셔스 (MAURITIUS)</option>
+                                                <option value="4">모잠비크 (MOZAMBIQUE)</option>
+                                                <option value="2">몰디브 (MALDIVES)</option>
+                                                <option value="1">몽골 (MONGOLIA)</option>
+                                                <option value="22">미국 (U.S.A)</option>
+                                                <option value="1">미얀마 (MYANMAR)</option>
+                                                <option value="3">바레인 (BAHRAIN)</option>
+                                                <option value="2">방글라데시 (BANGLADESH)</option>
+                                                <option value="24">베트남 (VIET NAM)</option>
+                                                <option value="3">벨기에 (BELGIUM)</option>
+                                                <option value="3">벨라루스 (BELARUS)</option>
+                                                <option value="3">보스니아헤르체코비나 (Bosnia and Herzegovina)</option>
+                                                <option value="4">보츠와나 (BOTSWANA)</option>
+                                                <option value="2">부탄 (BHUTAN)</option>
+                                                <option value="3">불가리아 (BULGARIA(REP))</option>
+                                                <option value="6">브라질 (BRAZIL)</option>
+                                                <option value="2">브루나이 (BRUNEI DARUSSALAM)</option>
+                                                <option value="3">사우디아라비아 (SAUDI ARABIA)</option>
+                                                <option value="3">사이프러스 (CYPRUS)</option>
+                                                <option value="2">스리랑카 (SRI LANKA)</option>
+                                                <option value="3">스웨덴 (SWEDEN)</option>
+                                                <option value="3">스위스 (SWITZERLAND)</option>
+                                                <option value="19">스페인 (SPAIN)</option>
+                                                <option value="3">슬로바키아 (SLOVAKIA)</option>
+                                                <option value="3">슬로베니아 (SLOVENIA)</option>
+                                                <option value="18">싱가폴 (SINGAPORE)</option>
+                                                <option value="3">아랍에미리트연합국 (UNITED ARAB EMIRATES)</option>
+                                                <option value="3">아르메니아 (ARMENIA)</option>
+                                                <option value="4">아르헨티나 (ARGENTINA)</option>
+                                                <option value="3">아일란드 (IRELAND)</option>
+                                                <option value="3">아제르바이잔 (AZERBAIJAN)</option>
+                                                <option value="3">알바니아 (ALBANIA)</option>
+                                                <option value="4">알제리 (ALGERIA)</option>
+                                                <option value="3">에스토니아 (ESTONIA)</option>
+                                                <option value="4">에콰도르 (ECUADOR)</option>
+                                                <option value="4">에티오피아 (ETHIOPIA)</option>
+                                                <option value="23">영국 (UNITED KINGDOM)</option>
+                                                <option value="3">오만 (OMAN)</option>
+                                                <option value="3">오스트리아 (AUSTRIA)</option>
+                                                <option value="3">요르단 (JORDAN)</option>
+                                                <option value="3">우즈베키스탄 (UZBEKISTAN)</option>
+                                                <option value="3">우크라이나 (UKRAINE)</option>
+                                                <option value="3">이란 (IRAN)</option>
+                                                <option value="3">이스라엘 (ISRAEL)</option>
+                                                <option value="4">이집트 (EGYPT)</option>
+                                                <option value="2">인도 (INDIA)</option>
+                                                <option value="12">인도네시아 (INDONESIA)</option>
+                                                <option value="13">일본 (JAPAN)</option>
+                                                <option value="4">잠비아 (ZAMBIA)</option>
+                                                <option value="8">중국 (CHINA)</option>
+                                                <option value="4">지부티 (DJIBOUTI)</option>
+                                                <option value="3">체코 (CZECH REP)</option>
+                                                <option value="4">칠레 (CHILE)</option>
+                                                <option value="4">카보베르데 (CAPE VERDE)</option>
+                                                <option value="3">카자흐스탄 (KAZAKHSTAN)</option>
+                                                <option value="3">카타르 (QATAR)</option>
+                                                <option value="1">캄보디아 (CAMBODIA)</option>
+                                                <option value="7">캐나다 (CANADA)</option>
+                                                <option value="4">케냐 (KENYA)</option>
+                                                <option value="4">코스타리카 (COSTA RICA)</option>
+                                                <option value="4">쿠바 (CUBA)</option>
+                                                <option value="3">크로아티아 (CROATIA)</option>
+                                                <option value="4">탄자니아 (TANZANIA(UNITED REP))</option>
+                                                <option value="21">태국 (THAILAND)</option>
+                                                <option value="3">터키 (TURKEY)</option>
+                                                <option value="4">튀니지 (TUNISIA)</option>
+                                                <option value="4">파나마 (PANAMA(REP))</option>
+                                                <option value="3">파키스탄 (PAKISTAN)</option>
+                                                <option value="3">포르투갈 (PORTUGAL)</option>
+                                                <option value="3">폴란드 (POLAND(REP))</option>
+                                                <option value="9">프랑스 (FRANCE)</option>
+                                                <option value="4">피지 (FIJI)</option>
+                                                <option value="3">핀란드 (FINLAND)</option>
+                                                <option value="16">필리핀 (PHILIPPINES)</option>
+                                                <option value="3">헝가리 (HUNGARY(REP))</option>
+                                                <option value="5">호주 (AUSTRALIA)</option>
+                                                <option value="11">홍콩 (HONGKONG)</option>
+                                            </select>
+                                        </div>
+
+                                        <input type="text" class="form_input form_addr0 o_zip_obj" id="ozip1" name="ozip1" placeholder="우편번호">
                                     </div>
-
-                                    <input type="text" class="form_input form_addr0 o_zip_obj" id="ozip1" name="ozip1" placeholder="우편번호">
                                 </div>
+                                <input type="text" class="form_input form_addr1" id="oaddr1" name="oaddr1" placeholder="주소">
+                                <input type="text" class="form_input form_addr2" id="oaddr2" name="oaddr2" placeholder="상세주소">
                             </div>
-                            <input type="text" class="form_input form_addr1" id="oaddr1" name="oaddr1" placeholder="주소">
-                            <input type="text" class="form_input form_addr2" id="oaddr2" name="oaddr2" placeholder="상세주소">
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">배송메모</th>
-                    <td>
-                        <input name="memo" id="delivery_memo" class="form_input block">
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">배송메모</th>
+                        <td>
+                            <input name="memo" id="delivery_memo" class="form_input block">
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
 
-            <div style="margin-top: 5px; color:#999999; padding:10px 0; border-bottom:1px solid #e0e0e0; font-size: 12px; line-height: 1.6; vertical-align: baseline;">
-                배송메모는 배달기사님께 보여지는 메모입니다.<br>
-                주문건 관련하여 요청사항 있으실 경우 게시판에 꼭! 남겨주세요:)
-            </div>
-
-            <ul class="tab_method">
-                <li class="deposit"><a href="javascript:" onclick="BuyProc.chooseMethod('B')">무통장입금</a></li>
-                <li class="credit"><a href="javascript:" onclick="BuyProc.chooseMethod('C')" class="active">신용카드</a></li>
-                <li class="realtime"><a href="javascript:" onclick="BuyProc.chooseMethod('R')">실시간계좌 이체</a></li>
-                <li class="mobile"><a href="javascript:" onclick="BuyProc.chooseMethod('Y')">휴대폰 결제</a></li>
-                <li class="samsung"><a href="javascript:" onclick="BuyProc.chooseMethod('S')">삼성PAY</a></li>
-                <li class="payco"><a href="javascript:" onclick="BuyProc.chooseMethod('E')">PAYCO</a></li>
-                <li class="kakao"><a href="javascript:" onclick="BuyProc.chooseMethod('W')" class="">카카오페이</a></li>
-
-                <li class="smile">
-                    <a href="javascript:" onclick="BuyProc.chooseMethod('N')">
-                        스마일페이
-                    </a>
-                </li>
-            </ul>
-
-            <div class="tabcnt_method tabcnt_method0 method2" style="display: block;">
-                <div>
-                    <label>입금은행</label>
-                    <select name="bank" class="deposit bank_obj">
-                        <option value="">입금은행선택</option>
-                        <option value="국민은행">국민은행 / 468001-01-111971 / 에스엔패션그룹(주)
-                        </option>
-                        <option value="농협">농협 / 301-0095-6307-61 / 에스엔패션그룹(주)
-                        </option>
-                        <option value="우리은행">우리은행 / 1005-401-918043 / 에스엔패션그룹(주)
-                        </option>
-                    </select>
+                <div style="margin-top: 5px; color:#999999; padding:10px 0; border-bottom:1px solid #e0e0e0; font-size: 12px; line-height: 1.6; vertical-align: baseline;">
+                    배송메모는 배달기사님께 보여지는 메모입니다.<br>
+                    주문건 관련하여 요청사항 있으실 경우 게시판에 꼭! 남겨주세요:)
                 </div>
-                <div>
-                    <label for="">입금자</label>
-                    <input type="text" name="inname" value="" class="form_input provider inname_obj">
-                    <span class="msg">(입금자명을 정확히 작성하셔야 빠른 입금확인이 가능합니다)</span>
-                </div>
-                <div>
-                    <label>입금예정</label>
-                    <input type="text" name="indate" class="form_input provider orderDatepicker indate_obj hasDatepicker" value="2024-09-07" style="text-align:center;" readonly="" id="dp1725638886003">
-                    <span class="msg">
-							주문일로부터 7일이내 입금해주셔야 됩니다.<br>
-							7일이 지나면 자동으로 주문취소 됩니다.
-						</span>
-                </div>
-            </div>
 
-            <div class="tabcnt_method tabcnt_method1 method2" style="display: block;">
-                <p class="choice"><strong class="p_color">'무통장입금'</strong>를 선택하셨습니다. 아래 주문하기를 눌러 결제를 이어가주세요.</p>
+                <ul class="tab_method">
+                    <li class="deposit"><a href="javascript:" onclick="BuyProc.chooseMethod('B')">무통장입금</a></li>
+                    <li class="credit"><a href="javascript:" onclick="BuyProc.chooseMethod('C')" class="active">신용카드</a></li>
+                    <li class="realtime"><a href="javascript:" onclick="BuyProc.chooseMethod('R')">실시간계좌 이체</a></li>
+                    <li class="mobile"><a href="javascript:" onclick="BuyProc.chooseMethod('Y')">휴대폰 결제</a></li>
+                    <li class="samsung"><a href="javascript:" onclick="BuyProc.chooseMethod('S')">삼성PAY</a></li>
+                    <li class="payco"><a href="javascript:" onclick="BuyProc.chooseMethod('E')">PAYCO</a></li>
+                    <li class="kakao"><a href="javascript:" onclick="BuyProc.chooseMethod('W')" class="">카카오페이</a></li>
 
-                <ul class="info_method">
-                    <li>
-                        <dl>
-                            <dt>무통장입금</dt>
-                            <dd>아뜨랑스에 지정된 계좌로 직접 입금하는 방식입니다. (인터넷뱅킹, 텔레뱅킹, ATM, 은행방문)</dd>
-                        </dl>
-                    </li>
-                    <li>
-                        <dl>
-                            <dt>실시간계좌이체</dt>
-                            <dd>은행을 거치지않고 회원님 계좌에서 바로 이체되는 편리한 서비스입니다. (이체수수료무료 / 공인인증서필수)</dd>
-                        </dl>
-                    </li>
-                    <li>
-                        <dl>
-                            <dt>휴대폰결제</dt>
-                            <dd>인증번호를 통해 간단히 휴대폰으로 결제처리가 되면 익월통신요금에 합산청구됩니다.</dd>
-                        </dl>
+                    <li class="smile">
+                        <a href="javascript:" onclick="BuyProc.chooseMethod('N')">
+                            스마일페이
+                        </a>
                     </li>
                 </ul>
+
+                <div class="tabcnt_method tabcnt_method0 method2" style="display: block;">
+                    <div>
+                        <label>입금은행</label>
+                        <select name="bank" class="deposit bank_obj">
+                            <option value="">입금은행선택</option>
+                            <option value="국민은행">국민은행 / 468001-01-111971 / 에스엔패션그룹(주)
+                            </option>
+                            <option value="농협">농협 / 301-0095-6307-61 / 에스엔패션그룹(주)
+                            </option>
+                            <option value="우리은행">우리은행 / 1005-401-918043 / 에스엔패션그룹(주)
+                            </option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="">입금자</label>
+                        <input type="text" name="inname" value="" class="form_input provider inname_obj">
+                        <span class="msg">(입금자명을 정확히 작성하셔야 빠른 입금확인이 가능합니다)</span>
+                    </div>
+                    <div>
+                        <label>입금예정</label>
+                        <input type="text" name="indate" class="form_input provider orderDatepicker indate_obj hasDatepicker" value="2024-09-07" style="text-align:center;" readonly="" id="dp1725638886003">
+                        <span class="msg">
+                                주문일로부터 7일이내 입금해주셔야 됩니다.<br>
+                                7일이 지나면 자동으로 주문취소 됩니다.
+                            </span>
+                    </div>
+                </div>
+
+                <div class="tabcnt_method tabcnt_method1 method2" style="display: block;">
+                    <p class="choice"><strong class="p_color">'무통장입금'</strong>를 선택하셨습니다. 아래 주문하기를 눌러 결제를 이어가주세요.</p>
+
+                    <ul class="info_method">
+                        <li>
+                            <dl>
+                                <dt>무통장입금</dt>
+                                <dd>아뜨랑스에 지정된 계좌로 직접 입금하는 방식입니다. (인터넷뱅킹, 텔레뱅킹, ATM, 은행방문)</dd>
+                            </dl>
+                        </li>
+                        <li>
+                            <dl>
+                                <dt>실시간계좌이체</dt>
+                                <dd>은행을 거치지않고 회원님 계좌에서 바로 이체되는 편리한 서비스입니다. (이체수수료무료 / 공인인증서필수)</dd>
+                            </dl>
+                        </li>
+                        <li>
+                            <dl>
+                                <dt>휴대폰결제</dt>
+                                <dd>인증번호를 통해 간단히 휴대폰으로 결제처리가 되면 익월통신요금에 합산청구됩니다.</dd>
+                            </dl>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div class="area_right">
+                <div class="inner" style="top: 7.40625px;">
+                    <div class="box">
+                        <p class="title first">결제정보</p>
+                        <table class="tbl_order2 ord">
+                            <caption class="hidden">결제 가격정보</caption>
+                            <colgroup>
+                                <col style="width:50%;">
+                                <col>
+                            </colgroup>
+                            <tbody>
+                            <tr>
+                                <th scope="row">총상품금액</th>
+                                <td><span class="total_goods_price_obj">45,000</span>원</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">배송료</th>
+                                <td>
+                                    +
+                                    <span class="total_delaccount_obj">3,500</span>원
+                                    <!--
+                                    <div id="delaccount_info" class="view_info">
+                                        <div class="order_area_event_prc">기본배송료<br><span class='delaccount_obj'>3,500</span>원</div>
+                                        <div class="order_area_event_prc">번개배송료<br><span class='delaccount_th_obj'>0</span>원</div>
+                                        <div class="order_area_event_prc">도서산간비<br><span class='delaccount_out_obj'>0</span>원</div>
+                                    </div>
+                                    -->
+                                </td>
+                            </tr>
+                            <tr style="display: none;">
+                                <th scope="row">적립금</th>
+                                <td>
+                                    -
+                                    <span class="point1_discount_obj">0</span>원
+                                    <!--
+                                    <div id="delaccount_info" class="view_info">
+                                        <div class="order_area_event_prc">기본배송료<br><span class='delaccount_obj'>3,500</span>원</div>
+                                        <div class="order_area_event_prc">번개배송료<br><span class='delaccount_th_obj'>0</span>원</div>
+                                        <div class="order_area_event_prc">도서산간비<br><span class='delaccount_out_obj'>0</span>원</div>
+                                    </div>
+                                    -->
+                                </td>
+                            </tr>
+                            <tr style="display: none;">
+                                <th scope="row">예치금</th>
+                                <td>
+                                    -
+                                    <span class="point2_discount_obj">0</span>원
+                                    <!--
+                                    <div id="delaccount_info" class="view_info">
+                                        <div class="order_area_event_prc">기본배송료<br><span class='delaccount_obj'>3,500</span>원</div>
+                                        <div class="order_area_event_prc">번개배송료<br><span class='delaccount_th_obj'>0</span>원</div>
+                                        <div class="order_area_event_prc">도서산간비<br><span class='delaccount_out_obj'>0</span>원</div>
+                                    </div>
+                                    -->
+                                </td>
+                            </tr>
+                            <tr style="display: none;">
+                                <th scope="row">코인</th>
+                                <td>
+                                    -
+                                    <span class="coin_discount_obj">0</span>원
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <table class="tbl_order2 ord">
+                            <caption class="hidden">결제 할인정보</caption>
+                            <colgroup>
+                                <col style="width:50%;">
+                                <col>
+                            </colgroup>
+                            <tbody>
+                            <!--
+                            <tr>
+                                <th scope="row">기본할인 금액</th>
+                                <td>
+                                    -
+                                    <span class='period_sale_total_obj'>13,000</span>원
+                                </td>
+                            </tr>
+                            -->
+                            <tr>
+                                <th scope="row">총할인금액</th>
+                                <td>
+                                    -
+                                    <span class="total_discount_obj">13,000</span>원
+
+                                    <!--
+                                    <div id="discount_info" class="view_info">
+                                        <div class="order_area_event_prc">적립금 차감<br><span class='point1_discount_obj'>0</span>원</div>
+                                        <div class="order_area_event_prc">예치금 차감<br><span class='point2_discount_obj'>0</span>원</div>
+                                        <div class="order_area_event_prc">상품할인 쿠폰<br><span class='coupon1_discount_obj'>0</span>원</div>
+                                        <div class="order_area_event_prc">배송비 쿠폰<br><span class='coupon2_discount_obj'>0</span>원</div>
+                                        <div class="order_area_event_prc">하나 더 할인<br>0원</div>
+                                    </div>
+                                    -->
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <dl class="total_ord_prc">
+                            <dt>총 결제금액</dt>
+                            <dd><strong class="use_account_obj" data-account="35500">35,500</strong>원</dd>
+                        </dl>
+                    </div>
+                    <div class="btn">
+                        <span class="box_btn block h50 fs15"><a href="javascript:" onclick="BuyProc.buy();" id="buyBtn">결제하기</a></span>
+                        <span class="box_btn block h50 fs15 white2"><a href="/">취소</a></span>
+                    </div>
+                </div>
             </div>
 
         </div>
