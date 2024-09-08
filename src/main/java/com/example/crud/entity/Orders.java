@@ -34,7 +34,28 @@ public class Orders {
     private String status;
 
     @Column(nullable = false)
-    private Integer totalAmount;
+    private Integer totalAmount; // 총 결제 금액
+
+    @Column(nullable = false)
+    private Integer deliveryFee; // 배송료
+
+    @Column(nullable = false)
+    private String deliveryMethod; // 배송 방법 (Ex : 오늘출발, 새벽도착)
+
+    @Column(nullable = false)
+    private String deliveryMemo; // 배송 메모
+
+    @Column(nullable = false)
+    private String receiverName; // 수령인 이름
+
+    @Column(nullable = false)
+    private String receiverPhone; // 수령인 전화번호
+
+    @Column(nullable = false)
+    private String receiverMobile; // 수령인 핸드폰 번호
+
+    @Column(nullable = false)
+    private String receiverAddress; // 배송 주소
 
     public void addOrderItem(OrderItem orderItem) {
         orderItems.add(orderItem);

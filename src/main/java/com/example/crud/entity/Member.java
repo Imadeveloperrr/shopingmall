@@ -37,7 +37,10 @@ public class Member implements UserDetails {
     private String address;
 
     @Column(nullable = true)
-    private int phoneNumber;
+    private String phoneNumber; // 전화번호
+
+    @Column(nullable = true)
+    private String mobileNumber; // 휴대폰 번호
 
     @Column(nullable = true)
     @Lob

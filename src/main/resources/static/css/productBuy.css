@@ -144,15 +144,17 @@ body {
 
 #container .area_right .btn {
     margin-top: 20px;
+    display: block;
+    unicode-bidi: isolate;
+    box-sizing: border-box;
 }
 
 #container .area_right .btn .box_btn {
     margin-bottom: 10px;
 }
-.box_btn.block {
-    display: block;
-}
+
 .box_btn {
+    display: block;
     text-align: center;
     vertical-align: top;
 }
@@ -162,9 +164,17 @@ body {
     width: 100%;
     margin: 0 auto;
 }
-
+.tbl_col.ord > tbody > tr > td.total_prc {
+    color: #d0591f;
+    font-weight: 700;
+}
 .box_btn.fs15 > * {
     font-size: 15px !important;
+}
+.box_btn.white2 * {
+    border-color: #dbdbdb;
+    background: #fff;
+    color: #000 !important;
 }
 .box_btn.h50 > * {
     height: 50px;
@@ -383,12 +393,6 @@ select {
 
 .tbl_order td .form_input.form_addr0 {
     width: 120px;
-}
-
-.box_btn {
-    display: inline-block;
-    text-align: center;
-    vertical-align: top;
 }
 
 .tbl_order td .form_input {
