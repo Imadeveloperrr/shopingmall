@@ -18,7 +18,7 @@
                 주문상품 <span>(갯수)</span>
             </p>
 
-            <table class="tbl_col">
+            <table class="tbl_col prd ord">
                 <colgroup>
                     <col style="width:10%;">
                     <col>
@@ -555,7 +555,7 @@
                             </colgroup>
                             <tbody>
                             <tr>
-                                <th scope="row">총상품금액</th>
+                                <th scope="row">총 상품금액</th>
                                 <td><span class="total_goods_price_obj">45,000</span>원</td>
                             </tr>
                             <tr>
@@ -650,8 +650,12 @@
                         </dl>
                     </div>
                     <div class="btn">
-                        <span class="box_btn block h50 fs15"><a href="javascript:" onclick="BuyProc.buy();" id="buyBtn">결제하기</a></span>
-                        <span class="box_btn block h50 fs15 white2"><a href="/">취소</a></span>
+                        <span class="box_btn block h50 fs15">
+                            <a href="javascript:" onclick="BuyProc.buy();" id="buyBtn">결제하기</a>
+                        </span>
+                        <span class="box_btn block h50 fs15 white2">
+                            <a href="/">취소</a>
+                        </span>
                     </div>
                 </div>
             </div>

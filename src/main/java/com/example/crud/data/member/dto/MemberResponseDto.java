@@ -13,7 +13,7 @@ public class MemberResponseDto {
     private String name;
     private String email;
     private String nickname;
-    private int phoneNumber;
+    private String phoneNumber;
     private String introduction;
     private String address;
 }
