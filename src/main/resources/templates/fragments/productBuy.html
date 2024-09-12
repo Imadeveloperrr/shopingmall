@@ -65,10 +65,10 @@
                         <td>
                             <s>12,000원</s>
                             <br>
-                            9,600원
+                            <span th:text="${product.price}"></span>
                         </td>
                         <td>1</td>
-                        <td class="total_prc">9,600원</td>
+                        <td class="total_prc" th:text="${product.price}"></td>
                         <td>
                             <img src="https://attrangs.co.kr/asset/img/shop/i_milage.gif" alt="마일리지" class="gif-lib-track">
                             <span class="mileage_obj">0</span>
