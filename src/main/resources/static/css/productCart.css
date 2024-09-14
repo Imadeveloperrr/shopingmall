@@ -1,0 +1,191 @@
+*, *:before, *:after {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+#cnt {
+    padding: 50px 0px 0;
+    min-height: 800px;
+    position: relative;
+    font-family: 'Outfit', 'Noto Sans KR', Dotum, AppleGothic, Malgun Gothic, sans-serif;
+    font-size: 12px;
+    line-height: 1.6;
+    vertical-align: baseline;
+    color: #333;
+    text-align: left;
+}
+
+.maincontent .top .wrap_inner {
+    padding-top: 20px;
+}
+.member .wrap_inner {
+    width: 1200px;
+    padding-bottom: 50px;
+}
+.wrap_inner {
+    width: 1416px;
+}
+.wrap_inner {
+    width: 1416px;
+}
+.wrap_inner {
+    width: 1210px;
+    margin: 0 auto;
+}
+
+a, a:hover, a:active, a:focus {
+    text-decoration: none;
+}
+
+.maincontent .top .wrap_inner .title {
+    font-size: 38px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.member .title .info {
+    display: inline-block !important;
+    position: relative;
+    width: auto;
+    vertical-align: top;
+    margin-left: 8px;
+    margin-top: 17px;
+}
+
+.member #my_menu {
+    position: relative;
+    text-align: center;
+    width: auto;
+    margin-top: 20px;
+    border: 0;
+}
+
+#my_menu {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 180px;
+    border: 1px solid #E6E6E6;
+    border-radius: 5px;
+    padding-bottom: 20px;
+}
+
+#my_menu dl:first-child dt {
+    padding-top: 0;
+}
+
+#my_menu dl dt {
+    padding: 15px 0px 0px 15px;
+    color: #404040;
+    font-size: 15px;
+}
+
+#my_menu dl:nth-of-type(2) dt {
+    display: none;
+}
+
+#my_menu dl dt {
+    padding: 15px 0px 0px 15px;
+    color: #404040;
+    font-size: 15px;
+}
+
+.member #my_menu dl dd, #my_menu dl dd {
+    display: inline-block;
+    margin: 0 3px;
+}
+#my_menu dl dd, #my_menu dl dd * {
+    color: #888;
+    font-family: Malgun Gothic, '맑은 고딕';
+    font-size: 13px;
+}
+
+.member #my_menu dl dd a:first-of-type {
+    margin-left: 0;
+    position: relative;
+    z-index: 1;
+}
+.member #my_menu dl dd a {
+    margin-left: 8px;
+}
+#my_menu dl dd a {
+    display: inline-block;
+    padding: 8px 0 0 0px;
+    margin-left: 25px;
+}
+#my_menu dl dd, #my_menu dl dd * {
+    color: #888;
+    font-family: Malgun Gothic, '맑은 고딕';
+    font-size: 13px;
+}
+
+.member #my_menu dl dd a.star1 {
+    display: none;
+}
+
+.member #my_menu dl {
+    display: none;
+}
+
+.member .title .info img {
+    width: 26px;
+}
+
+.maincontent .top .wrap_inner .navi {
+    position: relative;
+    top: 21px;
+}
+
+ol, ul, li {
+    list-style: none;
+}
+
+ul {
+    display: block;
+    list-style-type: disc;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    padding-inline-start: 40px;
+    unicode-bidi: isolate;
+}
+
+.member .title .info .ment {
+    display: none;
+    border-radius: 20px;
+    border-top-left-radius: 5px;
+    padding: 20px 40px;
+    box-shadow: 0 0 11px 0 #b9b9b9;
+    background-color: #fff;
+    white-space: nowrap;
+    position: absolute;
+    bottom: 0;
+    left: 9px;
+    text-align: left;
+    z-index: 2;
+    transform: translateY(100%);
+}
+
+#cnt .maincontent {
+    background-color: var(--season_color_01);
+    min-height: 1000px;
+    padding-bottom: 50px;
+}
+
+img {
+    vertical-align: top;
+    overflow-clip-margin: content-box;
+    overflow: clip;
+}
+
+#cnt .maincontent .top {
+    min-height: 170px;
+    position: relative;
+}
+
+div {
+    display: block;
+    unicode-bidi: isolate;
+}

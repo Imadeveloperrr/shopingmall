@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <div th:replace="~{/fragments/header.html :: fragment-header}"></div>
+    <link href="/css/productCart.css" rel="stylesheet"/>
+</head>
+
+<div th:insert="~{/fragments/nav.html :: fragment-nav}"></div>
+<body>
+    <div id="cnt" class="member">
+        <div class="maincontent">
+            <div class="top">
+                <div class="info" id="info" style="display:none">
+                    <img src="https://atimg.sonyunara.com/2022/member/info.svg" alt="">
+                    <div class="ment">
+                        <ul>
+                            <li>· [전체 상품 주문] 버튼을 누르시면 장바구니의 구분없이 <br>&nbsp;&nbsp;선택된 모든 상품에 대한 주문/결제가 이루어집니다.</li>
+                            <li>· [상품명]상단 □를 체크 하시고 [선택 상품 주문] 버튼을 누르시면 <br>&nbsp;&nbsp;선택된 상품에 대한 주문/결제가 이루어집니다.</li>
+                            <li>· 장바구니에 담긴 상품은 무기한 보관됩니다. 옵션변경 버튼 우측의 <br>&nbsp;&nbsp;♡를 클릭하시면 [좋아요]페이지에 보관됩니다. 우측의 X를 누르시면 상품이 삭제 됩니다.</li>
+                            <li>· 선택하신 상품의 수량을 변경하실 경우 숫자 좌우의 -,+버튼을 이용하시면 됩니다, <br>&nbsp;&nbsp;또한 옵션을 변경하실 경우 변경 후 [옵션변경] 버튼누르시면 색상 / 사이즈 변경이 가능 합니다.</li>
+                            <li>· 품절상품의 경우 비슷한 상품을 추천해드립니다.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="wrap_inner ">
+                    <div class="navi">
+                        홈 &gt;
+                        <a href="/member/mypage.php">마이페이지 &gt; </a>
+                        <a href="/member/cart.php" class="active">장바구니</a></div>
+                    <div>
+                        <div class="title">장바구니<div class="info" id="info" style="display:none">
+                            <img src="https://atimg.sonyunara.com/2022/member/info.svg" alt="">
+                            <div class="ment" style="display: none;">
+                                <ul>
+                                    <li>· [전체 상품 주문] 버튼을 누르시면 장바구니의 구분없이 <br>&nbsp;&nbsp;선택된 모든 상품에 대한 주문/결제가 이루어집니다.</li>
+                                    <li>· [상품명]상단 □를 체크 하시고 [선택 상품 주문] 버튼을 누르시면 <br>&nbsp;&nbsp;선택된 상품에 대한 주문/결제가 이루어집니다.</li>
+                                    <li>· 장바구니에 담긴 상품은 무기한 보관됩니다. 옵션변경 버튼 우측의 <br>&nbsp;&nbsp;♡를 클릭하시면 [좋아요]페이지에 보관됩니다. 우측의 X를 누르시면 상품이 삭제 됩니다.</li>
+                                    <li>· 선택하신 상품의 수량을 변경하실 경우 숫자 좌우의 -,+버튼을 이용하시면 됩니다, <br>&nbsp;&nbsp;또한 옵션을 변경하실 경우 변경 후 [옵션변경] 버튼누르시면 색상 / 사이즈 변경이 가능 합니다.</li>
+                                    <li>· 품절상품의 경우 비슷한 상품을 추천해드립니다.</li>
+                                </ul>
+                            </div>
+                        </div></div>
+                        <!-- <link rel="stylesheet" type="text/css" href="/asset/css/style_renew.css?a=20210413"> -->
+                        <!-- 마이페이지 메뉴 -->
+                        <dd class="nowish" style="height:100%; text-align: center; display:none">
+                            <span style="    display: inline-block; margin: 32px 0 10px; background: url(https://atimg.sonyunara.com/files/admin/newpro/1660826830_1_re23.gif) no-repeat; width: 44px; height: 28px; background-size: 44px; "> </span>
+                            <div style="font-size:16px; color:#C0C0C0;">자주 찾는 카테고리를<br>즐겨 찾기 해보세요!</div>
+                        </dd>
+                        <div id="my_menu" class="my_menu">
+                            <dl id="favor" style="background-color:#fff">
+                                <dt>즐겨찾기</dt>
+                            </dl>
+                            <dl>
+                                <dt><img src="https://atimg.sonyunara.com/2023/renew/list/mypage_1.png" class="icon" alt="">주문관리</dt>
+                                <dd class="order"><a href="/member/order.php">주문/배송조회</a><a class="star1 " onclick="stargo('order')"></a></dd>
+                                <dd class="today_goods"><a href="/member/today_goods.php">최근 본 상품</a><a class="star1" onclick="stargo('today_goods')"></a></dd>
+                                <dd class="cart"><a href="/member/cart.php" class="active">장바구니</a><a class="star1" onclick="stargo('cart')"></a></dd>
+                                <dd class="wish"><a href="/member/wish.php">좋아요</a><a class="star1" onclick="stargo('wish')"></a></dd>
+                            </dl>
+                            <dl>
+                                <dt><img src="https://atimg.sonyunara.com/2023/renew/list/mypage_2.png" class="icon" alt="">나의아뜨</dt>
+                                <dd class="qna"><a href="/member/qna.php">1:1문의<span class="circle-icon" style="color: #fff; margin-left: 2px;">0</span></a><a class="star1" onclick="stargo('qna')"></a></dd>
+                                <dd class="pQna"><a href="/member/pQna.php">상품문의</a><a class="star1" onclick="stargo('pQna')"></a></dd>
+                                <dd class="mystyle"><a href="/member/mystyle.php">내스타일</a><a class="star1" onclick="stargo('mystyle')"></a></dd>
+                                <dd class="lab"><a href="/member/lab.php">실험실</a><a class="star1" onclick="stargo('lab')"></a></dd>
+
+                            </dl>
+                            <dl>
+                                <dt><img src="https://atimg.sonyunara.com/2023/renew/list/mypage_3.png" class="icon" alt="">쇼핑혜택</dt>
+                                <dd class="coupon_point_account"><a href="/member/coupon_point_account.php">쿠폰/적립금/예치금/코인/L.포인트</a><a class="star1" onclick="stargo('coupon_point_account')"></a></dd>
+                                <dd class="benefit"><a href="/member/benefit.php">내등급정보</a><a class="star1" onclick="stargo('benefit')"></a></dd>
+                                <dd class="gift_card_list"><a href="/member/gift.php">선물함</a><a class="star1" onclick="stargo('gift_card_list')"></a></dd>
+                            </dl>
+                            <dl>
+                                <dt><img src="https://atimg.sonyunara.com/2023/renew/list/mypage_4.png" class="icon" alt="">활동내역</dt>
+                                <dd class="attend"><a href="/member/attend.php">도전! 출첵체크</a><a class="star1" onclick="stargo('attend')"></a></dd>
+                                <dd class="reviewer"><a href="/member/reviewer.php">리뷰어 활동 내역</a><a class="star1" onclick="stargo('reviewer')"></a></dd>
+                                <!-- <dd class="review_reviewencer"><a href="/review/review_reviewencer.php" >아뜨뷰어 상품</a><a class="star1" onclick="stargo('review_reviewencer')"></a></dd> -->
+                                <dd class="alram"><a href="/member/alram.php">신상알림</a><a class="star1" onclick="stargo('alram')"></a></dd>
+                                <dd class="sizealram">
+                                    <a href="/member/sizealram.php">최애 사이즈 알림</a>
+                                    <a class="star1" onclick="stargo('sizealram')"></a>
+                                </dd>
+                            </dl>
+                            <dl>
+                                <dt><img src="https://atimg.sonyunara.com/2023/renew/list/mypage_5.png" class="icon" alt="">정보관리</dt>
+                                <dd class="edit"><a href="/member/edit.php">회원정보 수정</a><a class="star1" onclick="stargo('edit')"></a></dd>
+                                <dd class="address"><a href="/member/address.php">배송지,환불계좌 관리</a><a class="star1" onclick="stargo('address')"></a></dd>
+                                <dd class="withdraw"><a href="/member/withdraw.php">회원탈퇴</a></dd>
+                            </dl>
+                        </div>
+
+                        <!-- //마이페이지 메뉴 -->                </div>
+                </div>
+                <script>
+                    var clone = $("#my_menu a.active").clone();
+                    var info = $(".info#info").clone();
+                    var text = $("#my_menu a.active").text();
+                    $(".top .wrap_inner .navi").append(clone);
+                    $(".top .wrap_inner .title").append(text,info);
+                    $(".info#info").hover(function(){
+                        $(this).find(".ment").toggle();
+                    })
+                </script>
+            </div>
+            <!-- 오더 스텝 -->
+
+            <!-- //오더 스텝 -->
+
+            <div id="cart" class="wrap_inner">
+                <div class="area_left">
+                    <form class="goods-form"></form><!-- 삭제금지 -->
+                    <div class="cart-sub-header">
+                        <div class="left-content">
+                            <ul>
+                                <li>
+                                    <label for="cart-allgoods"><input type="checkbox" id="cart-allgoods" onclick="MemberProc.with_check('.cartIdxs:not(.soldout)');cartCalcul();"> 전체상품<span class="checkgh">[</span><span id="allgoods-cnt">0</span><span class="checkgh">/</span>2<span class="checkgh">]</span></label>
+                                </li>
+                                <li>
+                                    <label for="cart-todaygoods"><input type="checkbox" id="cart-todaygoods" onclick="MemberProc.with_check('.cartIdxs[data-today_go=1]:not(.soldout)');cartCalcul();"> 오늘출발<span class="checkgh">[</span><span id="todaygoods-cnt">0</span><span class="checkgh">/</span>2<span class="checkgh">]</span></label>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="right-content">
+                            <ol class="order_step_new">
+                                <li class="cart active">장바구니</li>
+                                <li class="order">주문/결제</li>
+                                <li class="finish">주문완료</li>
+                            </ol>
+                            <a class="choose_del" href="javascript:;" onclick="MemberProc.choose_del();"> 선택삭제 </a>
+                        </div>
+                    </div>
+                    <ul class="prd list">
+                        <!-- <caption class="hidden">장바구니</caption> -->
+
+                        <li class="">
+                            <form class="goods-form">
+                                <div class="check">
+                                    <input type="checkbox" name="cart_idxs[]" data-today_go="1" value="59638329" class="cartIdxs checkYN" onclick="cartCalcul();">
+                                </div>
+                                <div class="img">
+                                    <a href="/shop/view.php?index_no=161051" target="_blank">
+                                        <img src="https://atimg.sonyunara.com/files/attrangs/goods/161051/1721265696_0.png" alt="(코디고민제로!/프리미엄원단/데일리필수템) 램버 소프트 라운드넥 자수 케이블 니트 가디건" data-img="1721265696_0.png">
+                                    </a>
+
+                                </div>
+
+                                <div class="tal">
+                                    <input type="hidden" name="cart_idx" value="59638329">
+                                    <input type="hidden" name="goods_idx" value="161051">
+                                    <input type="hidden" name="op1" value="651338">
+                                    <input type="hidden" name="op2" value="651353">
+
+                                    <input type="hidden" name="criteoPrice" value="35500"> <!-- 크리테오 스크립트용 2020-02-26 조영재 -->
+
+
+                                    <div>
+                                        <span style="color:#cf591f">[오늘출발] <img src="https://atimg.sonyunara.com/2023/renew/m/quick_m.png" style="height:15px; margin-right:5px; vertical-align: middle; transform:translateZ(0)"></span>									</div>
+                                    <div class="name">
+                                        <style>
+                                            .time-wrap{ width:300px; z-index:1;}
+                                        </style>
+                                        <div class="time-wrap" onclick="$(this).hide();">
+                                            <img src="https://atimg.sonyunara.com/attrangs/assets/web03/asset/img/common/quick_del_close_re2.png" alt="" style="    position: absolute; top: -20px; right: 0; width: auto; cursor:pointer;">
+                                            <div class="time-inner" style="padding:20px; ">
+                                                <div style="position:relative">
+                                                    <div class="time-title">기간한정특가</div>
+                                                    <div class="bottom-line"></div>
+                                                </div>
+                                                <div class="time-time">
+                                                    <div>특가 남은 시간</div>
+                                                    <div class="promotionEndTime" style="letter-spacing:1px">21 : 01 : 02</div>
+                                                </div>
+                                            </div>
+                                        </div>										<a href="/shop/view.php?index_no=161051" target="_blank">
+                                        cd3143 (코디고민제로!/프리미엄원단/데일리필수템) 램버 소프트 라운드넥 자수 케이블 니트 가디건										</a>
+
+                                        <div>
+                                            <img src="" style="height:20px; margin-right:5px;" onclick="$(this).closest('div.name').find('.time-wrap').show();">
+                                            <span style="font-size:13px; color:var(--season_color_11); font-weight:600">특가가</span>
+                                            <span class="attdaytime" style="font-size:13px; color:var(--season_color_11); font-weight:600">21시간 01분 1초</span><span style="font-size:13px; color:var(--season_color_11); font-weight:600">남았어요</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="opt">
+                                    <!-- DarkBeige / 미니 L -->
+                                    Ivory(model) / Free									<div class="box_btn w80 h30 white5" style="display:block; margin-top:10px;  "><a href="javascript:" style="border-radius: 3px;" onclick="optViewToggle(this)">옵션변경</a></div>
+                                    <div class="optchgBox" style="position: absolute; top: 50%; left: 0px; width: 100%; height: 100%; padding-top: 42px; transform: translateY(-50%); background-color: rgb(255, 255, 255); z-index: 1; display: none;">
+                                        <label style="display: inline-block;width: 60px; text-align: center;">색상</label>
+                                        <select name="change_op1" onchange="GoodsProc.set_opt_cart();" data-goods_idx="161051" style="width: 100px;">
+                                            <option value="">- 선택 -</option>
+                                            <option data-opname="Ivory(model)" value="651338">Ivory(model)</option>
+                                            <option data-opname="Melange(model)" value="651341">Melange(model)</option>
+                                            <option data-opname="Black(model)" value="651344">Black(model)</option>
+                                            <option data-opname="Camel(model)" value="651347">Camel(model)</option>
+                                            <option data-opname="Wine(model)" value="651350">Wine(model)</option>
+                                        </select>
+
+                                        <label style="display: inline-block;width: 60px; text-align: center;">사이즈</label>
+                                        <select name="change_op2" style="width:100px;">
+                                            <option value="">- 선택 -</option>
+                                        </select>
+                                        <span class="box_btn w65 h40 fs13" style="width: 65px; margin-top: 2px;"><a href="javascript:" onclick="OrderProc.cartChange()" style="width: 100%; height: 100%; display: inline-block;">변경</a></span>
+                                        <span class="box_btn w65 h40 fs13 gray6" style="width: 65px; margin-top: 2px;"><a href="javascript:" style="width: 100%; height: 100%; display: inline-block;" onclick="optViewToggle(this)">취소</a></span>
+                                    </div>
+                                </div>
+                                <div class="opt_chg">
+                                    <div class="box_qty">
+                                        <a href="javascript:" class="ea_down" onclick="MemberProc.change_ea(-1);"></a>
+                                        <input type="text" name="ea" value="1" class="form_input" readonly="">
+                                        <a href="javascript:" class="ea_up" onclick="MemberProc.change_ea(+1);"></a>
+                                    </div>
+                                </div>
+                                <div class="price">
+                                    <del>50,000원</del>
+                                    <p style="font-weight:600">35,500원</p>
+                                </div>
+                                <div class="delete_wish">
+                                    <a href="javascript:" onclick="GoodsProc.set_wish_single(161051)" style="vertical-align: middle;">
+                                        <div class="wish-icon "></div>
+                                    </a>
+                                    <a href="javascript:" onclick="MemberProc.cart_del(59638329);">
+                                        <img src="https://atimg.sonyunara.com/attrangs/assets/web03/asset/img/shop/icon_del.png" alt="삭제">
+                                    </a>
+                                </div>
+                            </form>
+                        </li>
+                        <li class="">
+                            <form class="goods-form">
+                                <div class="check">
+                                    <input type="checkbox" name="cart_idxs[]" data-today_go="1" value="59638330" class="cartIdxs checkYN" onclick="cartCalcul();">
+                                </div>
+                                <div class="img">
+                                    <a href="/shop/view.php?index_no=128418" target="_blank">
+                                        <img src="https://atimg.sonyunara.com/files/attrangs/goods/128418/1716186124_0.png" alt="(~L/링클프리)모먼트 히든버튼 셔츠 반팔 블라우스" data-img="1716186124_0.png">
+                                    </a>
+
+                                </div>
+
+                                <div class="tal">
+                                    <input type="hidden" name="cart_idx" value="59638330">
+                                    <input type="hidden" name="goods_idx" value="128418">
+                                    <input type="hidden" name="op1" value="499950">
+                                    <input type="hidden" name="op2" value="499965">
+
+                                    <input type="hidden" name="criteoPrice" value="17000"> <!-- 크리테오 스크립트용 2020-02-26 조영재 -->
+
+
+                                    <div>
+                                        <span style="color:#cf591f">[오늘출발] <img src="https://atimg.sonyunara.com/2023/renew/m/quick_m.png" style="height:15px; margin-right:5px; vertical-align: middle; transform:translateZ(0)"></span>									</div>
+                                    <div class="name">
+                                        <style>
+                                            .time-wrap{ width:300px; z-index:1;}
+                                        </style>
+                                        <div class="time-wrap" onclick="$(this).hide();">
+                                            <img src="https://atimg.sonyunara.com/attrangs/assets/web03/asset/img/common/quick_del_close_re2.png" alt="" style="    position: absolute; top: -20px; right: 0; width: auto; cursor:pointer;">
+                                            <div class="time-inner" style="padding:20px; ">
+                                                <div style="position:relative">
+                                                    <div class="time-title">기간한정특가</div>
+                                                    <div class="bottom-line"></div>
+                                                </div>
+                                                <div class="time-time">
+                                                    <div>특가 남은 시간</div>
+                                                    <div class="promotionEndTime" style="letter-spacing:1px">21 : 01 : 02</div>
+                                                </div>
+                                            </div>
+                                        </div>										<a href="/shop/view.php?index_no=128418" target="_blank">
+                                        bs7026 (~L/링클프리)모먼트 히든버튼 셔츠 반팔 블라우스										</a>
+
+                                        <div>
+                                            <img src="" style="height:20px; margin-right:5px;" onclick="$(this).closest('div.name').find('.time-wrap').show();">
+                                            <span style="font-size:13px; color:var(--season_color_11); font-weight:600">특가가</span>
+                                            <span class="attdaytime" style="font-size:13px; color:var(--season_color_11); font-weight:600">21시간 01분 1초</span><span style="font-size:13px; color:var(--season_color_11); font-weight:600">남았어요</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="opt">
+                                    <!-- DarkBeige / 미니 L -->
+                                    LightBeige(model) / Free									<div class="box_btn w80 h30 white5" style="display:block; margin-top:10px;  "><a href="javascript:" style="border-radius: 3px;" onclick="optViewToggle(this)">옵션변경</a></div>
+                                    <div class="optchgBox" style="display:none; position:absolute; top:50%; left:0; width:100%; height:100%; padding-top:42px; transform: translateY(-50%); background-color:#fff; z-index: 1;">
+                                        <label style="display: inline-block;width: 60px; text-align: center;">색상</label>
+                                        <select name="change_op1" onchange="GoodsProc.set_opt_cart();" data-goods_idx="128418" style="width: 100px;">
+                                            <option value="">- 선택 -</option>
+                                            <option data-opname="Black(model)" value="499962">Black(model)</option>
+                                            <option data-opname="LightBeige(model)" value="499950">LightBeige(model)</option>
+                                            <option data-opname="Peach(model)" value="499947">Peach(model)</option>
+                                            <option data-opname="Mint(model)" value="499956">Mint(model)</option>
+                                            <option data-opname="Navy(model)" value="499959">Navy(model)</option>
+                                            <option data-opname="SkyBlue(model)" value="499953">SkyBlue(model)</option>
+                                            <option data-opname="Ivory(model)" value="499944">Ivory(model)</option>
+                                        </select>
+
+                                        <label style="display: inline-block;width: 60px; text-align: center;">사이즈</label>
+                                        <select name="change_op2" style="width:100px;">
+                                            <option value="">- 선택 -</option>
+                                        </select>
+                                        <span class="box_btn w65 h40 fs13" style="width: 65px; margin-top: 2px;"><a href="javascript:" onclick="OrderProc.cartChange()" style="width: 100%; height: 100%; display: inline-block;">변경</a></span>
+                                        <span class="box_btn w65 h40 fs13 gray6" style="width: 65px; margin-top: 2px;"><a href="javascript:" style="width: 100%; height: 100%; display: inline-block;" onclick="optViewToggle(this)">취소</a></span>
+                                    </div>
+                                </div>
+                                <div class="opt_chg">
+                                    <div class="box_qty">
+                                        <a href="javascript:" class="ea_down" onclick="MemberProc.change_ea(-1);"></a>
+                                        <input type="text" name="ea" value="1" class="form_input" readonly="">
+                                        <a href="javascript:" class="ea_up" onclick="MemberProc.change_ea(+1);"></a>
+                                    </div>
+                                </div>
+                                <div class="price">
+                                    <del>28,000원</del>
+                                    <p style="font-weight:600">17,000원</p>
+                                </div>
+                                <div class="delete_wish">
+                                    <a href="javascript:" onclick="GoodsProc.set_wish_single(128418)" style="vertical-align: middle;">
+                                        <div class="wish-icon "></div>
+                                    </a>
+                                    <a href="javascript:" onclick="MemberProc.cart_del(59638330);">
+                                        <img src="https://atimg.sonyunara.com/attrangs/assets/web03/asset/img/shop/icon_del.png" alt="삭제">
+                                    </a>
+                                </div>
+                            </form>
+                        </li>
+                    </ul>
+                    <ul class="btn" style="display:none;">
+                        <li class="box_btn w115 h35 fs13 white2"><a href="javascript:" onclick="MemberProc.choose_buy();">선택상품 주문</a></li>
+                        <li class="box_btn w115 h35 fs13 white2"><a href="javascript:" onclick="MemberProc.choose_del();">선택상품 삭제</a></li>
+                        <li class="box_btn w115 h35 fs13 white2"><a href="javascript:" onclick="MemberProc.cart_all_del();">장바구니 비우기</a></li>
+
+                        <li class="box_btn w115 h35 fs13 white2"><a href="javascript:" onclick="MemberProc.cart_all_like();">전체 좋아요</a></li>
+                    </ul>
+                </div>
+                <div class="area_right">
+                    <div class="box">
+                        <div class="price-wrap">
+                            <div class="price-title">선택한 상품 <span class="cart-total-ea">0</span>개</div>
+                            <div class="price-won"><span id="total_price">0</span>원</div>
+                            <div style="text-align: center;">배송비<span id="del_account">
+                                 0</span>원
+                                <div class="deliveryInfo">
+                                    <img src="https://atimg.sonyunara.com/attrangs/2019/icon/i.gif" style="vertical-align: middle; width:19px;" class="gif-lib-track">
+                                    <span>80,000원이상</span> 구매시 <span>무료배송</span> 입니다.
+                                </div>
+                            </div>
+                            <div style="color:#333"><strong id="use_account">총 결제 예상금액 0</strong>원</div>
+                        </div>
+                        <table class="tbl_order2" style="display:none;">
+                            <caption>결제금액</caption>
+                            <colgroup>
+                                <col style="width:50%;">
+                                <col>
+                            </colgroup>
+                            <tbody>
+                            <tr>
+                                <th scope="row">상품 금액</th>
+                                <td><span id="total_price">0</span>원</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">배송료</th>
+                                <td>+<span id="del_account">0</span>원</td>
+                            </tr>
+                            <tr class="total">
+                                <th scope="row">총 결제 금액</th>
+                                <td><strong id="use_account">0</strong>원</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <!-- <div class="deliveryInfo">
+                            <img src="//atimg.sonyunara.com/attrangs/2019/icon/i.gif" style='vertical-align: middle; margin-top: -3px;' />
+                            <span>80,000원이상</span> 구매시 <span>무료배송</span> 입니다.
+                        </div> -->
+                        <div class="btn tac">
+                                                    <span style="background-color:var(--season_color_01); width:62px; padding:0; border:1px solid #cfcfcf; padding:7px 0;position:relative;text-align: center;display: inline-block;top:13px;" onclick="alert('선물하기는 모바일에서 이용가능합니다');" class="giftspanBtn">
+                                <!--
+                                <p style="position:absolute;top:-27px; left:0px;">
+                                    <img src="https://atimg.sonyunara.com/attrangs/gift/gift_btn_over.png" alt="" style="height:28px;">
+                                </p>-->
+                                <a href="javascript:" style="background-color:transparent;">
+                                    <img src="https://atimg.sonyunara.com/2023/renew/list/gift.png" alt="" style="width:25px;">
+                                    <p style=" margin-top:3px; font-size:12px;">선물하기</p>
+                                </a>
+                            </span>
+                            <span class="okbox"><a style="" href="javascript:" onclick="MemberProc.choose_buy();">선택상품 주문하기</a></span>
+                            <span class="canbox"><a href="javascript:" onclick="MemberProc.all_buy();">전체상품 주문하기</a></span>
+                            <center style="margin-top: 50px;">
+                                <div class="pay npay_btn_pay">
+                                    <script data-cfasync="false" type="text/javascript">
+                                        function buy_nc(url){
+                                            GoodsProc.naver_buy();
+                                            //$('#cartform').attr('action','/shop/nc_buy_new_cart.php').attr('target','_blank').submit();
+                                            //$('#cartform').attr('action','/order/order_step1.php').attr('target','_self');
+                                        }
+                                    </script>
+                                    <script data-cfasync="false" type="text/javascript">//<![CDATA[
+                                    naver.NaverPayButton.apply({
+                                        BUTTON_KEY:"B510C2FB-8BB8-4A59-A6D6-AC6B3F07E2B4", // 네이버페이에서 할당받은 버튼 KEY 를 입력하세요.
+                                        TYPE: "C", // 템플릿을 확인하시고 원하는 타입의 버튼을 선택
+                                        COLOR: 1, // 버튼의 색 설정
+                                        COUNT: 2, // 버튼 개수 설정. 구매하기 버튼만 있으면 1, 찜하기 버튼과 함께 있으면 2를 입력한다.
+                                        ENABLE: "Y", // 품절 등과 같은 이유에 따라 버튼을 비활성화할 필요가 있을 경우
+                                        BUY_BUTTON_HANDLER: buy_nc, // 구매하기 버튼 이벤트 Handler 함수 등록, 품절인 경우 not_buy_nc 함수 사용
+                                        BUY_BUTTON_LINK_URL:"", // 링크 주소 (필요한 경우만 사용)
+                                        WISHLIST_BUTTON_HANDLER:"", // 찜하기 버튼 이벤트 Handler 함수 등록
+                                        WISHLIST_BUTTON_LINK_URL:"", // 찜하기 팝업 링크 주소
+                                        "":""
+                                    });
+                                    //]]>
+                                    </script><div id="NC_ID_172616376563013" class="npay_storebtn_bx npay_type_C_1_2">	<div id="NPAY_BUTTON_BOX_ID" class="npay_button_box ">		<div class="npay_button">			<div class="npay_text"><span class="npay_blind">NAVER 네이버 ID로 간편구매 네이버페이</span></div>				<table class="npay_btn_list" cellspacing="0" cellpadding="0"><tbody><tr>    <td class="npay_btn_item">        <a id="NPAY_BUY_LINK_IDNC_ID_172616376563013" href="#" class="npay_btn_link npay_btn_pay " style="box-sizing:content-box; " title="새창"><span class="npay_blind">네이버페이 구매하기</span></a>    </td>    <td class="npay_btn_item btn_width">        <a id="NPAY_WISH_LINK_IDNC_ID_172616376563013" href="#" class="npay_btn_link npay_btn_zzim " style="box-sizing:content-box; " title="새창"><span class="npay_blind">찜하기</span></a>    </td>    <td class="npay_btn_item btn_width">        <a id="NPAY_TALK_LINK_IDNC_ID_172616376563013" href="#" class="npay_btn_link npay_btn_talk " style="box-sizing:content-box; " title="새창"><span class="npay_blind">톡톡</span></a>    </td></tr></tbody></table>		</div>		<div id="NPAY_EVENT_ID" class="npay_event">			<a id="NPAY_PROMOTION_PREV_IDNC_ID_172616376563013" href="#" class="npay_more npay_more_prev"><span class="npay_blind">이전</span></a>			<p id="NPAY_PROMOTION_IDNC_ID_172616376563013" class="npay_event_text"><strong class="event_title">머니결제혜택</strong><a class="event_link" href="https://campaign2.naver.com/moneypay/" target="_blank" title="새창">최대 3%적립 + 소득공제</a></p>			<a id="NPAY_PROMOTION_NEXT_IDNC_ID_172616376563013" href="#" class="npay_more npay_more_next"><span class="npay_blind">다음</span></a>		</div>	</div></div>
+                                    <style>
+                                        /* .npay_type_D_1_1, .npay_type_D_2_1{width: 100% !important;} */
+                                    </style>
+                                </div>
+                            </center>
+
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 10px; display:none;">
+                        <a href="javascript:" onclick="GoodsProc.kakao_buy()">
+                            <img src="https://atimg.sonyunara.com/attrangs/assets/web03/asset/img/member/kakao_buy.png" style="width: 100%;"><br>
+                        </a>
+                    </div>
+                </div>
+                <div class="clear"></div>
+                <br>
+
+                <div class="guide" style="display:none;">
+                    <table class="tbl_guide" cellspacing="0" cellpadding="0">
+                        <caption class="hidden">이용안내</caption>
+                        <colgroup>
+                            <col style="width:240px;">
+                            <col>
+                        </colgroup>
+                        <tbody>
+                        <tr>
+                            <th>장바구니 이용안내</th>
+                            <td>
+                                <ul>
+                                    <li>[전체 상품 주문] 버튼을 누르시면 장바구니의 구분없이 선택된 모든 상품에 대한 주문/결제가 이루어집니다. </li>
+                                    <li>[상품명]상단 □를 체크 하시고 [선택 상품 주문] 버튼을 누르시면 선택된 상품에 대한 주문/결제가 이루어집니다.</li>
+                                    <li>[장바구니 비우기] 버튼을 누르시면 장바구니에 저장된 상품이 삭제됩니다.</li>
+                                    <li>장바구니에 담긴 상품은 14일 동안 보관됩니다. 보관된 상품은 14일 이후에 삭제되오니 장바구니에서 삭제된 경우 다시 장바구니에 담으시고 좀더 오래 보관 하고 싶으시면 상품명 우측의 ♡를 클릭하시면 [좋아요]코너에 보관됩니다.우측의 X를 누르시면 상품이 삭제 됩니다.</li>
+                                    <li>선택하신 상품의 수량을 변경하실 경우 숫자 좌우의 -,+버튼을 이용하시면 됩니다, 또한 옵션을 변경하실 경우 변경 후 [옵션변경] 버튼누르시면 색상 / 사이즈 변경이 가능 합니다.</li>
+                                </ul>
+                            </td>
+                        </tr>
+                        <!--
+                        <tr>
+                            <th>카드 행사 안내</th>
+                            <td>
+                                <span class="box_btn large white5"><a href="">무이지 할부 혜택 +</a></span>
+                                <span class="box_btn large white5"><a href="">카드사별 청구 할인 +</a></span>
+                            </td>
+                        </tr>
+                        -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

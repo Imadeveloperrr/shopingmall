@@ -26,6 +26,11 @@ public class Cart {
     private List<CartItem> cartItems = new ArrayList<>();
 
     public void addCartItem(CartItem cartItem) {
+        for (CartItem existingItem : cartItems) {
+            if (existingItem.getProduct().equals(cartItem.getProduct()) && existingItem.getProductSize().equals(cartItem.getProductSize())) {
+                existingItem.setQuantity(existingItem.getQuantity() + cartItem.getQuantity());
+            }
+        }
         cartItems.add(cartItem);
         cartItem.setCart(this);
     }
