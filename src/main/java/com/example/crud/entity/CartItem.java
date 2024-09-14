@@ -16,6 +16,7 @@ public class CartItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 장바구니
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart_id")
     private Cart cart;
@@ -24,6 +25,11 @@ public class CartItem {
     @JoinColumn(name = "product_size_id")
     private ProductSize productSize;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id")
+    private Product product;
+
+    //수량 정보
     @Column(nullable = false)
     private Integer quantity;
 }
