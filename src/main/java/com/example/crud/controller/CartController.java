@@ -21,6 +21,4 @@ public class CartController {
         return "fragments/productCart";
     }
 
-    
-
 }
