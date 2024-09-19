@@ -14,6 +14,8 @@ public interface CartService {
     void removeCartItem(Long memberId, Long cartItemId);
     // 장바구니 비우기
     void clearCart(Long memberId);
+    // 상품 수량 변경
+    void updateCartItemQuantity(Long memberId, Long cartItemId, int quantity);
     // Cart -> CartDTO 변환
     CartDto convertToCartDto(Cart cart);
 }

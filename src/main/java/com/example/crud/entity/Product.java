@@ -3,6 +3,9 @@ package com.example.crud.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.awt.*;
+import java.util.List;
+
 @Entity
 @Getter
 @Setter
@@ -48,6 +51,15 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductSize> productSizes;
+
+    public ProductSize getProductSizeBySize(String size) {
+        return productSizes.stream().filter(productSize -> productSize.getSize().equals(size))
+                .findFirst()
+                .orElse(null);
+    }
 
     public String getMemberEmail() {
         return member.getEmail();
