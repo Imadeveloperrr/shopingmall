@@ -28,7 +28,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartDto getCartByMemberId(Long memberId) {
-        Cart cart = cartRepository.findByMemberId(memberId)
+        Cart cart = cartRepository.findByMemberNumber(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("장바구니가 존재하지 않습니다."));
         return convertToCartDto(cart);
     }
@@ -38,7 +38,7 @@ public class CartServiceImpl implements CartService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-        Cart cart = cartRepository.findByMemberId(memberId)
+        Cart cart = cartRepository.findByMemberNumber(memberId)
                 .orElseGet(() -> createCart(memberId));
 
         ProductSize productSize = product.getProductSizeBySize(size);
@@ -74,7 +74,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public void removeCartItem(Long memberId, Long cartItemId) {
-        Cart cart = cartRepository.findByMemberId(memberId)
+        Cart cart = cartRepository.findByMemberNumber(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("장바구니를 찾을 수 없습니다."));
 
         CartItem cartItem = cart.getCartItems().stream()
@@ -89,7 +89,7 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public void updateCartItemQuantity(Long memberId, Long cartItemId, int quantity) {
-        Cart cart = cartRepository.findByMemberId(memberId)
+        Cart cart = cartRepository.findByMemberNumber(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("장바구니를 찾을 수 없습니다."));
 
         CartItem cartItem = cart.getCartItems().stream()
@@ -103,7 +103,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public void clearCart(Long memberId) {
-        Cart cart = cartRepository.findByMemberId(memberId)
+        Cart cart = cartRepository.findByMemberNumber(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("장바구니를 찾을 수 없습니다."));
         cart.getCartItems().clear();
         cartRepository.save(cart);
