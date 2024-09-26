@@ -1,7 +1,5 @@
 package com.example.crud.data.member.service.impl;
 
-
-import com.example.crud.data.member.dao.MemberDAO;
 import com.example.crud.data.member.dto.MemberDto;
 import com.example.crud.data.member.dto.MemberResponseDto;
 import com.example.crud.data.member.service.MemberService;
@@ -15,6 +13,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +32,7 @@ public class MemberServiceImpl implements MemberService {
     private final MemberRepository memberRepository;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final JwtTokenProvider jwtTokenProvider;
-    private final MemberDAO memberDao;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional // 새로운 @Transactional 어노테이션을 사용하여 기본 설정을 오버라이딩함. 즉, 이 메서드에서는 데이터를 변경할 수 있음.
     @Override
@@ -66,31 +65,30 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     @Override
     public MemberResponseDto signUp(MemberDto memberDto) {
-        if (memberDao.existsByEmail(memberDto.getEmail())) {
+        if (memberRepository.existsByEmail(memberDto.getEmail())) {
             throw new IllegalArgumentException("이미 사용 중인 이메일 입니다.");
-        } else if (memberDao.existsByNickname(memberDto.getNickname())) {
+        } else if (memberRepository.existsByNickname(memberDto.getNickname())) {
             throw new IllegalArgumentException("이미 사용 중인 닉네임 입니다.");
         }
 
         List<String> rolse = new ArrayList<>();
-        rolse.add("USER");
+        rolse.add("ROLE_USER");
         Member member = Member.builder()
                 .email(memberDto.getEmail())
                 .name(memberDto.getName())
-                .password(memberDto.getPassword())
+                .password(passwordEncoder.encode(memberDto.getPassword())) // 비밀번호 인코딩 기존 코딩 : memberDto.getPassword()
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .nickname(memberDto.getNickname())
                 .roles(rolse)
                 .build();
 
-        Member saveMember = memberDao.saveMember(member);
+        Member saveMember = memberRepository.save(member);
 
         MemberResponseDto memberResponseDto = MemberResponseDto.builder()
                 .number(saveMember.getNumber())
                 .email(saveMember.getEmail())
-                .name(saveMember.getName())
-                .password(saveMember.getPassword())
+                .name(saveMember.getName()) // 응답 DTO password 삭제했음.
                 .nickname(saveMember.getNickname())
                 .build();
         return memberResponseDto;
@@ -99,7 +97,7 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public MemberResponseDto getMember() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Member member = memberDao.getMember(authentication.getName())
+        Member member = memberRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new NoSuchElementException("Error : 존재하지 않는 이메일 주소"));
 
         return MemberResponseDto.builder()
@@ -118,14 +116,14 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public MemberResponseDto updateMemBer(MemberDto memberDto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Member member = memberDao.getMember(authentication.getName())
+        Member member = memberRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new NoSuchElementException("ERROR : 존재하지 않는 이메일"));
 
-        if (!member.getEmail().equals(memberDto.getEmail()) && memberDao.existsByEmail(memberDto.getEmail())) {
+        if (!member.getEmail().equals(memberDto.getEmail()) && memberRepository.existsByEmail(memberDto.getEmail())) {
             throw new IllegalArgumentException("이미 사용 중인 이메일 입니다.");
         }
 
-        if (!member.getNickname().equals(memberDto.getNickname()) && memberDao.existsByNickname(memberDto.getNickname())) {
+        if (!member.getNickname().equals(memberDto.getNickname()) && memberRepository.existsByNickname(memberDto.getNickname())) {
             throw new IllegalArgumentException("이미 사용 중인 닉네임 입니다.");
         }
 
@@ -133,18 +131,17 @@ public class MemberServiceImpl implements MemberService {
         member.setName(memberDto.getName());
         member.setEmail(memberDto.getEmail());
         member.setNickname(memberDto.getNickname());
-        member.setPassword(memberDto.getPassword());
+        member.setPassword(passwordEncoder.encode(memberDto.getPassword())); // 비밀번호 인코딩
         member.setAddress(memberDto.getAddress());
         member.setIntroduction(memberDto.getIntroduction());
         member.setPhoneNumber(memberDto.getPhoneNumber());
 
-        Member saveMember = memberDao.saveMember(member);
+        Member saveMember = memberRepository.save(member);
 
         return MemberResponseDto.builder()
                 .number(saveMember.getNumber())
                 .email(saveMember.getEmail())
-                .name(saveMember.getName())
-                .password(saveMember.getPassword())
+                .name(saveMember.getName()) // 패스워드 제거
                 .nickname(saveMember.getNickname())
                 .address(saveMember.getAddress())
                 .phoneNumber(saveMember.getPhoneNumber())
