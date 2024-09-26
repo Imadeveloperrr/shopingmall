@@ -80,16 +80,6 @@
                             <!-- //마이페이지 메뉴 --></div>
                     </div>
 
-                    <script>
-                        var clone = $("#my_menu a.active").clone();
-                        var info = $(".info#info").clone();
-                        var text = $("#my_menu a.active").text();
-                        $(".top .wrap_inner .navi").append(clone);
-                        $(".top .wrap_inner .title").append(text,info);
-                        $(".info#info").hover(function(){
-                            $(this).find(".ment").toggle();
-                        })
-                    </script>
                 </div>
                 <!-- 오더 스텝 -->
 
@@ -213,100 +203,7 @@
                                     </div>
                                 </form>
                             </li>
-                            <li class="">
-                                <form class="goods-form">
-                                    <div class="check">
-                                        <input type="checkbox" name="cart_idxs[]" data-today_go="1" value="59638330" class="cartIdxs checkYN" onclick="cartCalcul();">
-                                    </div>
-                                    <div class="img">
-                                        <a href="/shop/view.php?index_no=128418" target="_blank">
-                                            <img src="https://atimg.sonyunara.com/files/attrangs/goods/128418/1716186124_0.png" alt="(~L/링클프리)모먼트 히든버튼 셔츠 반팔 블라우스" data-img="1716186124_0.png">
-                                        </a>
 
-                                    </div>
-
-                                    <div class="tal">
-                                        <input type="hidden" name="cart_idx" value="59638330">
-                                        <input type="hidden" name="goods_idx" value="128418">
-                                        <input type="hidden" name="op1" value="499950">
-                                        <input type="hidden" name="op2" value="499965">
-
-                                        <input type="hidden" name="criteoPrice" value="17000"> <!-- 크리테오 스크립트용 2020-02-26 조영재 -->
-
-
-                                        <div>
-                                            <span style="color:#cf591f">[오늘출발] <img src="https://atimg.sonyunara.com/2023/renew/m/quick_m.png" style="height:15px; margin-right:5px; vertical-align: middle; transform:translateZ(0)"></span>									</div>
-                                        <div class="name">
-                                            <style>
-                                                .time-wrap{ width:300px; z-index:1;}
-                                            </style>
-                                            <div class="time-wrap" onclick="$(this).hide();">
-                                                <img src="https://atimg.sonyunara.com/attrangs/assets/web03/asset/img/common/quick_del_close_re2.png" alt="" style="    position: absolute; top: -20px; right: 0; width: auto; cursor:pointer;">
-                                                <div class="time-inner" style="padding:20px; ">
-                                                    <div style="position:relative">
-                                                        <div class="time-title">기간한정특가</div>
-                                                        <div class="bottom-line"></div>
-                                                    </div>
-                                                    <div class="time-time">
-                                                        <div>특가 남은 시간</div>
-                                                        <div class="promotionEndTime" style="letter-spacing:1px">21 : 01 : 02</div>
-                                                    </div>
-                                                </div>
-                                            </div>										<a href="/shop/view.php?index_no=128418" target="_blank">
-                                            bs7026 (~L/링클프리)모먼트 히든버튼 셔츠 반팔 블라우스										</a>
-
-                                            <div>
-                                                <img src="" style="height:20px; margin-right:5px;" onclick="$(this).closest('div.name').find('.time-wrap').show();">
-                                                <span style="font-size:13px; color:var(--season_color_11); font-weight:600">특가가</span>
-                                                <span class="attdaytime" style="font-size:13px; color:var(--season_color_11); font-weight:600">21시간 01분 1초</span><span style="font-size:13px; color:var(--season_color_11); font-weight:600">남았어요</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="opt">
-                                        <!-- DarkBeige / 미니 L -->
-                                        LightBeige(model) / Free									<div class="box_btn w80 h30 white5" style="display:block; margin-top:10px;  "><a href="javascript:" style="border-radius: 3px;" onclick="optViewToggle(this)">옵션변경</a></div>
-                                        <div class="optchgBox" style="display:none; position:absolute; top:50%; left:0; width:100%; height:100%; padding-top:42px; transform: translateY(-50%); background-color:#fff; z-index: 1;">
-                                            <label style="display: inline-block;width: 60px; text-align: center;">색상</label>
-                                            <select name="change_op1" onchange="GoodsProc.set_opt_cart();" data-goods_idx="128418" style="width: 100px;">
-                                                <option value="">- 선택 -</option>
-                                                <option data-opname="Black(model)" value="499962">Black(model)</option>
-                                                <option data-opname="LightBeige(model)" value="499950">LightBeige(model)</option>
-                                                <option data-opname="Peach(model)" value="499947">Peach(model)</option>
-                                                <option data-opname="Mint(model)" value="499956">Mint(model)</option>
-                                                <option data-opname="Navy(model)" value="499959">Navy(model)</option>
-                                                <option data-opname="SkyBlue(model)" value="499953">SkyBlue(model)</option>
-                                                <option data-opname="Ivory(model)" value="499944">Ivory(model)</option>
-                                            </select>
-
-                                            <label style="display: inline-block;width: 60px; text-align: center;">사이즈</label>
-                                            <select name="change_op2" style="width:100px;">
-                                                <option value="">- 선택 -</option>
-                                            </select>
-                                            <span class="box_btn w65 h40 fs13" style="width: 65px; margin-top: 2px;"><a href="javascript:" onclick="OrderProc.cartChange()" style="width: 100%; height: 100%; display: inline-block;">변경</a></span>
-                                            <span class="box_btn w65 h40 fs13 gray6" style="width: 65px; margin-top: 2px;"><a href="javascript:" style="width: 100%; height: 100%; display: inline-block;" onclick="optViewToggle(this)">취소</a></span>
-                                        </div>
-                                    </div>
-                                    <div class="opt_chg">
-                                        <div class="box_qty">
-                                            <a href="javascript:" class="ea_down" onclick="MemberProc.change_ea(-1);"></a>
-                                            <input type="text" name="ea" value="1" class="form_input" readonly="">
-                                            <a href="javascript:" class="ea_up" onclick="MemberProc.change_ea(+1);"></a>
-                                        </div>
-                                    </div>
-                                    <div class="price">
-                                        <del>28,000원</del>
-                                        <p style="font-weight:600">17,000원</p>
-                                    </div>
-                                    <div class="delete_wish">
-                                        <a href="javascript:" onclick="GoodsProc.set_wish_single(128418)" style="vertical-align: middle;">
-                                            <div class="wish-icon "></div>
-                                        </a>
-                                        <a href="javascript:" onclick="MemberProc.cart_del(59638330);">
-                                            <img src="https://atimg.sonyunara.com/attrangs/assets/web03/asset/img/shop/icon_del.png" alt="삭제">
-                                        </a>
-                                    </div>
-                                </form>
-                            </li>
                         </ul>
                         <ul class="btn" style="display:none;">
                             <li class="box_btn w115 h35 fs13 white2"><a href="javascript:" onclick="MemberProc.choose_buy();">선택상품 주문</a></li>
@@ -316,6 +213,8 @@
                             <li class="box_btn w115 h35 fs13 white2"><a href="javascript:" onclick="MemberProc.cart_all_like();">전체 좋아요</a></li>
                         </ul>
                     </div>
+
+
                     <div class="area_right">
                         <div class="box">
                             <div class="price-wrap">
@@ -328,7 +227,7 @@
                                         <span>80,000원이상</span> 구매시 <span>무료배송</span> 입니다.
                                     </div>
                                 </div>
-                                <div style="color:#333"><strong id="use_account">총 결제 예상금액 0</strong>원</div>
+                                <div style="color:#333"><strong id="use_account">0</strong>원</div>
                             </div>
                             <table class="tbl_order2" style="display:none;">
                                 <caption>결제금액</caption>
@@ -355,8 +254,8 @@
                                 <img src="//atimg.sonyunara.com/attrangs/2019/icon/i.gif" style='vertical-align: middle; margin-top: -3px;' />
                                 <span>80,000원이상</span> 구매시 <span>무료배송</span> 입니다.
                             </div> -->
-                            <div class="btn tac">
-                                                        <span style="background-color:var(--season_color_01); width:62px; padding:0; border:1px solid #cfcfcf; padding:7px 0;position:relative;text-align: center;display: inline-block;top:13px;" onclick="alert('선물하기는 모바일에서 이용가능합니다');" class="giftspanBtn">
+                            <div class="btn-custom tac">
+                                    <span style="background-color:var(--season_color_01); width:62px; padding:0; border:1px solid #cfcfcf; padding:7px 0;position:relative;text-align: center;display: inline-block;top:13px; height:62px" onclick="alert('선물하기는 모바일에서 이용가능합니다');" class="giftspanBtn">
                                     <!--
                                     <p style="position:absolute;top:-27px; left:0px;">
                                         <img src="https://atimg.sonyunara.com/attrangs/gift/gift_btn_over.png" alt="" style="height:28px;">
@@ -368,36 +267,6 @@
                                 </span>
                                 <span class="okbox"><a style="" href="javascript:" onclick="MemberProc.choose_buy();">선택상품 주문하기</a></span>
                                 <span class="canbox"><a href="javascript:" onclick="MemberProc.all_buy();">전체상품 주문하기</a></span>
-                                <center style="margin-top: 50px;">
-                                    <div class="pay npay_btn_pay">
-                                        <script data-cfasync="false" type="text/javascript">
-                                            function buy_nc(url){
-                                                GoodsProc.naver_buy();
-                                                //$('#cartform').attr('action','/shop/nc_buy_new_cart.php').attr('target','_blank').submit();
-                                                //$('#cartform').attr('action','/order/order_step1.php').attr('target','_self');
-                                            }
-                                        </script>
-                                        <script data-cfasync="false" type="text/javascript">//<![CDATA[
-                                        naver.NaverPayButton.apply({
-                                            BUTTON_KEY:"B510C2FB-8BB8-4A59-A6D6-AC6B3F07E2B4", // 네이버페이에서 할당받은 버튼 KEY 를 입력하세요.
-                                            TYPE: "C", // 템플릿을 확인하시고 원하는 타입의 버튼을 선택
-                                            COLOR: 1, // 버튼의 색 설정
-                                            COUNT: 2, // 버튼 개수 설정. 구매하기 버튼만 있으면 1, 찜하기 버튼과 함께 있으면 2를 입력한다.
-                                            ENABLE: "Y", // 품절 등과 같은 이유에 따라 버튼을 비활성화할 필요가 있을 경우
-                                            BUY_BUTTON_HANDLER: buy_nc, // 구매하기 버튼 이벤트 Handler 함수 등록, 품절인 경우 not_buy_nc 함수 사용
-                                            BUY_BUTTON_LINK_URL:"", // 링크 주소 (필요한 경우만 사용)
-                                            WISHLIST_BUTTON_HANDLER:"", // 찜하기 버튼 이벤트 Handler 함수 등록
-                                            WISHLIST_BUTTON_LINK_URL:"", // 찜하기 팝업 링크 주소
-                                            "":""
-                                        });
-                                        //]]>
-                                        </script><div id="NC_ID_172616376563013" class="npay_storebtn_bx npay_type_C_1_2">	<div id="NPAY_BUTTON_BOX_ID" class="npay_button_box ">		<div class="npay_button">			<div class="npay_text"><span class="npay_blind">NAVER 네이버 ID로 간편구매 네이버페이</span></div>				<table class="npay_btn_list" cellspacing="0" cellpadding="0"><tbody><tr>    <td class="npay_btn_item">        <a id="NPAY_BUY_LINK_IDNC_ID_172616376563013" href="#" class="npay_btn_link npay_btn_pay " style="box-sizing:content-box; " title="새창"><span class="npay_blind">네이버페이 구매하기</span></a>    </td>    <td class="npay_btn_item btn_width">        <a id="NPAY_WISH_LINK_IDNC_ID_172616376563013" href="#" class="npay_btn_link npay_btn_zzim " style="box-sizing:content-box; " title="새창"><span class="npay_blind">찜하기</span></a>    </td>    <td class="npay_btn_item btn_width">        <a id="NPAY_TALK_LINK_IDNC_ID_172616376563013" href="#" class="npay_btn_link npay_btn_talk " style="box-sizing:content-box; " title="새창"><span class="npay_blind">톡톡</span></a>    </td></tr></tbody></table>		</div>		<div id="NPAY_EVENT_ID" class="npay_event">			<a id="NPAY_PROMOTION_PREV_IDNC_ID_172616376563013" href="#" class="npay_more npay_more_prev"><span class="npay_blind">이전</span></a>			<p id="NPAY_PROMOTION_IDNC_ID_172616376563013" class="npay_event_text"><strong class="event_title">머니결제혜택</strong><a class="event_link" href="https://campaign2.naver.com/moneypay/" target="_blank" title="새창">최대 3%적립 + 소득공제</a></p>			<a id="NPAY_PROMOTION_NEXT_IDNC_ID_172616376563013" href="#" class="npay_more npay_more_next"><span class="npay_blind">다음</span></a>		</div>	</div></div>
-                                        <style>
-                                            /* .npay_type_D_1_1, .npay_type_D_2_1{width: 100% !important;} */
-                                        </style>
-                                    </div>
-                                </center>
-
                             </div>
                         </div>
 
@@ -430,15 +299,6 @@
                                     </ul>
                                 </td>
                             </tr>
-                            <!--
-                            <tr>
-                                <th>카드 행사 안내</th>
-                                <td>
-                                    <span class="box_btn large white5"><a href="">무이지 할부 혜택 +</a></span>
-                                    <span class="box_btn large white5"><a href="">카드사별 청구 할인 +</a></span>
-                                </td>
-                            </tr>
-                            -->
                             </tbody>
                         </table>
                     </div>

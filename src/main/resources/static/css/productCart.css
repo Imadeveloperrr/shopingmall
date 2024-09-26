@@ -5,7 +5,7 @@
 }
 
 #cnt {
-    padding: 50px 0px 0;
+    padding: 0px 0px 0;
     min-height: 800px;
     position: relative;
     font-family: 'Outfit', 'Noto Sans KR', Dotum, AppleGothic, Malgun Gothic, sans-serif;
@@ -107,7 +107,8 @@ a, a:hover, a:active, a:focus {
     text-align: center !important;
 }
 
-.btn.tac span {
+
+.btn-custom.tac span {
     display: inline-block;
     margin: 0 2px;
 }
@@ -125,117 +126,6 @@ a, a:hover, a:active, a:focus {
 }
 .npay_storebtn_bx {
     display: inline-block !important;
-}
-
-.npay_text {
-    display: block !important;
-    position: absolute !important;
-    top: 11px !important;
-    left: 0 !important;
-    width: 79px !important;
-    height: 36px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: url(../../images/button/2023_10_diff/npay_sp_text.png) no-repeat !important;
-    background-size: 180px auto !important;
-}
-
-.npay_button_box .npay_blind, .npay_button_box .yellow, .npay_button_box .blue, .npay_button_box2 .npay_blind, .npay_button_box2 .yellow .npay_button_box2 .blue {
-    overflow: hidden !important;
-    position: absolute !important;
-    width: 1px !important;
-    height: 1px !important;
-    margin: -1px !important;
-    padding: 0 !important;
-    clip: rect(0 0 0 0) !important;
-}
-
-.npay_btn_item:first-child .npay_btn_link {
-    margin: 0 !important;
-}
-.npay_btn_link.npay_btn_pay {
-    border-color: #00c05a !important;
-    background-image: url(../../images/button/2023_10_diff/npay_sp_payment.png) !important;
-    background-position: 50% 0 !important;
-    background-repeat: no-repeat !important;
-    background-size: 63px auto !important;
-}
-
-.npay_btn_link.npay_btn_zzim {
-    background-image: url(../../images/button/2023_10_diff/npay_sp_zzim.png) !important;
-    background-position: 50% 0 !important;
-    background-repeat: no-repeat !important;
-    background-size: 35px auto !important;
-}
-
-.npay_btn_link.npay_btn_talk {
-    background-image: url(../../images/button/2023_10_diff/npay_sp_talk.png) !important;
-    background-position: 50% 0 !important;
-    background-repeat: no-repeat !important;
-    background-size: 35px auto !important;
-}
-
-.npay_btn_link.npay_btn_zzim, .npay_btn_link.npay_btn_talk {
-    width: 35px !important;
-}
-
-.npay_btn_link {
-    display: block !important;
-    height: 35px !important;
-    margin: 0 0 0 3px !important;
-    padding: 0 !important;
-    border: 1px solid #ccc !important;
-    border-radius: 2px !important;
-    background-color: #fff !important;
-    background-repeat: no-repeat !important;
-    background-repeat: no-repeat !important;
-    text-align: center !important;
-    text-decoration: none !important;
-}
-
-.npay_btn_list {
-    display: table !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    table-layout: fixed !important;
-    list-style: none !important;
-}
-
-.npay_btn_item {
-    display: table-cell !important;
-    height: 37px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    text-align: left !important;
-}
-
-.npay_btn_item.btn_width {
-    width: 40px !important;
-}
-
-.npay_btn_list tr {
-    display: table-row !important;
-}
-
-.npay_btn_list tbody {
-    display: table-row-group !important;
-}
-
-.npay_more_prev {
-    right: 15px !important;
-    background-position: 0 0 !important;
-}
-.npay_more {
-    position: absolute !important;
-    top: 5px !important;
-    width: 16px !important;
-    height: 16px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: url(../../images/button/2023_10_diff/npay_sp_more.png) no-repeat !important;
-    background-size: 31px auto !important;
-    text-decoration: none !important;
 }
 
 .clear {
@@ -327,7 +217,7 @@ a, a:hover, a:active, a:focus {
     border-radius: 0 !important;
 }
 
-.btn.tac .canbox a {
+.btn-custom.tac .canbox a {
     display: inline-block;
     font-size: 14px;
     padding: 20px 0;
@@ -339,7 +229,7 @@ a, a:hover, a:active, a:focus {
     border-radius: 0;
 }
 
-.btn.tac .okbox input, .btn.tac .okbox a {
+.btn-custom.tac .okbox input, .btn-custom.tac .okbox a {
     display: inline-block;
     font-size: 14px;
     padding: 20px 0;
@@ -396,21 +286,14 @@ input[type="checkbox"] {
     position: relative;
 }
 
-#cart .area_left .btn {
+#cart .area_left .btn-custom {
     padding-top: 20px;
 }
 
-.btn {
+.btn-custom {
     margin-top: 25px;
 }
 
-#cart .checkYN {
-    background: url(https://atimg.sonyunara.com/2022/member/wish_check.png);
-    width: 20px;
-    height: 20px;
-    background-size: cover;
-    display: inline-block;
-}
 
 #cart .list li .goods-form > div {
     display: table-cell;
@@ -421,12 +304,18 @@ input[type="checkbox"] {
     width: 100%;
 }
 
+#cart .checkYN:checked {
+    background: url(https://atimg.sonyunara.com/2022/member/wish_check_on.png);
+    background-size: cover;
+    cursor: pointer;
+}
 #cart .checkYN {
     background: url(https://atimg.sonyunara.com/2022/member/wish_check.png);
     width: 20px;
     height: 20px;
     background-size: cover;
     display: inline-block;
+    cursor: pointer;
 }
 
 #cart .list li .goods-form {
@@ -898,8 +787,6 @@ select {
 
 #cart .area_right .box .deliveryInfo {
     position: relative;
-    padding: 23px 0 31px;
-    border-top: 1px solid #dfdfdf;
     color: #888;
     font-family: Malgun Gothic, '맑은 고딕';
     font-size: 14px;
