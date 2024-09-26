@@ -6,14 +6,19 @@ import com.example.crud.data.cart.service.CartService;
 import com.example.crud.entity.*;
 import com.example.crud.repository.CartItemRepository;
 import com.example.crud.repository.CartRepository;
+import com.example.crud.repository.MemberRepository;
 import com.example.crud.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,18 +28,29 @@ import java.util.stream.Collectors;
 public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
-    private final CartItemRepository cartItemRepository;
+    private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
 
+    private Long getAuthenticatedMemberId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
+            throw new IllegalStateException("로그인이 필요합니다");
+        }
+        String userEmail = authentication.getName();
+        Member member = memberRepository.findByEmail(userEmail).orElseThrow(() -> new NoSuchElementException("ERROR : 존재하지 않는 사용자입니다."));
+        return member.getNumber();
+    }
+
     @Override
-    public CartDto getCartByMemberId(Long memberId) {
-        Cart cart = cartRepository.findByMemberNumber(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("장바구니가 존재하지 않습니다."));
+    public CartDto getCartByAuthenticateMember() {
+        Long memberId = getAuthenticatedMemberId();
+        Cart cart = cartRepository.findByMemberNumber(memberId).orElseGet(() -> createCart(memberId));
         return convertToCartDto(cart);
     }
 
     @Override
-    public void addCartItem(Long memberId, Long productId, String size, int quantity) {
+    public void addCartItem(Long productId, String size, int quantity) {
+        Long memberId = getAuthenticatedMemberId();
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
@@ -73,7 +89,8 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public void removeCartItem(Long memberId, Long cartItemId) {
+    public void removeCartItem(Long cartItemId) {
+        Long memberId = getAuthenticatedMemberId();
         Cart cart = cartRepository.findByMemberNumber(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("장바구니를 찾을 수 없습니다."));
 
@@ -88,7 +105,8 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public void updateCartItemQuantity(Long memberId, Long cartItemId, int quantity) {
+    public void updateCartItemQuantity(Long cartItemId, int quantity) {
+        Long memberId = getAuthenticatedMemberId();
         Cart cart = cartRepository.findByMemberNumber(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("장바구니를 찾을 수 없습니다."));
 
@@ -106,7 +124,8 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public void clearCart(Long memberId) {
+    public void clearCart() {
+        Long memberId = getAuthenticatedMemberId();
         Cart cart = cartRepository.findByMemberNumber(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("장바구니를 찾을 수 없습니다."));
         cart.getCartItems().clear();
