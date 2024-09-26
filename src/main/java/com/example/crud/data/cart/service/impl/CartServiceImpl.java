@@ -97,6 +97,10 @@ public class CartServiceImpl implements CartService {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("장바구니 항목을 찾을 수 없습니다."));
 
+        if (quantity >= 0) {
+            throw new IllegalArgumentException("상품 수량은 0보다 커야합니다.");
+        }
+
         cartItem.setQuantity(quantity);
         cartRepository.save(cart);
     }
@@ -106,7 +110,6 @@ public class CartServiceImpl implements CartService {
         Cart cart = cartRepository.findByMemberNumber(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("장바구니를 찾을 수 없습니다."));
         cart.getCartItems().clear();
-        cartRepository.save(cart);
     }
 
     @Override
