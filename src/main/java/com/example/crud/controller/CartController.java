@@ -20,8 +20,8 @@ public class CartController {
     private final CartService cartService;
 
     @GetMapping
-    public String cart(@RequestParam("memberId") Long memberId, Model model) {
-        CartDto cartDto = cartService.getCartByMemberId(memberId);
+    public String cart(Model model) {
+        CartDto cartDto = cartService.getCartByAuthenticateMember();
         model.addAttribute("cart", cartDto);
         return "fragments/productCart";
     }

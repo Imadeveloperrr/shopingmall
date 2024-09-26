@@ -100,6 +100,7 @@ a {
     -o-transition: all 0.3s;
     transition: all 0.3s;
     border: 1px solid #e0e0e0;
+    color:black;
     background-color: #fff;
 }
 

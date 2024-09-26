@@ -1,5 +1,7 @@
 package com.example.crud.controller;
 
+import com.example.crud.data.member.dto.MemberResponseDto;
+import com.example.crud.data.member.service.MemberService;
 import com.example.crud.data.product.dto.ProductDto;
 import com.example.crud.data.product.dto.ProductResponseDto;
 import com.example.crud.data.product.service.ProductService;
@@ -22,6 +24,7 @@ public class ProductController {
 
     private static final Logger log = LoggerFactory.getLogger(ProductController.class);
     private final ProductService productService;
+    private final MemberService memberService;
 
     @GetMapping
     public String product() {
@@ -83,6 +86,9 @@ public class ProductController {
     public String detail(@PathVariable Long id, Model model) {
         ProductResponseDto productResponseDto = productService.getProductById(id);
         model.addAttribute("product", productResponseDto);
+
+        MemberResponseDto memberResponseDto = memberService.getMember();
+        model.addAttribute("member", memberResponseDto);
         return "fragments/productDetail";
     }
 }

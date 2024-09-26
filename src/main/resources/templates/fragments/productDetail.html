@@ -33,9 +33,11 @@
 
             <div class="product-info-action">
                 <a th:href="@{/product/buy(id=${product.number})}" class="product-info-action-buy">Buy it Now</a>
-                <button type="button" id="actionCart" class="product-info-action-cart">
+
+                <a th:href="@{/cart}" class="product-info-action-cart">
                     <i class="fas fa-shopping-cart"></i>
-                    Cart</button>
+                    Cart
+                </a>
                 <button type="button" id="wishList" class="product-info-action-wish">
                     <i class="fas fa-heart"></i>
                     Wish List</button>
