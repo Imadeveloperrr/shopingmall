@@ -31,38 +31,36 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 // Exception Handling 설정
-                .exceptionHandling(this::configureExceptionHandling)
-                .and()
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
+                        .accessDeniedHandler(new CustomAccessDeniedHandler())
+                )
 
-                .logout()
-                    .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-                    .logoutSuccessUrl("/")
-                    .invalidateHttpSession(true)
-                    .deleteCookies("accessToken", "refreshToken")
-                .and()
+                .logout(logout -> logout
+                        .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                        .logoutSuccessUrl("/")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("accessToken", "refreshToken")
+                )
+
                 // 권한 설정
-                .authorizeHttpRequests()
-                    // 해당 API에 대해서는 모든 요청을 허가.
-                    .requestMatchers("/").permitAll() //
-                    .requestMatchers("/register").permitAll() //
-                    .requestMatchers("/login").permitAll() //
-                    .requestMatchers("/logout").permitAll()
-
-                    // USER 권한이 있어야 요청할 수 있음.
-                    .requestMatchers("/mypage/**").hasRole("USER")
-                    .requestMatchers("/product/**").hasRole("USER")
-                    //  정적 파일에 대한 권한 허용을 설정
-                    .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
-                    // 이 밖에 모든 요청에 대해서 인증을 필요로 한다는 설정.
-                    .anyRequest().authenticated()
-                .and()
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/").permitAll()
+                        .requestMatchers("/register").permitAll()
+                        .requestMatchers("/login").permitAll()
+                        .requestMatchers("/logout").permitAll()
+                        .requestMatchers("/mypage/**").hasRole("USER")
+                        .requestMatchers("/product/**").hasRole("USER")
+                        .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+                        .anyRequest().authenticated()
+                )
 
                 // JWT 인증을 위하여 직접 구현한 필터를 UsernamePasswordAuthenticationFilter 전에 실행.
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
-    private void configureExceptionHandling(ExceptionHandlingConfigurer<HttpSecurity> exceptions) throws Exception {
+    private void configureExceptionHandling(ExceptionHandlingConfigurer<HttpSecurity> exceptions) {
         exceptions
                 .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
                 .accessDeniedHandler(new CustomAccessDeniedHandler());
