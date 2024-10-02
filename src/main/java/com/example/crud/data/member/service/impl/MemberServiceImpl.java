@@ -104,7 +104,6 @@ public class MemberServiceImpl implements MemberService {
                 .number(member.getNumber())
                 .email(member.getEmail())
                 .name(member.getName())
-                .password(member.getPassword())
                 .nickname(member.getNickname())
                 .address(member.getAddress())
                 .phoneNumber(member.getPhoneNumber())

@@ -5,8 +5,10 @@ import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,11 +25,13 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 // Rest API 이므로 basic auth 및 csrf 보안을 사용하지 않음.
-                .httpBasic().disable()
-                .csrf().disable()
-
+                .httpBasic(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
                 // JWT를 사용하기 때문에 세션을 사용하지 않음.
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // Exception Handling 설정
+                .exceptionHandling(this::configureExceptionHandling)
                 .and()
 
                 .logout()
@@ -45,10 +49,8 @@ public class SecurityConfig {
                     .requestMatchers("/logout").permitAll()
 
                     // USER 권한이 있어야 요청할 수 있음.
-                    .requestMatchers("/mypage").hasRole("USER")
-                    .requestMatchers("/mypage/profileEdit").hasRole("USER")
-                    .requestMatchers("/product").hasRole("USER")
-                    .requestMatchers("/product/add").hasRole("USER")
+                    .requestMatchers("/mypage/**").hasRole("USER")
+                    .requestMatchers("/product/**").hasRole("USER")
                     //  정적 파일에 대한 권한 허용을 설정
                     .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                     // 이 밖에 모든 요청에 대해서 인증을 필요로 한다는 설정.
@@ -60,6 +62,11 @@ public class SecurityConfig {
                 .build();
     }
 
+    private void configureExceptionHandling(ExceptionHandlingConfigurer<HttpSecurity> exceptions) throws Exception {
+        exceptions
+                .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
+                .accessDeniedHandler(new CustomAccessDeniedHandler());
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
