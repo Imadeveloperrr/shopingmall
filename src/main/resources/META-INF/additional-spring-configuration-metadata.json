@@ -1,0 +1,13 @@
+{
+  "properties": [
+    {
+      "name": "jwt.access-token-validity-in-seconds",
+      "type": "java.lang.String",
+      "description": "Description for jwt.access-token-validity-in-seconds."
+    },
+    {
+      "name": "jwt.refresh-token-validity-in-seconds",
+      "type": "java.lang.String",
+      "description": "Description for jwt.refresh-token-validity-in-seconds."
+    }
+  ] }
