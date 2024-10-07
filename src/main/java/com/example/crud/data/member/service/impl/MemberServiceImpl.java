@@ -3,8 +3,11 @@ package com.example.crud.data.member.service.impl;
 import com.example.crud.data.member.dto.MemberDto;
 import com.example.crud.data.member.dto.MemberResponseDto;
 import com.example.crud.data.member.service.MemberService;
+import com.example.crud.data.token.TokenRequestDto;
 import com.example.crud.entity.Member;
+import com.example.crud.entity.RefreshToken;
 import com.example.crud.repository.MemberRepository;
+import com.example.crud.repository.RefreshTokenRepository;
 import com.example.crud.security.JwtToken;
 import com.example.crud.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +36,7 @@ public class MemberServiceImpl implements MemberService {
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Transactional // 새로운 @Transactional 어노테이션을 사용하여 기본 설정을 오버라이딩함. 즉, 이 메서드에서는 데이터를 변경할 수 있음.
     @Override
@@ -59,7 +63,36 @@ public class MemberServiceImpl implements MemberService {
        - 인증이 성공하면, 인증된 사용자 정보를 담고 있는 Authentication 객체가 반환됩니다.
        - JwtTokenProvider의 generateToken 메서드를 사용하여 이 인증 정보를 기반으로 JWT 토큰을 생성합니다.
     */
+
+        RefreshToken refreshToken = RefreshToken.builder() // refresh Token Save
+                .key(authentication.getName())
+                .token(jwtToken.getRefreshToken())
+                .build();
+        refreshTokenRepository.save(refreshToken);
+
         return jwtToken;
+    }
+
+    @Override
+    public JwtToken reissue(TokenRequestDto tokenRequestDto) {
+        if (!jwtTokenProvider.validateToken(tokenRequestDto.getRefreshToken())) {
+            throw new RuntimeException("Invalid refresh token");
+        }
+
+        Authentication authentication = jwtTokenProvider.getAuthentication(tokenRequestDto.getAccessToken());
+
+        RefreshToken refreshToken = refreshTokenRepository.findById(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("로그아웃된 사용자입니다."));
+
+        if (!refreshToken.getToken().equals(tokenRequestDto.getRefreshToken()))
+            throw new RuntimeException("토근의 유저정보가 일치하지 않습니다.");
+
+        JwtToken newJwtToken = jwtTokenProvider.generateToken(authentication);
+
+        refreshToken.updateToken(newJwtToken.getRefreshToken());
+        refreshTokenRepository.save(refreshToken);
+
+        return newJwtToken;
     }
 
     @Transactional
