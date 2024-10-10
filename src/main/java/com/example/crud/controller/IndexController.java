@@ -67,6 +67,8 @@ public class IndexController {
         return new JwtToken(jwtToken.getGrantType(), jwtToken.getAccessToken(), jwtToken.getRefreshToken());
     }
 
+
+
     @GetMapping("/register")
     public String register() {
         return "fragments/register";

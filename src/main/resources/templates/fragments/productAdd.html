@@ -33,6 +33,12 @@
 
                         <!-- Text input -->
                         <div class="form-outline mb-4">
+                            <input type="text" id="color" name="color" class="form-control" />
+                            <label class="form-label" for="color">상품 색상</label>
+                        </div>
+
+                        <!-- Text input -->
+                        <div class="form-outline mb-4">
                             <input type="number" id="price" name="price" class="form-control" />
                             <label class="form-label" for="price">가격(원화)</label>
                         </div>
@@ -96,6 +102,7 @@
         const fields = {
             name: '상품 이름',
             brand: '상품 브랜드',
+            color: '상품 색상',
             price: '가격',
             description: '상품 설명',
             category: '카테고리',
