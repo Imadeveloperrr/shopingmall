@@ -13,6 +13,7 @@ import lombok.*;
 public class RefreshToken {
 
     @Id
+    @Column(name = "refresh_key")
     private String key; // 회원의 Email or ID
 
     @Column(nullable = false)

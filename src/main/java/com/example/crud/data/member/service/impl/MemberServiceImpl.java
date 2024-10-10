@@ -1,5 +1,7 @@
 package com.example.crud.data.member.service.impl;
 
+import com.example.crud.data.exception.CustomException;
+import com.example.crud.data.exception.ErrorCode;
 import com.example.crud.data.member.dto.MemberDto;
 import com.example.crud.data.member.dto.MemberResponseDto;
 import com.example.crud.data.member.service.MemberService;
@@ -75,20 +77,27 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public JwtToken reissue(TokenRequestDto tokenRequestDto) {
+
+        // 1. Refresh Token 검증
         if (!jwtTokenProvider.validateToken(tokenRequestDto.getRefreshToken())) {
-            throw new RuntimeException("Invalid refresh token");
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
+        // 2. Access Token에서 Authentication 객체 가져오기
         Authentication authentication = jwtTokenProvider.getAuthentication(tokenRequestDto.getAccessToken());
 
+        // 3. 저장소에서 Refresh Token 가져오기
         RefreshToken refreshToken = refreshTokenRepository.findById(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("로그아웃된 사용자입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REFRESH_TOKEN));
 
+        // 4. Refresh Token 일치 여부 확인
         if (!refreshToken.getToken().equals(tokenRequestDto.getRefreshToken()))
-            throw new RuntimeException("토근의 유저정보가 일치하지 않습니다.");
+            throw new CustomException(ErrorCode.MISMATCH_REFRESH_TOKEN);
 
+        // 5. 새로운 토큰 생성
         JwtToken newJwtToken = jwtTokenProvider.generateToken(authentication);
 
+        // 6. Refresh Token Update
         refreshToken.updateToken(newJwtToken.getRefreshToken());
         refreshTokenRepository.save(refreshToken);
 
