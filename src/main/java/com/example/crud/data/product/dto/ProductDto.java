@@ -17,6 +17,7 @@ public class ProductDto {
     private int price;
     private String brand;
     private String intro;
+    private String color;
     private String description;
     private String category;
 }
