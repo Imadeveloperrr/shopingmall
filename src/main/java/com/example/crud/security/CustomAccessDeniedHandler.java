@@ -8,6 +8,10 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 
 import java.io.IOException;
 
+/*
+인증된 사용자가 권한이 부족하여 접근이 거부될 때 호출.
+403 Forbidden 상태 코드를 반환하고, 에러 메시지를 JSON 형식으로 제공.
+ */
 public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
     @Override
