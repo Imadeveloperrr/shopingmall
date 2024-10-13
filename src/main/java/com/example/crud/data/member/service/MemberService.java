@@ -6,7 +6,7 @@ import com.example.crud.data.token.TokenRequestDto;
 import com.example.crud.security.JwtToken;
 
 public interface MemberService {
-    JwtToken signIn(String username, String password);
+    JwtToken signIn(String username, String password, boolean rememberMe);
 
     MemberResponseDto signUp(MemberDto memberDto);
 

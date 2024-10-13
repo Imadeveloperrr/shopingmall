@@ -19,6 +19,9 @@ public class RefreshToken {
     @Column(nullable = false)
     private String token;
 
+    @Column(nullable = false)
+    private boolean rememberMe;
+
     public void updateToken(String newToken) {
         this.token = newToken;
     }

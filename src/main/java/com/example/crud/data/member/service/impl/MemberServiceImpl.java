@@ -42,7 +42,7 @@ public class MemberServiceImpl implements MemberService {
 
     @Transactional // 새로운 @Transactional 어노테이션을 사용하여 기본 설정을 오버라이딩함. 즉, 이 메서드에서는 데이터를 변경할 수 있음.
     @Override
-    public JwtToken signIn(String username, String password) {
+    public JwtToken signIn(String username, String password, boolean rememberMe) {
         // 1. 사용자 이름과 비밀번호를 기반으로 UsernamePasswordAuthenticationToken 객체 생성
         // 이 단계에서의 authenticationToken은 아직 인증되지 않았으므로, authenticated 값이 false입니다.
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
@@ -57,7 +57,7 @@ public class MemberServiceImpl implements MemberService {
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
 
         // 3. 인증된 Authentication 객체를 기반으로 JWT 토큰을 생성합니다.
-        JwtToken jwtToken = jwtTokenProvider.generateToken(authentication);
+        JwtToken jwtToken = jwtTokenProvider.generateToken(authentication, rememberMe);
 
     /* 요약:
        - UsernamePasswordAuthenticationToken 객체에 사용자 이름과 비밀번호를 입력하여 Authentication 객체를 생성합니다.
@@ -69,6 +69,7 @@ public class MemberServiceImpl implements MemberService {
         RefreshToken refreshToken = RefreshToken.builder() // refresh Token Save
                 .key(authentication.getName())
                 .token(jwtToken.getRefreshToken())
+                .rememberMe(rememberMe)
                 .build();
         refreshTokenRepository.save(refreshToken);
 
@@ -95,7 +96,8 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(ErrorCode.MISMATCH_REFRESH_TOKEN);
 
         // 5. 새로운 토큰 생성
-        JwtToken newJwtToken = jwtTokenProvider.generateToken(authentication);
+        boolean rememberMe = refreshToken.isRememberMe();
+        JwtToken newJwtToken = jwtTokenProvider.generateToken(authentication, rememberMe);
 
         // 6. Refresh Token Update
         refreshToken.updateToken(newJwtToken.getRefreshToken());
@@ -108,13 +110,13 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public MemberResponseDto signUp(MemberDto memberDto) {
         if (memberRepository.existsByEmail(memberDto.getEmail())) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일 입니다.");
+            throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
         } else if (memberRepository.existsByNickname(memberDto.getNickname())) {
-            throw new IllegalArgumentException("이미 사용 중인 닉네임 입니다.");
+            throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
         }
 
-        List<String> rolse = new ArrayList<>();
-        rolse.add("ROLE_USER");
+        List<String> roles = new ArrayList<>();
+        roles.add("ROLE_USER");
         Member member = Member.builder()
                 .email(memberDto.getEmail())
                 .name(memberDto.getName())
@@ -122,7 +124,7 @@ public class MemberServiceImpl implements MemberService {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .nickname(memberDto.getNickname())
-                .roles(rolse)
+                .roles(roles)
                 .build();
 
         Member saveMember = memberRepository.save(member);
@@ -161,11 +163,11 @@ public class MemberServiceImpl implements MemberService {
                 .orElseThrow(() -> new NoSuchElementException("ERROR : 존재하지 않는 이메일"));
 
         if (!member.getEmail().equals(memberDto.getEmail()) && memberRepository.existsByEmail(memberDto.getEmail())) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일 입니다.");
+            throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
         }
 
         if (!member.getNickname().equals(memberDto.getNickname()) && memberRepository.existsByNickname(memberDto.getNickname())) {
-            throw new IllegalArgumentException("이미 사용 중인 닉네임 입니다.");
+            throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
         }
 
         member.setUpdatedAt(LocalDateTime.now());

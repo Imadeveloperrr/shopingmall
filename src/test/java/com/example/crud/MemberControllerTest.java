@@ -76,6 +76,7 @@ public class MemberControllerTest {
         MemberDto memberRequestDto = MemberDto.builder()
                 .email("ddooochii@gmail.com")
                 .password("1234")
+                .rememberMe(true)
                 .build();
 
         // 로그인 요청
@@ -84,7 +85,7 @@ public class MemberControllerTest {
         ResponseEntity<JwtToken> response = testRestTemplate.postForEntity(url, memberRequestDto, JwtToken.class);
         assertEquals(response.getStatusCode(), HttpStatus.OK);*/
 
-        JwtToken jwtToken = memberService.signIn(memberRequestDto.getEmail(), memberRequestDto.getPassword());
+        JwtToken jwtToken = memberService.signIn(memberRequestDto.getEmail(), memberRequestDto.getPassword(), memberRequestDto.isRememberMe());
 
 
         // API 요청 설정

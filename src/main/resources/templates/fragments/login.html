@@ -78,7 +78,7 @@
         var formData = {
             email: document.getElementById('email').value,
             password: document.getElementById('password').value,
-            rememberMe: document.getElementById('rememberMe').value
+            rememberMe: document.getElementById('rememberMe').checked
         };
 
         if (!validateEmail(formData.email)) {
@@ -100,7 +100,9 @@
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error('로그인 실패. ' + response.statusText);
+                return response.json().then(errorData => {
+                    throw new Error(errorData.message || '로그인 실패');
+                });
             }
             return response.json();
         })
@@ -110,11 +112,8 @@
         .catch(error => {
             // 에러처리 로직
             console.error('로그인 에러 : ', error);
-            if (error.response) {
-                console.error('응답 상태 : ', error.response.status);
-                console.error('응답 데이터 : ', error.response.data);
-            }
-        })
+            showError(error.message);
+        });
     });
 
     function validateEmail(email) {
