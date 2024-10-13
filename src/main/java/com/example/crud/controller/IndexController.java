@@ -10,16 +10,20 @@ import com.example.crud.entity.Product;
 import com.example.crud.security.JwtToken;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -49,22 +53,33 @@ public class IndexController {
 
     @PostMapping(value = "/login")
     @ResponseBody
-    public JwtToken loginPost(@RequestBody MemberDto memberDto, HttpServletResponse response, Model model) {
-        String email = memberDto.getEmail();
-        String password = memberDto.getPassword();
-        JwtToken jwtToken = memberService.signIn(email, password);
-        log.info("request email = {}, password = {}", email, password);
-        log.info("JwtToken accessToken = {}, refreshToken = {}", jwtToken.getAccessToken(), jwtToken.getRefreshToken());
+    public ResponseEntity<?> loginPost(@RequestBody MemberDto memberDto, HttpServletResponse response, Model model) {
+        try {
+            String email = memberDto.getEmail();
+            String password = memberDto.getPassword();
+            boolean rememberMe = memberDto.isRememberMe();
 
-        Cookie refreshCookie = new Cookie("refreshToken", jwtToken.getRefreshToken());
-        refreshCookie.setHttpOnly(true);
-        response.addCookie(refreshCookie); // refreshToken은 쿠키에 저장
+            JwtToken jwtToken = memberService.signIn(email, password, rememberMe);
 
-        Cookie accessToken = new Cookie("accessToken", jwtToken.getAccessToken());
-        accessToken.setHttpOnly(true);
-        response.addCookie(accessToken);
+            log.info("로그인 성공 : email = {}, rememberMe = {}", email, rememberMe);
 
-        return new JwtToken(jwtToken.getGrantType(), jwtToken.getAccessToken(), jwtToken.getRefreshToken());
+            Cookie refreshCookie = new Cookie("refreshToken", jwtToken.getRefreshToken());
+            refreshCookie.setHttpOnly(true);
+            if (rememberMe)
+                refreshCookie.setMaxAge(60 * 60 * 24 * 7); // 로그인유지 체크 했을시 7일간 유지
+            response.addCookie(refreshCookie); // refreshToken은 쿠키에 저장
+
+            Cookie accessToken = new Cookie("accessToken", jwtToken.getAccessToken());
+            accessToken.setHttpOnly(true);
+            if (rememberMe)
+                refreshCookie.setMaxAge(60 * 60 * 24 * 7); // 로그인유지 체크 했을시 7일간 유지
+            response.addCookie(accessToken);
+
+            //return new JwtToken(jwtToken.getGrantType(), jwtToken.getAccessToken(), jwtToken.getRefreshToken());
+            return ResponseEntity.ok().body("로그인 성공");
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("아이디 또는 비밀번호가 다릅니다.");
+        }
     }
 
 
@@ -76,7 +91,11 @@ public class IndexController {
 
     @PostMapping("/register") //
     @ResponseBody
-    public ResponseEntity<?> registerPost(@RequestBody MemberDto memberDto) { // AJAX 요청은 ResponseEntity 객체가 GOOD.
+    public ResponseEntity<?> registerPost(@Valid @RequestBody MemberDto memberDto, BindingResult bindingResult) { // AJAX 요청은 ResponseEntity 객체가 GOOD.
+        if(bindingResult.hasErrors()) {
+            String errorMessage = bindingResult.getAllErrors().get(0).getDefaultMessage();
+            return ResponseEntity.badRequest().body(errorMessage);
+        }
         MemberResponseDto memberResponseDto = memberService.signUp(memberDto);
         return ResponseEntity.ok().body(memberResponseDto); // HTTP 상태 코드와 응답 본문 설정
     }

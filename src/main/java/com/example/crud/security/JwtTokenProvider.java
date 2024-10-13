@@ -25,6 +25,13 @@ public class JwtTokenProvider {
     private final long accessTokenValidityInMilliseconds;
     private final long refreshTokenValidityInMilliseconds;
 
+    private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 30;            // 30분
+    private static final long REFRESH_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24 * 7;  // 7일
+
+    private static final long ACCESS_TOKEN_EXPIRE_TIME_REMEMBER_ME = 1000 * 60 * 60 * 24 * 7; // 7일
+    private static final long REFRESH_TOKEN_EXPIRE_TIME_REMEMBER_ME = 1000 * 60 * 60 * 24 * 14; // 14일
+
+
     public JwtTokenProvider(
             @Value("${jwt.secret}") String secretKey,
             @Value("${jwt.access-token-validity-in-seconds}") long accessTokenValidityInSeconds,
@@ -37,28 +44,36 @@ public class JwtTokenProvider {
     }
 
     // Member 정보를 가지고 AccessToken, RefreshToken을 생성하는 메서드.
-    public JwtToken generateToken(Authentication authentication) {
+    public JwtToken generateToken(Authentication authentication, boolean rememberMe) {
         String authorities = authentication.getAuthorities().stream()// 권한 컬렉션을 가져와서 stream으로 변환
                 .map(GrantedAuthority::getAuthority) // 각 권한 객체의 getAuthority 메서드를 호출하여 권한이름이름 가져오기
                 .collect(Collectors.joining(",")); // 스트림의 각 요소를 , 구분하여 결합
 
         long now = (new Date()).getTime();
+        Date accessTokenExpiresIn;
+        Date refreshTokenExpiresIn;
+
+        if (rememberMe) {
+            accessTokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRE_TIME_REMEMBER_ME);
+            refreshTokenExpiresIn = new Date(now + REFRESH_TOKEN_EXPIRE_TIME_REMEMBER_ME);
+        } else {
+            accessTokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRE_TIME);
+            refreshTokenExpiresIn = new Date(now + REFRESH_TOKEN_EXPIRE_TIME);
+        }
 
         // Access Token 생성
-        Date accessTokenExpiresln = new Date(now + accessTokenValidityInMilliseconds);
         String accessToken = Jwts.builder()
                 .setSubject(authentication.getName())
                 .claim("auth", authorities)
-                .setExpiration(accessTokenExpiresln)
-                .signWith(key, SignatureAlgorithm.HS256)
+                .setExpiration(accessTokenExpiresIn)
+                .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
 
         // Refresh Token 생성
-        Date refreshTokenExpiresIn = new Date(now + refreshTokenValidityInMilliseconds);
         String refreshToken = Jwts.builder()
                 .setSubject(authentication.getName())
                 .setExpiration(refreshTokenExpiresIn)
-                .signWith(key, SignatureAlgorithm.HS256)
+                .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
 
 
@@ -67,7 +82,6 @@ public class JwtTokenProvider {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
-
     }
 
     // Jwt 토큰을 복호화하여 토큰에 들어있는 정보를 꺼내는 메서드.

@@ -6,4 +6,5 @@ import lombok.Data;
 public class TokenRequestDto {
     private String accessToken;
     private String refreshToken;
+    private boolean rememberMe;
 }
