@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.crud.mapper.ProductMapper">
+
+    <resultMap id="ProductResultMap" type="com.example.crud.data.product.dto.ProductResponseDto">
+        <!-- 필드 매핑 -->
+        <result property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="price" column="price"/>
+        <result property="description" column="description"/>
+        <result property="imageUrl" column="image_url"/>
+        <!-- 필요한 추가 필드 -->
+    </resultMap>
+
+    <select id="findAllProducts" resultMap="ProductResultMap">
+        SELECT * FROM product
+    </select>
+
+    <select id="findProductsByMemberId" parameterType="long" resultMap="ProductResultMap">
+        SELECT * FROM product WHERE member_id = #{memberId}
+    </select>
+
+    <select id="findProductById" parameterType="long" resultMap="ProductResultMap">
+        SELECT * FROM product WHERE id = #{id}
+    </select>
+
+    <!-- 필요한 추가 쿼리 -->
+</mapper>
