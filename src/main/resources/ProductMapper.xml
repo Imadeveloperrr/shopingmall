@@ -6,22 +6,28 @@
 
     <resultMap id="ProductResultMap" type="com.example.crud.data.product.dto.ProductResponseDto">
         <!-- 필드 매핑 -->
-        <result property="id" column="id"/>
+        <result property="number" column="number"/>
         <result property="name" column="name"/>
+        <result property="brand" column="brand"/>
         <result property="price" column="price"/>
+        <result property="imageUrl" column="imageUrl"/>
+        <result property="intro" column="intro"/>
+        <result property="color" column="color"/>
         <result property="description" column="description"/>
-        <result property="imageUrl" column="image_url"/>
-        <!-- 필요한 추가 필드 -->
+        <result property="category" column="category"/>
     </resultMap>
 
+    <!-- 모든 제품을 가져오는 쿼리 -->
     <select id="findAllProducts" resultMap="ProductResultMap">
         SELECT * FROM product
     </select>
 
+    <!-- 특정 회원이 등록한 제품들을 가져오는 쿼리 -->
     <select id="findProductsByMemberId" parameterType="long" resultMap="ProductResultMap">
         SELECT * FROM product WHERE member_id = #{memberId}
     </select>
 
+    <!-- 특정 ID를 가진 제품을 가져오는 쿼리 -->
     <select id="findProductById" parameterType="long" resultMap="ProductResultMap">
         SELECT * FROM product WHERE id = #{id}
     </select>
