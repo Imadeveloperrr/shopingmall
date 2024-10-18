@@ -4,9 +4,9 @@
 
 <mapper namespace="com.example.crud.mapper.ProductMapper">
 
-    <resultMap id="ProductResultMap" type="com.example.crud.data.product.dto.ProductResponseDto">
+    <resultMap id="ProductResultMap" type="com.example.crud.entity.Product">
         <!-- 필드 매핑 -->
-        <result property="number" column="number"/>
+        <id property="number" column="number"/>
         <result property="name" column="name"/>
         <result property="brand" column="brand"/>
         <result property="price" column="price"/>
@@ -15,6 +15,10 @@
         <result property="color" column="color"/>
         <result property="description" column="description"/>
         <result property="category" column="category"/>
+
+        <!-- Member 관계 매핑 -->
+        <association property="member" column="member_id" javaType="com.example.crud.entity.Product">
+        </association>
     </resultMap>
 
     <!-- 모든 제품을 가져오는 쿼리 -->
