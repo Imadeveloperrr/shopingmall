@@ -11,6 +11,6 @@ public interface ProductMapper {
 
     List<ProductResponseDto> findAllProducts();
     List<ProductResponseDto> findProductsByMemberId(@Param("memberId") Long memberId);
-    ProductResponseDto findProductById(@Param("id") Long id);
+    ProductResponseDto findProductByNumber(@Param("number") Long number);
 
 }
