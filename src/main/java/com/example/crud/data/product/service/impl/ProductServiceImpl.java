@@ -5,6 +5,7 @@ import com.example.crud.data.product.dto.ProductResponseDto;
 import com.example.crud.data.product.service.ProductService;
 import com.example.crud.entity.Member;
 import com.example.crud.entity.Product;
+import com.example.crud.mapper.ProductMapper;
 import com.example.crud.repository.MemberRepository;
 import com.example.crud.repository.ProductRepository;
 import com.fasterxml.jackson.databind.util.BeanUtil;
@@ -35,12 +36,14 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final MemberRepository memberRepository;
+    private final ProductMapper productMapper;
 
     @Override
     @Transactional(readOnly = true)
     public List<ProductResponseDto> getProducts() {
         try {
-            List<Product> products = productRepository.findAll();
+            //List<Product> products = productRepository.findAll();
+            List<Product> products = productMapper.findAllProducts();
 
             return products.stream()
                     .map(this::convertToProductResponseDTO)
@@ -49,13 +52,13 @@ public class ProductServiceImpl implements ProductService {
             log.error("Error occurred while fetching products: {}", e.getMessage(), e);
             throw e;
         }
-
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<ProductResponseDto> getProductsByMemberId(Long memberId) {
-        List<Product> product = productRepository.findByMemberNumber(memberId);
+        //List<Product> product = productRepository.findByMemberNumber(memberId);
+        List<Product> product = productMapper.findProductsByMemberId(memberId);
         return product.stream()
                 .map(this::convertToProductResponseDTO)
                 .collect(Collectors.toList());
@@ -66,7 +69,7 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductResponseDto> getMyProducts() {
         Member member = getAuthenticatedUser();
 
-        List<Product> products = productRepository.findByMemberNumber(member.getNumber());
+        List<Product> products = productMapper.findProductsByMemberId(member.getNumber());
         return products.stream()
                 .map(this::convertToProductResponseDTO)
                 .collect(Collectors.toList());
@@ -113,8 +116,10 @@ public class ProductServiceImpl implements ProductService {
     public void getDeleteProduct(Long id) throws IOException {
         Member member = getAuthenticatedUser();
 
-        Product product = productRepository.findById(id).orElseThrow(
-                () -> new NoSuchElementException("ERROR  : 없는 상품 번호 입니다."));
+        Product product = productMapper.findProductById(id);
+        if (product == null)
+            throw new NoSuchElementException("ERROR  : 없는 상품 번호 입니다.");
+
         deletedImageFromFirebase(product.getImageUrl());
         productRepository.delete(product);
     }
@@ -123,8 +128,10 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponseDto getProductById(Long id) {
         Member member = getAuthenticatedUser();
 
-        Product product = productRepository.findById(id).orElseThrow(
-                () -> new NoSuchElementException("ERROR : 없는 상품 번호 입니다."));
+        Product product = productMapper.findProductById(id);
+        if (product == null)
+            throw new NoSuchElementException("ERROR : 없는 상품 번호 입니다.");
+
         ProductResponseDto productResponseDto = convertToProductResponseDTO(product);
         productResponseDto.setPermission(Objects.equals(member.getEmail(), product.getMemberEmail()));
         return productResponseDto;
