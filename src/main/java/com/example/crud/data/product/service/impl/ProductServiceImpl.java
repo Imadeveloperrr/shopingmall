@@ -116,7 +116,7 @@ public class ProductServiceImpl implements ProductService {
     public void getDeleteProduct(Long id) throws IOException {
         Member member = getAuthenticatedUser();
 
-        Product product = productMapper.findProductById(id);
+        Product product = productMapper.findProductByNumber(id);
         if (product == null)
             throw new NoSuchElementException("ERROR  : 없는 상품 번호 입니다.");
 
@@ -128,7 +128,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponseDto getProductById(Long id) {
         Member member = getAuthenticatedUser();
 
-        Product product = productMapper.findProductById(id);
+        Product product = productMapper.findProductByNumber(id);
         if (product == null)
             throw new NoSuchElementException("ERROR : 없는 상품 번호 입니다.");
 
