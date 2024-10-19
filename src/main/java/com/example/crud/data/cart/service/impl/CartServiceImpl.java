@@ -4,6 +4,7 @@ import com.example.crud.data.cart.dto.CartDto;
 import com.example.crud.data.cart.dto.CartItemDto;
 import com.example.crud.data.cart.service.CartService;
 import com.example.crud.entity.*;
+import com.example.crud.mapper.CartMapper;
 import com.example.crud.repository.CartItemRepository;
 import com.example.crud.repository.CartRepository;
 import com.example.crud.repository.MemberRepository;
@@ -30,6 +31,7 @@ public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
+    private final CartMapper cartMapper;
 
     private Long getAuthenticatedMemberId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -44,8 +46,21 @@ public class CartServiceImpl implements CartService {
     @Override
     public CartDto getCartByAuthenticateMember() {
         Long memberId = getAuthenticatedMemberId();
-        Cart cart = cartRepository.findByMemberNumber(memberId).orElseGet(() -> createCart(memberId));
-        return convertToCartDto(cart);
+        CartDto cartDto = cartMapper.findCartByMemberId(memberId);
+
+        if (cartDto == null) {
+            createCart(memberId);
+            cartDto = new CartDto();
+            cartDto.setId(null);
+            cartDto.setCartItems(new ArrayList<>());
+            cartDto.setTotalPrice(0);
+        } else {
+            int totalPrice = cartDto.getCartItems().stream()
+                    .mapToInt(item -> item.getPrice() * item.getQuantity())
+                    .sum();
+            cartDto.setTotalPrice(totalPrice);
+        }
+        return cartDto;
     }
 
     @Override
