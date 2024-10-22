@@ -20,7 +20,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
                          AuthenticationException authException) throws IOException, ServletException {
         // 인증 실패 시 401 응답
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType("application/json");
-        response.getWriter().write("{\"error\": \"Authentication required\"}");
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write("{\"message\": \"아이디 또는 비밀번호가 다릅니다.\"}");
     }
 }

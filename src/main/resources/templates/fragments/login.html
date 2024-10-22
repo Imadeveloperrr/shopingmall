@@ -100,9 +100,19 @@
         })
         .then(response => {
             if (!response.ok) {
-                return response.json().then(errorData => {
-                    throw new Error(errorData.message || '로그인 실패');
-                });
+                // 응답의 contentType 확인
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    // 응답이 JSON인 경우
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.message || '로그인 실패');
+                    });
+                } else {
+                    // 응답이 텍스트인 경우
+                    return response.text().then(errorText => {
+                        throw new Error(errorText || '로그인 실패');
+                    });
+                }
             }
             return response.json();
         })

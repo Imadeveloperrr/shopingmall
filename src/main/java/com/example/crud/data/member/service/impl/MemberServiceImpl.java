@@ -8,6 +8,7 @@ import com.example.crud.data.member.service.MemberService;
 import com.example.crud.data.token.TokenRequestDto;
 import com.example.crud.entity.Member;
 import com.example.crud.entity.RefreshToken;
+import com.example.crud.mapper.MemberMapper;
 import com.example.crud.repository.MemberRepository;
 import com.example.crud.repository.RefreshTokenRepository;
 import com.example.crud.security.JwtToken;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +41,7 @@ public class MemberServiceImpl implements MemberService {
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final MemberMapper memberMapper;
 
     @Transactional // 새로운 @Transactional 어노테이션을 사용하여 기본 설정을 오버라이딩함. 즉, 이 메서드에서는 데이터를 변경할 수 있음.
     @Override
@@ -189,6 +192,22 @@ public class MemberServiceImpl implements MemberService {
                 .address(saveMember.getAddress())
                 .phoneNumber(saveMember.getPhoneNumber())
                 .introduction(saveMember.getIntroduction())
+                .build();
+    }
+
+    public List<MemberResponseDto> getAllMembers() {
+        List<Member> members = memberMapper.findAll();
+        return members.stream()
+                .map(this::convertToMemberResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    private MemberResponseDto convertToMemberResponseDto(Member member) {
+        return MemberResponseDto.builder()
+                .number(member.getNumber())
+                .email(member.getEmail())
+                .name(member.getName())
+                .nickname(member.getNickname())
                 .build();
     }
 }

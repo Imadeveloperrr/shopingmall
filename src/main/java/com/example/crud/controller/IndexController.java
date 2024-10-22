@@ -1,5 +1,6 @@
 package com.example.crud.controller;
 
+import com.example.crud.data.exception.ErrorResponse;
 import com.example.crud.data.member.dto.MemberDto;
 import com.example.crud.data.member.dto.MemberResponseDto;
 import com.example.crud.data.member.service.MemberService;
@@ -78,11 +79,16 @@ public class IndexController {
             //return new JwtToken(jwtToken.getGrantType(), jwtToken.getAccessToken(), jwtToken.getRefreshToken());
             return ResponseEntity.ok().body("로그인 성공");
         } catch (AuthenticationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("아이디 또는 비밀번호가 다릅니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "아이디 또는 비밀번호가 다릅니다."));
+        } catch (Exception e) {
+            log.error("로그인 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "서버 오류가 발생했습니다."));
         }
     }
-
-
 
     @GetMapping("/register")
     public String register() {
@@ -94,7 +100,9 @@ public class IndexController {
     public ResponseEntity<?> registerPost(@Valid @RequestBody MemberDto memberDto, BindingResult bindingResult) { // AJAX 요청은 ResponseEntity 객체가 GOOD.
         if(bindingResult.hasErrors()) {
             String errorMessage = bindingResult.getAllErrors().get(0).getDefaultMessage();
-            return ResponseEntity.badRequest().body(errorMessage);
+            return ResponseEntity.badRequest()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), errorMessage));
         }
         MemberResponseDto memberResponseDto = memberService.signUp(memberDto);
         return ResponseEntity.ok().body(memberResponseDto); // HTTP 상태 코드와 응답 본문 설정
