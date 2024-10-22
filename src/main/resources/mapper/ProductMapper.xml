@@ -17,7 +17,7 @@
         <result property="category" column="category"/>
 
         <!-- Member 관계 매핑 -->
-        <association property="member" column="member_id" javaType="com.example.crud.entity.Product">
+        <association property="member" column="member_id" javaType="com.example.crud.entity.Member">
         </association>
     </resultMap>
 
@@ -33,7 +33,7 @@
 
     <!-- 특정 ID를 가진 제품을 가져오는 쿼리 -->
     <select id="findProductByNumber" parameterType="long" resultMap="ProductResultMap">
-        SELECT * FROM product WHERE id = #{number}
+        SELECT * FROM product WHERE number = #{number}
     </select>
 
     <!-- 필요한 추가 쿼리 -->
