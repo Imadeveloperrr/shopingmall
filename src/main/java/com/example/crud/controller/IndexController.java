@@ -30,7 +30,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
@@ -64,20 +66,28 @@ public class IndexController {
 
             log.info("로그인 성공 : email = {}, rememberMe = {}", email, rememberMe);
 
-            Cookie refreshCookie = new Cookie("refreshToken", jwtToken.getRefreshToken());
-            refreshCookie.setHttpOnly(true);
-            if (rememberMe)
-                refreshCookie.setMaxAge(60 * 60 * 24 * 7); // 로그인유지 체크 했을시 7일간 유지
-            response.addCookie(refreshCookie); // refreshToken은 쿠키에 저장
-
             Cookie accessToken = new Cookie("accessToken", jwtToken.getAccessToken());
             accessToken.setHttpOnly(true);
             if (rememberMe)
-                refreshCookie.setMaxAge(60 * 60 * 24 * 7); // 로그인유지 체크 했을시 7일간 유지
+                accessToken.setMaxAge(60 * 60 * 24 * 7); // 'accessToken' 쿠키의 maxAge를 설정해야 함
+            accessToken.setPath("/"); // 쿠키의 유효 경로 설정
             response.addCookie(accessToken);
 
+            Cookie refreshCookie = new Cookie("refreshToken", jwtToken.getRefreshToken());
+            refreshCookie.setHttpOnly(true);
+            if (rememberMe)
+                refreshCookie.setMaxAge(60 * 60 * 24 * 14); // 필요에 따라 refreshToken의 만료 시간 설정
+            refreshCookie.setPath("/");
+            response.addCookie(refreshCookie);
+
             //return new JwtToken(jwtToken.getGrantType(), jwtToken.getAccessToken(), jwtToken.getRefreshToken());
-            return ResponseEntity.ok().body("로그인 성공");
+            Map<String, String> responseBody = new HashMap<>();
+            responseBody.put("message", "로그인 성공");
+
+            return ResponseEntity
+                    .ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(responseBody);
         } catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .contentType(MediaType.APPLICATION_JSON)

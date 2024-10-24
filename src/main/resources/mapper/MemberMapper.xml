@@ -6,4 +6,12 @@
     <select id="findAll" resultType="com.example.crud.entity.Member">
         SELECT * FROM member
     </select>
+
+    <update id="updateMember" parameterType="com.example.crud.entity.Member">
+        UPDATE member
+        SET
+            password = #{password},
+            update_at = NOW()
+        WHERE number = #{number}
+    </update>
 </mapper>
