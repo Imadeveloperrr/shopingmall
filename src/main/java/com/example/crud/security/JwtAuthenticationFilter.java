@@ -31,9 +31,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (authentication != null) {
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 } else {
+
                     SecurityContextHolder.clearContext();
                 }
             } else {
+                clearTokenCookies(response);
                 SecurityContextHolder.clearContext();
             }
         } catch (Exception e) {
@@ -44,11 +46,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response); // 다음 필터로 요청을 전달
     }
 
+    private void clearTokenCookies(HttpServletResponse response) {
+        Cookie accessTokenCookie = new Cookie("accessToken", null);
+        accessTokenCookie.setPath("/");
+        accessTokenCookie.setMaxAge(0);
+        response.addCookie(accessTokenCookie);
+
+        Cookie refreshTokenCookie = new Cookie("refreshToken", null);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge(0);
+        response.addCookie(refreshTokenCookie);
+    }
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getServletPath();
-        return path.equals("/") || // 홈 페이지 제외
-                path.startsWith("/login") ||
+        return path.startsWith("/login") ||
                 path.startsWith("/register") ||
                 path.startsWith("/static/") ||
                 path.startsWith("/css/") ||
