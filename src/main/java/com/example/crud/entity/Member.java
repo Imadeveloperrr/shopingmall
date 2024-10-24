@@ -49,7 +49,9 @@ public class Member {
     @Column(nullable = false)
     private String nickname;
 
+    @Column(name = "create_at")
     private LocalDateTime createdAt;
+    @Column(name = "update_at")
     private LocalDateTime updatedAt;
 
     @ElementCollection(fetch = FetchType.EAGER) // 즉시 로딩 즉 데이터베이스에서 읽을때 이 컬렉션도 함께 로딩을 의미

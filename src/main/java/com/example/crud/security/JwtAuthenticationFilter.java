@@ -8,6 +8,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
@@ -16,28 +17,43 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 // Custom Filter
+@Slf4j
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
+        String token = resolveToken(request);
         try {
-            // 1. Request Header에서 JWT 토큰 추출
-            String token = resolveToken(request);
-
-            // 2. validateToken으로 토큰 유효성 검사.
             if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
                 Authentication authentication = jwtTokenProvider.getAuthentication(token);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                if (authentication != null) {
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                } else {
+                    SecurityContextHolder.clearContext();
+                }
+            } else {
+                SecurityContextHolder.clearContext();
             }
         } catch (Exception e) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"Invalid or expired JWT token\"}");
+            // 예외 발생 시 로그 남기기
+            log.error("Could not set user authentication in security context", e);
+            SecurityContextHolder.clearContext();
         }
-
         filterChain.doFilter(request, response); // 다음 필터로 요청을 전달
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getServletPath();
+        return path.equals("/") || // 홈 페이지 제외
+                path.startsWith("/login") ||
+                path.startsWith("/register") ||
+                path.startsWith("/static/") ||
+                path.startsWith("/css/") ||
+                path.startsWith("/js/") ||
+                path.startsWith("/images/");
     }
 
     private String resolveToken(HttpServletRequest request) {
@@ -57,6 +73,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         return null;
     }
-
-
 }
