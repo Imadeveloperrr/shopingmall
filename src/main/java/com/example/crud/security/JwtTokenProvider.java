@@ -90,14 +90,21 @@ public class JwtTokenProvider {
         try {
             Claims claims = parseClaims(accessToken);
 
-            if (claims.get("auth") == null) {
+            String authClaim = claims.get("auth", String.class);
+            if (authClaim == null || authClaim.trim().isEmpty()) {
                 log.info("No authorities in token");
                 return null;
             }
 
-            Collection<? extends GrantedAuthority> authorities = Arrays.stream(claims.get("auth").toString().split(","))
+            Collection<? extends GrantedAuthority> authorities = Arrays.stream(authClaim.split(","))
+                    .filter(role -> role != null && !role.trim().isEmpty())
                     .map(SimpleGrantedAuthority::new)
                     .collect(Collectors.toList());
+
+            if (authorities.isEmpty()) {
+                log.info("No valid authorities found in token");
+                return null;
+            }
 
             User principal = new User(claims.getSubject(), "", authorities);
             return new UsernamePasswordAuthenticationToken(principal, "", authorities);
@@ -106,6 +113,7 @@ public class JwtTokenProvider {
             return null;
         }
     }
+
 
     // Token 정보를 검증하는 Method
     public boolean validateToken(String token) {
