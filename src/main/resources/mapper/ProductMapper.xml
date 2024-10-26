@@ -4,8 +4,18 @@
 
 <mapper namespace="com.example.crud.mapper.ProductMapper">
 
+    <!-- MemberResultMap 정의 -->
+    <resultMap id="MemberResultMap" type="com.example.crud.entity.Member">
+        <id property="number" column="m_number"/>
+        <result property="email" column="m_email"/>
+        <result property="name" column="m_name"/>
+        <result property="nickname" column="m_nickname"/>
+        <!-- 필요한 다른 필드들도 추가하세요 -->
+    </resultMap>
+
+    <!-- ProductResultMap 수정 -->
     <resultMap id="ProductResultMap" type="com.example.crud.entity.Product">
-        <!-- 필드 매핑 -->
+        <!-- Product 필드 매핑 -->
         <id property="number" column="number"/>
         <result property="name" column="name"/>
         <result property="brand" column="brand"/>
@@ -17,23 +27,30 @@
         <result property="category" column="category"/>
 
         <!-- Member 관계 매핑 -->
-        <association property="member" column="member_id" javaType="com.example.crud.entity.Member">
-        </association>
+        <association property="member" javaType="com.example.crud.entity.Member" resultMap="MemberResultMap"/>
     </resultMap>
 
     <!-- 모든 제품을 가져오는 쿼리 -->
     <select id="findAllProducts" resultMap="ProductResultMap">
-        SELECT * FROM product
+        SELECT p.*, m.number AS m_number, m.email AS m_email, m.name AS m_name, m.nickname AS m_nickname
+        FROM product p
+                 LEFT JOIN member m ON p.member_id = m.number
     </select>
 
     <!-- 특정 회원이 등록한 제품들을 가져오는 쿼리 -->
     <select id="findProductsByMemberId" parameterType="long" resultMap="ProductResultMap">
-        SELECT * FROM product WHERE member_id = #{memberId}
+        SELECT p.*, m.number AS m_number, m.email AS m_email, m.name AS m_name, m.nickname AS m_nickname
+        FROM product p
+                 LEFT JOIN member m ON p.member_id = m.number
+        WHERE p.member_id = #{memberId}
     </select>
 
     <!-- 특정 ID를 가진 제품을 가져오는 쿼리 -->
     <select id="findProductByNumber" parameterType="long" resultMap="ProductResultMap">
-        SELECT * FROM product WHERE number = #{number}
+        SELECT p.*, m.number AS m_number, m.email AS m_email, m.name AS m_name, m.nickname AS m_nickname
+        FROM product p
+                 LEFT JOIN member m ON p.member_id = m.number
+        WHERE p.number = #{number}
     </select>
 
     <!-- 필요한 추가 쿼리 -->
