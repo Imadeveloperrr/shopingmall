@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 
@@ -55,9 +56,15 @@ public class ProductController {
     }
 
     @GetMapping("/delete/{id}")
-    public String deleteProduct(@PathVariable Long id) throws IOException {
-        productService.getDeleteProduct(id);
-        return "fragments/mypage";
+    public String deleteProduct(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            productService.getDeleteProduct(id);
+            redirectAttributes.addFlashAttribute("message", "상품이 성공적으로 삭제되었습니다.");
+            return "redirect:/mypage";  // /mypage로 리다이렉트
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "상품 삭제 중 오류가 발생했습니다.");
+            return "redirect:/mypage";
+        }
     }
 
     @GetMapping("/update/{id}")

@@ -5,10 +5,7 @@ import com.example.crud.data.cart.dto.CartItemDto;
 import com.example.crud.data.cart.service.CartService;
 import com.example.crud.entity.*;
 import com.example.crud.mapper.CartMapper;
-import com.example.crud.repository.CartItemRepository;
-import com.example.crud.repository.CartRepository;
-import com.example.crud.repository.MemberRepository;
-import com.example.crud.repository.ProductRepository;
+import com.example.crud.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -31,6 +28,7 @@ public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
+    private final ProductSizeRepository productSizeRepository;
     private final CartMapper cartMapper;
 
     private Long getAuthenticatedMemberId() {
@@ -64,6 +62,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public void addCartItem(Long productId, String size, int quantity) {
         Long memberId = getAuthenticatedMemberId();
         Product product = productRepository.findById(productId)
@@ -72,7 +71,8 @@ public class CartServiceImpl implements CartService {
         Cart cart = cartRepository.findByMemberNumber(memberId)
                 .orElseGet(() -> createCart(memberId));
 
-        ProductSize productSize = product.getProductSizeBySize(size);
+        ProductSize productSize = productSizeRepository.findByProduct_NumberAndSize(productId, size)
+                .orElseThrow(() -> new IllegalArgumentException("해당 사이즈의 상품을 찾을 수 없습니다."));
 
         // 동일한 상품과 사이즈가 이미 있는지 확인
         CartItem existingCartItem = cart.getCartItems().stream()
@@ -82,7 +82,7 @@ public class CartServiceImpl implements CartService {
 
         if (existingCartItem != null) { // 기존 상품의 수량만 증가
             existingCartItem.setQuantity(existingCartItem.getQuantity() + quantity);
-        } else { // 새로운 상품 추가.
+        } else { // 새로운 상품 추가
             CartItem newCartItem = CartItem.builder()
                     .productSize(productSize)
                     .product(product)

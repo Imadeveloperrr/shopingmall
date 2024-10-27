@@ -3,55 +3,65 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.crud.mapper.ProductMapper">
-
-    <!-- MemberResultMap 정의 -->
     <resultMap id="MemberResultMap" type="com.example.crud.entity.Member">
         <id property="number" column="m_number"/>
         <result property="email" column="m_email"/>
         <result property="name" column="m_name"/>
         <result property="nickname" column="m_nickname"/>
-        <!-- 필요한 다른 필드들도 추가하세요 -->
     </resultMap>
 
-    <!-- ProductResultMap 수정 -->
+    <resultMap id="ProductSizeResultMap" type="com.example.crud.entity.ProductSize">
+        <id property="id" column="ps_id"/>
+        <result property="size" column="ps_size"/>
+        <result property="stock" column="ps_stock"/>
+    </resultMap>
+
     <resultMap id="ProductResultMap" type="com.example.crud.entity.Product">
-        <!-- Product 필드 매핑 -->
         <id property="number" column="number"/>
         <result property="name" column="name"/>
         <result property="brand" column="brand"/>
         <result property="price" column="price"/>
-        <result property="imageUrl" column="imageUrl"/>
+        <result property="imageUrl" column="image_url"/>
         <result property="intro" column="intro"/>
         <result property="color" column="color"/>
         <result property="description" column="description"/>
         <result property="category" column="category"/>
 
-        <!-- Member 관계 매핑 -->
-        <association property="member" javaType="com.example.crud.entity.Member" resultMap="MemberResultMap"/>
+        <association property="member" javaType="com.example.crud.entity.Member"
+                     resultMap="MemberResultMap"/>
+        <collection property="productSizes" ofType="com.example.crud.entity.ProductSize"
+                    resultMap="ProductSizeResultMap"/>
     </resultMap>
 
-    <!-- 모든 제품을 가져오는 쿼리 -->
     <select id="findAllProducts" resultMap="ProductResultMap">
-        SELECT p.*, m.number AS m_number, m.email AS m_email, m.name AS m_name, m.nickname AS m_nickname
+        SELECT p.*,
+               m.number AS m_number, m.email AS m_email,
+               m.name AS m_name, m.nickname AS m_nickname,
+               ps.id AS ps_id, ps.size AS ps_size, ps.stock AS ps_stock
         FROM product p
                  LEFT JOIN member m ON p.member_id = m.number
+                 LEFT JOIN product_size ps ON p.number = ps.product_id
     </select>
 
-    <!-- 특정 회원이 등록한 제품들을 가져오는 쿼리 -->
     <select id="findProductsByMemberId" parameterType="long" resultMap="ProductResultMap">
-        SELECT p.*, m.number AS m_number, m.email AS m_email, m.name AS m_name, m.nickname AS m_nickname
+        SELECT p.*,
+               m.number AS m_number, m.email AS m_email,
+               m.name AS m_name, m.nickname AS m_nickname,
+               ps.id AS ps_id, ps.size AS ps_size, ps.stock AS ps_stock
         FROM product p
                  LEFT JOIN member m ON p.member_id = m.number
+                 LEFT JOIN product_size ps ON p.number = ps.product_id
         WHERE p.member_id = #{memberId}
     </select>
 
-    <!-- 특정 ID를 가진 제품을 가져오는 쿼리 -->
     <select id="findProductByNumber" parameterType="long" resultMap="ProductResultMap">
-        SELECT p.*, m.number AS m_number, m.email AS m_email, m.name AS m_name, m.nickname AS m_nickname
+        SELECT p.*,
+               m.number AS m_number, m.email AS m_email,
+               m.name AS m_name, m.nickname AS m_nickname,
+               ps.id AS ps_id, ps.size AS ps_size, ps.stock AS ps_stock
         FROM product p
                  LEFT JOIN member m ON p.member_id = m.number
+                 LEFT JOIN product_size ps ON p.number = ps.product_id
         WHERE p.number = #{number}
     </select>
-
-    <!-- 필요한 추가 쿼리 -->
 </mapper>

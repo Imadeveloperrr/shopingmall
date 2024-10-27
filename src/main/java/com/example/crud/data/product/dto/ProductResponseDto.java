@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -21,6 +23,7 @@ public class ProductResponseDto {
     private String description;
     private String category;
     private boolean permission;
+    private List<ProductSizeDto> productSizes;
 
     public void setDescription(String description) {
         this.description = description.replace("\n", "<br>");

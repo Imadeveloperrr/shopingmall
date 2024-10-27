@@ -89,6 +89,24 @@
                                 취소하기
                             </a>
                         </div>
+
+                        <div class="form-outline mb-4">
+                            <label class="form-label">상품 사이즈 및 재고</label>
+                            <table id="sizeTable" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>사이즈</th>
+                                        <th>재고</th>
+                                        <th>삭제</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                </tbody>
+                            </table>
+                            <button type="button" onclick="addSizeRow()" class="btn btn-primary">사이즈 추가</button>
+                        </div>
+
                     </form>
                 </div>
             </div>
@@ -96,6 +114,29 @@
     </div>
 </div>
 <script>
+    function addSizeRow() {
+        const tableBody = document.querySelector('#sizeTable tbody');
+        const newRow = document.createElement('tr');
+
+        newRow.innerHTML = `
+            <td><input type="text" name="sizes" class="form-control" placeholder="예: S, M, L"></td>
+            <td><input type="number"
+                        name="stocks"
+                        class="form-control"
+                        placeholder="재고 수량"
+                        min="0"
+                        max="99999"></td>
+            <td><button type="button" onclick="removeSizeRow(this)" class="btn btn-danger">삭제</button></td>
+        `;
+
+        tableBody.appendChild(newRow);
+    }
+
+    function removeSizeRow(button) {
+        const row = button.parentElement.parentElement;
+        row.remove();
+    }
+
     document.getElementById('productForm').addEventListener('submit', function (event) {
         event.preventDefault();
 
@@ -107,7 +148,7 @@
             description: '상품 설명',
             category: '카테고리',
             imageUrl: '상품 이미지',
-            intro: '상품 1줄 설명',
+            intro: '상품 한줄 설명',
         }
 
         for (let id in fields) {
@@ -119,9 +160,28 @@
             }
         }
 
+        const sizes = document.getElementsByName('sizes');
+        const stocks = document.getElementsByName('stocks');
+
+        if (sizes.length === 0) {
+            alert('최소 하나의 사이즈를 입력해야 합니다.');
+            return;
+        }
+
+        for (let i = 0; i < sizes.length; i++) {
+            if (sizes[i].value.trim() === '' || stocks[i].value.trim() === '') {
+                alert('사이즈와 재고를 모두 입력해야 합니다.');
+                return;
+            }
+        }
+
         const form = document.getElementById('productForm');
         const formData = new FormData(form);
 
+        for (let i=0; i<sizes.length; i++) {
+            formData.append(`productSizes[${i}].size`, sizes[i].value);
+            formData.append(`productSizes[${i}].stock`, stocks[i].value);
+        }
 
         fetch('/product/add', {
             method: 'POST',
