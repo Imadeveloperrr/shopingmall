@@ -2,9 +2,11 @@ package com.example.crud.data.product.service.impl;
 
 import com.example.crud.data.product.dto.ProductDto;
 import com.example.crud.data.product.dto.ProductResponseDto;
+import com.example.crud.data.product.dto.ProductSizeDto;
 import com.example.crud.data.product.service.ProductService;
 import com.example.crud.entity.Member;
 import com.example.crud.entity.Product;
+import com.example.crud.entity.ProductSize;
 import com.example.crud.mapper.ProductMapper;
 import com.example.crud.repository.MemberRepository;
 import com.example.crud.repository.ProductRepository;
@@ -25,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -83,12 +87,28 @@ public class ProductServiceImpl implements ProductService {
             Member member = getAuthenticatedUser();
             imageUrl = uploadImageToFirebase(image);
 
+            // DTO를 엔티티로 변환
             Product product = converToProductEntity(productDto, member);
             product.setImageUrl(imageUrl);
-            productRepository.save(product);
-            return convertToProductResponseDTO(product);
+
+            // ProductSize 엔티티 생성 및 설정
+            List<ProductSize> productSizeList = new ArrayList<>();
+            if (productDto.getProductSizes() != null) {
+                for (ProductSizeDto sizeDto : productDto.getProductSizes()) {
+                    ProductSize productSize = ProductSize.builder()
+                            .size(sizeDto.getSize())
+                            .stock(sizeDto.getStock())
+                            .product(product)
+                            .build();
+                    productSizeList.add(productSize);
+                }
+                product.setProductSizes(productSizeList);
+            }
+
+            Product savedProduct = productRepository.save(product);
+            return convertToProductResponseDTO(savedProduct);
         } catch (Exception e) {
-            if(!image.isEmpty()){
+            if (image != null && !image.isEmpty()) {
                 deletedImageFromFirebase(imageUrl);
             }
             throw e;
@@ -96,20 +116,42 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public ProductResponseDto getUpdateProduct(ProductDto productDto, MultipartFile image) throws IOException {
         Member member = getAuthenticatedUser();
 
-        Product product = productRepository.findById(productDto.getNumber())
+        Product existingProduct = productRepository.findById(productDto.getNumber())
                 .orElseThrow(() -> new NoSuchElementException("ERROR : 없는 상품입니다."));
-        deletedImageFromFirebase(product.getImageUrl());
 
+        // 기존 이미지 삭제
+        if (existingProduct.getImageUrl() != null && !existingProduct.getImageUrl().isEmpty()) {
+            deletedImageFromFirebase(existingProduct.getImageUrl());
+        }
+
+        // 새 이미지 업로드
         String imageUrl = uploadImageToFirebase(image);
 
-        Product responseProduct = converToProductEntity(productDto, member);
-        responseProduct.setImageUrl(imageUrl);
-        productRepository.save(responseProduct);
+        // DTO를 엔티티로 변환
+        Product updatedProduct = converToProductEntity(productDto, member);
+        updatedProduct.setImageUrl(imageUrl);
 
-        return convertToProductResponseDTO(product);
+        // 기존 사이즈 정보 삭제
+        updatedProduct.getProductSizes().clear();
+
+        // 새로운 사이즈 정보 추가
+        if (productDto.getProductSizes() != null) {
+            List<ProductSize> productSizeList = productDto.getProductSizes().stream()
+                    .map(sizeDto -> ProductSize.builder()
+                            .size(sizeDto.getSize())
+                            .stock(sizeDto.getStock())
+                            .product(updatedProduct)
+                            .build())
+                    .collect(Collectors.toList());
+            updatedProduct.setProductSizes(productSizeList);
+        }
+
+        Product savedProduct = productRepository.save(updatedProduct);
+        return convertToProductResponseDTO(savedProduct);
     }
 
     @Override
@@ -167,8 +209,9 @@ public class ProductServiceImpl implements ProductService {
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(image.getContentType()).build();
 
         storage.create(blobInfo, image.getBytes());
+        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString());
 
-        return "https://firebasestorage.googleapis.com/v0/b/" + "webproject-83837.appspot.com" + "/o/" + fileName + "?alt=media";
+        return "https://firebasestorage.googleapis.com/v0/b/" + "webproject-83837.appspot.com" + "/o/" + encodedFileName + "?alt=media";
     }
 
     private ProductResponseDto convertToProductResponseDTO(Product product) {
@@ -177,6 +220,18 @@ public class ProductServiceImpl implements ProductService {
         NumberFormat formatter = NumberFormat.getNumberInstance(Locale.KOREA);
         productResponseDto.setPrice(formatter.format(product.getPrice()) + "원");
         productResponseDto.setDescription(product.getDescription().replace("\n", "<br>"));
+
+        // ProductSize 정보 변환
+        if (product.getProductSizes() != null) {
+            List<ProductSizeDto> sizeDtos = product.getProductSizes().stream()
+                    .map(size -> ProductSizeDto.builder()
+                            .size(size.getSize())
+                            .stock(size.getStock())
+                            .build())
+                    .collect(Collectors.toList());
+            productResponseDto.setProductSizes(sizeDtos);
+        }
+
         return productResponseDto;
     }
 

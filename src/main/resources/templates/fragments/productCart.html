@@ -91,12 +91,10 @@
                         <div class="cart-sub-header">
                             <div class="left-content">
                                 <ul>
-                                    <li>
-                                        <label for="cart-allgoods"><input type="checkbox" id="cart-allgoods" onclick="MemberProc.with_check('.cartIdxs:not(.soldout)');cartCalcul();"> 전체상품<span class="checkgh">[</span><span id="allgoods-cnt">0</span><span class="checkgh">/</span>2<span class="checkgh">]</span></label>
-                                    </li>
-                                    <li>
-                                        <label for="cart-todaygoods"><input type="checkbox" id="cart-todaygoods" onclick="MemberProc.with_check('.cartIdxs[data-today_go=1]:not(.soldout)');cartCalcul();"> 오늘출발<span class="checkgh">[</span><span id="todaygoods-cnt">0</span><span class="checkgh">/</span>2<span class="checkgh">]</span></label>
-                                    </li>
+                                    <label>
+                                        <input type="checkbox" id="selectAll" onclick="toggleAllItems()">
+                                        전체상품<span class="checkgh">[</span><span id="selectedCount">0</span><span class="checkgh">/</span><span id="totalCount" th:text="${cart.cartItems.size()}">0</span><span class="checkgh">]</span>
+                                    </label>
                                 </ul>
                             </div>
                             <div class="right-content">
@@ -105,32 +103,25 @@
                                     <li class="order">주문/결제</li>
                                     <li class="finish">주문완료</li>
                                 </ol>
-                                <a class="choose_del" href="javascript:;" onclick="MemberProc.choose_del();"> 선택삭제 </a>
+                                <a class="choose_del" href="javascript:void(0);" onclick="deleteSelectedItems()">선택삭제</a>
                             </div>
                         </div>
                         <ul class="prd list">
                             <!-- <caption class="hidden">장바구니</caption> -->
 
-                            <li class="">
+                            <li th:each="item : ${cart.cartItems}" class="">
                                 <form class="goods-form">
                                     <div class="check">
                                         <input type="checkbox" name="cart_idxs[]" data-today_go="1" value="59638329" class="cartIdxs checkYN" onclick="cartCalcul();">
                                     </div>
-                                    <div class="img">
-                                        <a href="/shop/view.php?index_no=161051" target="_blank">
-                                            <img src="https://atimg.sonyunara.com/files/attrangs/goods/161051/1721265696_0.png" alt="(코디고민제로!/프리미엄원단/데일리필수템) 램버 소프트 라운드넥 자수 케이블 니트 가디건" data-img="1721265696_0.png">
-                                        </a>
 
+                                    <div class="img">
+                                        <a th:href="@{/product/detail/{id}(id=${item.id})}">
+                                            <img th:src="${item.imageUrl}" alt="상품 이미지">
+                                        </a>
                                     </div>
 
                                     <div class="tal">
-                                        <input type="hidden" name="cart_idx" value="59638329">
-                                        <input type="hidden" name="goods_idx" value="161051">
-                                        <input type="hidden" name="op1" value="651338">
-                                        <input type="hidden" name="op2" value="651353">
-
-                                        <input type="hidden" name="criteoPrice" value="35500"> <!-- 크리테오 스크립트용 2020-02-26 조영재 -->
-
 
                                         <div>
                                             <span style="color:#cf591f">[오늘출발] <img src="https://atimg.sonyunara.com/2023/renew/m/quick_m.png" style="height:15px; margin-right:5px; vertical-align: middle; transform:translateZ(0)"></span>									</div>
@@ -204,13 +195,6 @@
                                 </form>
                             </li>
 
-                        </ul>
-                        <ul class="btn" style="display:none;">
-                            <li class="box_btn w115 h35 fs13 white2"><a href="javascript:" onclick="MemberProc.choose_buy();">선택상품 주문</a></li>
-                            <li class="box_btn w115 h35 fs13 white2"><a href="javascript:" onclick="MemberProc.choose_del();">선택상품 삭제</a></li>
-                            <li class="box_btn w115 h35 fs13 white2"><a href="javascript:" onclick="MemberProc.cart_all_del();">장바구니 비우기</a></li>
-
-                            <li class="box_btn w115 h35 fs13 white2"><a href="javascript:" onclick="MemberProc.cart_all_like();">전체 좋아요</a></li>
                         </ul>
                     </div>
 

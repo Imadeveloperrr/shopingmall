@@ -24,5 +24,5 @@ public class ProductSize {
     private String size;
 
     @Column(nullable = false)
-    private Long stock;
+    private Integer stock;
 }
