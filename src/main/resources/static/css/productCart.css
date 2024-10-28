@@ -304,12 +304,12 @@ input[type="checkbox"] {
     width: 100%;
 }
 
-#cart .checkYN:checked {
+#cart .itemCheckbox:checked {
     background: url(https://atimg.sonyunara.com/2022/member/wish_check_on.png);
     background-size: cover;
     cursor: pointer;
 }
-#cart .checkYN {
+#cart .itemCheckbox {
     background: url(https://atimg.sonyunara.com/2022/member/wish_check.png);
     width: 20px;
     height: 20px;
@@ -570,6 +570,26 @@ ul {
     text-align: center;
 }
 
+.box_qty a.ea_down {
+    left: 0;
+    background-image: url('/img/ea_down.png');
+}
+
+.box_qty a.ea_up {
+    right: 0;
+    background-image: url('/img/ea_up.png');
+}
+
+.box_qty a {
+    display: block;
+    position: absolute;
+    top: 0;
+    width: 24px;
+    height: 28px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
 input[type=text], input[type=email], input[type=password] {
     vertical-align: top;
 }
@@ -659,26 +679,6 @@ input[type=text], input[type=email], input[type=password] {
     border: 1px solid #e9e9e9;
     text-align: center;
     vertical-align: top;
-}
-
-.box_qty a.ea_down {
-    left: 0;
-    background-image: url(/asset/img/shop/ea_down.png);
-}
-
-.box_qty a.ea_up {
-    right: 0;
-    background-image: url(/asset/img/shop/ea_up.png);
-}
-
-.box_qty a {
-    display: block;
-    position: absolute;
-    top: 0;
-    width: 24px;
-    height: 28px;
-    background-repeat: no-repeat;
-    background-position: center;
 }
 
 #cart .list li .goods-form > div {
