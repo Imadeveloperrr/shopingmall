@@ -112,7 +112,7 @@
                             <li th:each="item : ${cart.cartItems}" th:id="'cartItem-' + ${item.id}">
                                 <form class="goods-form">
                                     <div class="check">
-                                        <input type="checkbox" name="cart_idxs[]" data-today_go="1" value="59638329" class="cartIdxs checkYN" onclick="cartCalcul();">
+                                        <input type="checkbox" class="itemCheckbox" th:value="${item.id}" onclick="updateTotalPrice()">
                                     </div>
 
                                     <div class="img">
@@ -141,8 +141,9 @@
                                                         <div class="promotionEndTime" style="letter-spacing:1px">21 : 01 : 02</div>
                                                     </div>
                                                 </div>
-                                            </div>										<a href="/shop/view.php?index_no=161051" target="_blank">
-                                            cd3143 (코디고민제로!/프리미엄원단/데일리필수템) 램버 소프트 라운드넥 자수 케이블 니트 가디건										</a>
+                                            </div>
+                                            <a href="/shop/view.php?index_no=161051" target="_blank">
+                                            <span th:text="${item.productName}">상품명</span></a>
 
                                             <div>
                                                 <img src="" style="height:20px; margin-right:5px;" onclick="$(this).closest('div.name').find('.time-wrap').show();">
@@ -153,7 +154,10 @@
                                     </div>
                                     <div class="opt">
                                         <!-- DarkBeige / 미니 L -->
-                                        Ivory(model) / Free									<div class="box_btn w80 h30 white5" style="display:block; margin-top:10px;  "><a href="javascript:" style="border-radius: 3px;" onclick="optViewToggle(this)">옵션변경</a></div>
+                                        Ivory(model) / Free
+                                        <div class="box_btn w80 h30 white5" style="display:block; margin-top:10px;  ">
+                                            <a href="javascript:" style="border-radius: 3px;" onclick="optViewToggle(this)">옵션변경</a>
+                                        </div>
                                         <div class="optchgBox" style="position: absolute; top: 50%; left: 0px; width: 100%; height: 100%; padding-top: 42px; transform: translateY(-50%); background-color: rgb(255, 255, 255); z-index: 1; display: none;">
                                             <label style="display: inline-block;width: 60px; text-align: center;">색상</label>
                                             <select name="change_op1" onchange="GoodsProc.set_opt_cart();" data-goods_idx="161051" style="width: 100px;">
@@ -173,22 +177,24 @@
                                             <span class="box_btn w65 h40 fs13 gray6" style="width: 65px; margin-top: 2px;"><a href="javascript:" style="width: 100%; height: 100%; display: inline-block;" onclick="optViewToggle(this)">취소</a></span>
                                         </div>
                                     </div>
+
                                     <div class="opt_chg">
                                         <div class="box_qty">
-                                            <a href="javascript:" class="ea_down" onclick="MemberProc.change_ea(-1);"></a>
-                                            <input type="text" name="ea" value="1" class="form_input" readonly="">
-                                            <a href="javascript:" class="ea_up" onclick="MemberProc.change_ea(+1);"></a>
+                                            <a href="javascript:void(0);" class="ea_down" th:onclick="'updateQuantity(' + ${item.id} + ', -1)'"></a>
+                                            <input type="text" th:value="${item.quantity}" class="form_input" readonly>
+                                            <a href="javascript:void(0);" class="ea_up" th:onclick="'updateQuantity(' + ${item.id} + ', 1)'"></a>
                                         </div>
                                     </div>
+
                                     <div class="price">
-                                        <del>50,000원</del>
-                                        <p style="font-weight:600">35,500원</p>
+                                        <p th:text="${#numbers.formatInteger(item.price, 0, 'COMMA') + '원'}">가격</p>
                                     </div>
+
                                     <div class="delete_wish">
                                         <a href="javascript:" onclick="GoodsProc.set_wish_single(161051)" style="vertical-align: middle;">
                                             <div class="wish-icon "></div>
                                         </a>
-                                        <a href="javascript:" onclick="MemberProc.cart_del(59638329);">
+                                        <a href="javascript:void(0);" th:onclick="'deleteCartItem(' + ${item.id} + ')'">
                                             <img src="https://atimg.sonyunara.com/attrangs/assets/web03/asset/img/shop/icon_del.png" alt="삭제">
                                         </a>
                                     </div>
@@ -202,8 +208,8 @@
                     <div class="area_right">
                         <div class="box">
                             <div class="price-wrap">
-                                <div class="price-title">선택한 상품 <span class="cart-total-ea">0</span>개</div>
-                                <div class="price-won"><span id="total_price">0</span>원</div>
+                                <div class="price-title">선택한 상품 <span id="selectedItemCount">0</span>개</div>
+                                <div class="price-won"><span id="selectedTotalPrice">0</span>원</div>
                                 <div style="text-align: center;">배송비<span id="del_account">
                                      0</span>원
                                     <div class="deliveryInfo">
@@ -234,22 +240,16 @@
                                 </tr>
                                 </tbody>
                             </table>
-                            <!-- <div class="deliveryInfo">
-                                <img src="//atimg.sonyunara.com/attrangs/2019/icon/i.gif" style='vertical-align: middle; margin-top: -3px;' />
-                                <span>80,000원이상</span> 구매시 <span>무료배송</span> 입니다.
-                            </div> -->
                             <div class="btn-custom tac">
                                     <span style="background-color:var(--season_color_01); width:62px; padding:0; border:1px solid #cfcfcf; padding:7px 0;position:relative;text-align: center;display: inline-block;top:13px; height:62px" onclick="alert('선물하기는 모바일에서 이용가능합니다');" class="giftspanBtn">
-                                    <!--
-                                    <p style="position:absolute;top:-27px; left:0px;">
-                                        <img src="https://atimg.sonyunara.com/attrangs/gift/gift_btn_over.png" alt="" style="height:28px;">
-                                    </p>-->
                                     <a href="javascript:" style="background-color:transparent;">
                                         <img src="https://atimg.sonyunara.com/2023/renew/list/gift.png" alt="" style="width:25px;">
                                         <p style=" margin-top:3px; font-size:12px;">선물하기</p>
                                     </a>
                                 </span>
-                                <span class="okbox"><a style="" href="javascript:" onclick="MemberProc.choose_buy();">선택상품 주문하기</a></span>
+                                <span class="okbox">
+                                    <a href="javascript:void(0);" onclick="orderSelectedItems()">선택상품 주문하기</a>
+                                </span>
                                 <span class="canbox"><a href="javascript:" onclick="MemberProc.all_buy();">전체상품 주문하기</a></span>
                             </div>
                         </div>
@@ -291,6 +291,100 @@
         </div>
     </div>
 
+    <script th:inline="javascript">
+        function toggleAllItems() {
+            const checked = document.getElementById('selectAll').checked;
+            document.querySelectorAll('.itemCheckbox').forEach(checkbox => {
+                checkbox.checked = checked;
+            });
+            updateTotalPrice();
+        }
+
+        function updateQuantity(itemId, change) {
+            fetch(`/cart/update/${itemId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ quantity: change })
+            })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        throw new Error('수량 변경 실패');
+                    }
+                })
+                .catch(error => alert(error.message));
+        }
+
+        function deleteCartItem(itemId) {
+            if (confirm('선택한 상품을 삭제하시겠습니까?')) {
+                fetch(`/cart/remove/${itemId}`, {
+                    method: 'DELETE'
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            document.getElementById(`cartItem-${itemId}`).remove();
+                            updateTotalPrice();
+                        } else {
+                            throw new Error('삭제 실패');
+                        }
+                    })
+                    .catch(error => alert(error.message));
+            }
+        }
+
+        function deleteSelectedItems() {
+            const selectedItems = Array.from(document.querySelectorAll('.itemCheckbox:checked'))
+                .map(checkbox => checkbox.value);
+
+            if (selectedItems.length === 0) {
+                alert('선택된 상품이 없습니다.');
+                return;
+            }
+
+            if (confirm('선택한 상품들을 삭제하시겠습니까?')) {
+                Promise.all(selectedItems.map(itemId =>
+                    fetch(`/cart/remove/${itemId}`, { method: 'DELETE' })
+                ))
+                    .then(() => location.reload())
+                    .catch(error => alert('삭제 중 오류가 발생했습니다.'));
+            }
+        }
+
+        function updateTotalPrice() {
+            const checkedItems = document.querySelectorAll('.itemCheckbox:checked');
+            let totalPrice = 0;
+            checkedItems.forEach(checkbox => {
+                const itemPrice = parseInt(checkbox.closest('li').querySelector('.price p').textContent.replace(/[^0-9]/g, ''));
+                const quantity = parseInt(checkbox.closest('li').querySelector('.form_input').value);
+                totalPrice += itemPrice * quantity;
+            });
+
+            document.getElementById('selectedItemCount').textContent = checkedItems.length;
+            document.getElementById('selectedTotalPrice').textContent = totalPrice.toLocaleString();
+            document.getElementById('selectedCount').textContent = checkedItems.length;
+        }
+
+        function orderSelectedItems() {
+            const selectedItems = Array.from(document.querySelectorAll('.itemCheckbox:checked'))
+                .map(checkbox => checkbox.value);
+
+            if (selectedItems.length === 0) {
+                alert('주문할 상품을 선택해주세요.');
+                return;
+            }
+
+            // 주문 페이지로 이동
+            location.href = '/order/checkout?items=' + selectedItems.join(',');
+        }
+
+        // 페이지 로드시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTotalPrice();
+        });
+    </script>
 
 </body>
 </html>

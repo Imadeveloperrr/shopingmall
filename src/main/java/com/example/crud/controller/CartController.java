@@ -36,9 +36,31 @@ public class CartController {
             int quantity = Integer.parseInt(payload.get("quantity").toString());
 
             cartService.addCartItem(productId, size, quantity);
-            return ResponseEntity.ok("success");
+            return ResponseEntity.ok("장바구니에 추가되었습니다.");
         } catch (Exception e) {
-            log.error("Error adding to cart", e);
+            log.error("장바구니 추가 실패", e);
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/update/{itemId}")
+    @ResponseBody
+    public ResponseEntity<String> updateCartItem(@PathVariable Long itemId, @RequestBody Map<String, Integer> payload) {
+        try {
+            cartService.updateCartItemQuantity(itemId, payload.get("quantity"));
+            return ResponseEntity.ok("수량이 변경되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/remove/{itemId}")
+    @ResponseBody
+    public ResponseEntity<String> removeCartItem(@PathVariable Long itemId) {
+        try {
+            cartService.removeCartItem(itemId);
+            return ResponseEntity.ok("상품이 삭제되었습니다.");
+        } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
