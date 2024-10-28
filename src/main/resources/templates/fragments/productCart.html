@@ -109,7 +109,7 @@
                         <ul class="prd list">
                             <!-- <caption class="hidden">장바구니</caption> -->
 
-                            <li th:each="item : ${cart.cartItems}" class="">
+                            <li th:each="item : ${cart.cartItems}" th:id="'cartItem-' + ${item.id}">
                                 <form class="goods-form">
                                     <div class="check">
                                         <input type="checkbox" name="cart_idxs[]" data-today_go="1" value="59638329" class="cartIdxs checkYN" onclick="cartCalcul();">
