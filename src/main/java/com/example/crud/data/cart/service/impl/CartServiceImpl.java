@@ -130,11 +130,15 @@ public class CartServiceImpl implements CartService {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("장바구니 항목을 찾을 수 없습니다."));
 
-        if (quantity >= 0) {
-            throw new IllegalArgumentException("상품 수량은 0보다 커야합니다.");
+        // 현재 수량에 변경값을 더합니다
+        int newQuantity = cartItem.getQuantity() + quantity;
+
+        // 새로운 수량이 0보다 작으면 에러
+        if (newQuantity <= 0) {
+            throw new IllegalArgumentException("상품 수량은 1개 이상이어야 합니다.");
         }
 
-        cartItem.setQuantity(quantity);
+        cartItem.setQuantity(newQuantity);
         cartRepository.save(cart);
     }
 
