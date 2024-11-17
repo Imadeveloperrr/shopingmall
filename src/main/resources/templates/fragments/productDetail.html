@@ -24,22 +24,33 @@
             <div class="prd-opt">
                 <table class="prd-opt-table">
                     <tbody class="prd-opt-tbody">
-                        <tr>
-                            <th scope="row">SIZE</th>
-                            <td>
-                                <select id="productSize">
-                                    <option value="S">Small</option>
-                                    <option value="M">Medium</option>
-                                    <option value="L">Large</option>
-                                </select>
-                            </td>
-                        </tr>
+                    <tr>
+                        <th scope="row">SIZE</th>
+                        <td>
+                            <select id="productSize" name="size">
+                                <option value="">사이즈 선택</option>
+                                <option th:each="size : ${product.productSizes}"
+                                        th:value="${size.size}"
+                                        th:text="${size.size + ' - 재고: ' + size.stock}">
+                                </option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">수량</th>
+                        <td>
+                            <input type="number" id="quantity" name="quantity"
+                                   min="1" value="1" max="10">
+                        </td>
+                    </tr>
                     </tbody>
                 </table>
             </div>
 
             <div class="product-info-action">
-                <a th:href="@{/product/buy(id=${product.number})}" class="product-info-action-buy">Buy it Now</a>
+                <a href="javascript:void(0);" class="product-info-action-buy" onclick="buyNow()">
+                    Buy it Now
+                </a>
 
                 <a href="javascript:void(0);" class="product-info-action-cart" onclick="addToCart()">
                     <i class="fas fa-shopping-cart"></i>
@@ -69,14 +80,29 @@
         }
     </script>
     <script th:inline="javascript">
-        function addToCart() {
+        function buyNow() {
+            const size = document.getElementById('productSize').value;
+            const quantity = document.getElementById('quantity').value;
             const productId = [[${product.number}]];
-            const sizeSelect = document.getElementById('productSize');
-            const size = sizeSelect.value;
-            const quantity = 1;
 
-            console.log('Product ID:', productId);
-            console.log('Selected Size:', size);
+            if (!size) {
+                alert('사이즈를 선택해주세요.');
+                return;
+            }
+
+            // 재고 확인 및 주문 페이지로 이동
+            location.href = `/order/checkout/direct?productId=${productId}&size=${size}&quantity=${quantity}`;
+        }
+
+        function addToCart() {
+            const size = document.getElementById('productSize').value;
+            const quantity = document.getElementById('quantity').value;
+            const productId = [[${product.number}]];
+
+            if (!size) {
+                alert('사이즈를 선택해주세요.');
+                return;
+            }
 
             fetch('/cart/add', {
                 method: 'POST',
@@ -86,16 +112,16 @@
                 body: JSON.stringify({
                     productId: productId,
                     size: size,
-                    quantity: quantity
+                    quantity: parseInt(quantity)
                 })
             })
                 .then(response => {
                     if (response.ok) {
-                        window.location.href = '/cart';
+                        if (confirm('상품이 장바구니에 추가되었습니다.\n장바구니로 이동하시겠습니까?')) {
+                            location.href = '/cart';
+                        }
                     } else {
-                        response.text().then(text => {
-                            alert('장바구니에 상품을 추가하는 데 실패했습니다: ' + text);
-                        });
+                        response.text().then(text => alert(text));
                     }
                 })
                 .catch(error => {
@@ -103,6 +129,17 @@
                     alert('오류가 발생했습니다.');
                 });
         }
+
+        // 재고에 따른 수량 제한
+        document.getElementById('productSize').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const stock = parseInt(selectedOption.text.split('재고: ')[1]);
+            const quantityInput = document.getElementById('quantity');
+            quantityInput.max = stock;
+            if (parseInt(quantityInput.value) > stock) {
+                quantityInput.value = stock;
+            }
+        });
     </script>
 
 </body>
