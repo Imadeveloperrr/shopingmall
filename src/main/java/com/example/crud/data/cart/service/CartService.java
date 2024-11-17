@@ -2,6 +2,9 @@ package com.example.crud.data.cart.service;
 
 import com.example.crud.data.cart.dto.CartDto;
 import com.example.crud.entity.Cart;
+import com.example.crud.entity.CartItem;
+
+import java.util.List;
 
 public interface CartService {
     // 장바구니 조회
@@ -18,4 +21,9 @@ public interface CartService {
     void updateCartItemQuantity(Long cartItemId, int quantity);
     // Cart -> CartDTO 변환
     CartDto convertToCartDto(Cart cart);
+
+    // 추가 메서드
+    void removeOrderedItems(List<Long> cartItemIds);
+    CartItem getCartItem(Long cartItemId);
+    CartDto getCartItems(List<Long> cartItemIds);  // 선택된 장바구니 아이템만 조회
 }

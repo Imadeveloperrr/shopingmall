@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Entity
 @Getter
@@ -27,17 +28,26 @@ public class Cart {
     private List<CartItem> cartItems = new ArrayList<>();
 
     public void addCartItem(CartItem cartItem) {
-        for (CartItem existingItem : cartItems) {
-            if (existingItem.getProduct().equals(cartItem.getProduct()) && existingItem.getProductSize().equals(cartItem.getProductSize())) {
-                existingItem.setQuantity(existingItem.getQuantity() + cartItem.getQuantity());
-            }
+        Optional<CartItem> existingItem = cartItems.stream()
+                .filter(item -> item.getProduct().equals(cartItem.getProduct())
+                        && item.getProductSize().equals(cartItem.getProductSize()))
+                .findFirst();
+
+        if (existingItem.isPresent()) {
+            existingItem.get().setQuantity(existingItem.get().getQuantity() + cartItem.getQuantity());
+        } else {
+            cartItems.add(cartItem);
+            cartItem.setCart(this);
         }
-        cartItems.add(cartItem);
-        cartItem.setCart(this);
     }
 
     public void removeCartItem(CartItem cartItem) {
         cartItems.remove(cartItem);
         cartItem.setCart(null);
+    }
+
+    public void clearItems() {
+        cartItems.forEach(item -> item.setCart(null));
+        cartItems.clear();
     }
 }

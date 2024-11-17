@@ -3,6 +3,7 @@
 <head>
     <div th:replace="~{/fragments/header.html :: fragment-header}"></div>
     <link href="/css/productCart.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="../../static/css/productCart.css">
 </head>
 
 
@@ -147,8 +148,6 @@
 
                                             <div>
                                                 <img src="" style="height:20px; margin-right:5px;" onclick="$(this).closest('div.name').find('.time-wrap').show();">
-                                                <span style="font-size:13px; color:var(--season_color_11); font-weight:600">특가가</span>
-                                                <span class="attdaytime" style="font-size:13px; color:var(--season_color_11); font-weight:600">21시간 01분 1초</span><span style="font-size:13px; color:var(--season_color_11); font-weight:600">남았어요</span>
                                             </div>
                                         </div>
                                     </div>
@@ -254,11 +253,6 @@
                             </div>
                         </div>
 
-                        <div style="margin-bottom: 10px; display:none;">
-                            <a href="javascript:" onclick="GoodsProc.kakao_buy()">
-                                <img src="https://atimg.sonyunara.com/attrangs/assets/web03/asset/img/member/kakao_buy.png" style="width: 100%;"><br>
-                            </a>
-                        </div>
                     </div>
                     <div class="clear"></div>
                     <br>
@@ -300,15 +294,15 @@
                 fetch(`/cart/remove/${itemId}`, {
                     method: 'DELETE'
                 })
-                    .then(response => {
-                        if (response.ok) {
-                            document.getElementById(`cartItem-${itemId}`).remove();
-                            updateTotalPrice();
-                        } else {
-                            throw new Error('삭제 실패');
-                        }
-                    })
-                    .catch(error => alert(error.message));
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById(`cartItem-${itemId}`).remove();
+                        updateTotalPrice();
+                    } else {
+                        throw new Error('삭제 실패');
+                    }
+                })
+                .catch(error => alert(error.message));
             }
         }
 
