@@ -104,6 +104,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public void removeCartItem(Long cartItemId) {
         Long memberId = getAuthenticatedMemberId();
         Cart cart = cartRepository.findByMemberNumber(memberId)
@@ -167,6 +168,52 @@ public class CartServiceImpl implements CartService {
                 .id(cart.getId())
                 .cartItems(cartItemDtos)
                 .totalPrice(cartItemDtos.stream()
+                        .mapToInt(item -> item.getPrice() * item.getQuantity())
+                        .sum())
+                .build();
+    }
+
+    // ------------------------------- 24-11-18 추가 -------------------------------
+
+    @Override
+    @Transactional
+    public void removeOrderedItems(List<Long> cartItemIds) {
+        Long memberId = getAuthenticatedMemberId();
+        Cart cart = cartRepository.findByMemberNumber(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("장바구니를 찾을 수 없습니다."));
+
+        List<CartItem> itemsToRemove = cart.getCartItems().stream()
+                .filter(item -> cartItemIds.contains(item.getId()))
+                .collect(Collectors.toList());
+
+        itemsToRemove.forEach(cart::removeCartItem);
+        cartRepository.save(cart);
+    }
+
+    @Override
+    public CartItem getCartItem(Long cartItemId) {
+        Long memberId = getAuthenticatedMemberId();
+        Cart cart = cartRepository.findByMemberNumber(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("장바구니를 찾을 수 없습니다."));
+
+        return cart.getCartItems().stream()
+                .filter(item -> item.getId().equals(cartItemId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("장바구니 항목을 찾을 수 없습니다."));
+    }
+
+    @Override
+    public CartDto getCartItems(List<Long> cartItemIds) {
+        CartDto fullCart = getCartByAuthenticateMember();
+
+        List<CartItemDto> selectedItems = fullCart.getCartItems().stream()
+                .filter(item -> cartItemIds.contains(item.getId()))
+                .collect(Collectors.toList());
+
+        return CartDto.builder()
+                .id(fullCart.getId())
+                .cartItems(selectedItems)
+                .totalPrice(selectedItems.stream()
                         .mapToInt(item -> item.getPrice() * item.getQuantity())
                         .sum())
                 .build();
