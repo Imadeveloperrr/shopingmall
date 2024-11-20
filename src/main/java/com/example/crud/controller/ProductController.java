@@ -32,12 +32,6 @@ public class ProductController {
         return "fragments/productAdd";
     }
 
-    /*@GetMapping("/buy")
-    public String productBuy(@RequestParam("id") Long productId, Model model) {
-        ProductResponseDto productResponseDto = productService.getProductById(productId);
-        model.addAttribute("product", productResponseDto);
-        return "fragments/productBuy";
-    }*/
 
     @PostMapping("/add")
     public ResponseEntity<?> addProduct(@ModelAttribute ProductDto productDto, @RequestParam("imageUrl") MultipartFile file) {
