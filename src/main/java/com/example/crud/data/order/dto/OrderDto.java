@@ -13,7 +13,6 @@ import java.util.List;
 @Builder
 public class OrderDto {
     private OrderType orderType;                // CART 또는 DIRECT
-    private DirectOrderInfo directOrderInfo;    // 직접 주문시 사용
     private String receiverName;
     private String receiverPhone;
     private String receiverMobile;

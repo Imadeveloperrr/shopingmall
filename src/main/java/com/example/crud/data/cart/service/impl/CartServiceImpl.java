@@ -157,6 +157,7 @@ public class CartServiceImpl implements CartService {
         List<CartItemDto> cartItemDtos = cart.getCartItems().stream().map(cartItem ->
                 CartItemDto.builder()
                         .id(cartItem.getId())
+                        .productId(cartItem.getProduct().getNumber())
                         .productName(cartItem.getProduct().getName())
                         .productSize(cartItem.getProductSize().getSize())
                         .price(cartItem.getProduct().getPrice())

@@ -1,9 +1,7 @@
 package com.example.crud.controller;
 
 import com.example.crud.data.cart.dto.CartDto;
-import com.example.crud.data.cart.dto.CartItemDto;
 import com.example.crud.data.cart.service.CartService;
-import com.example.crud.data.order.dto.DirectOrderInfo;
 import com.example.crud.data.order.dto.OrderDto;
 import com.example.crud.data.order.dto.OrderItemDto;
 import com.example.crud.data.order.dto.OrderPreparationDto;
@@ -23,7 +21,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
 
 @Controller
-@RequestMapping("/Order")
+@RequestMapping("/order")
 @RequiredArgsConstructor
 public class OrderController {
 
@@ -62,17 +60,10 @@ public class OrderController {
         // 상품 정보 조회
         ProductResponseDto product = productService.getProductById(productId);
 
-        // 직접 주문 정보 생성
-        DirectOrderInfo directOrderInfo = DirectOrderInfo.builder()
-                .productId(productId)
-                .size(size)
-                .quantity(quantity)
-                .build();
 
-        OrderPreparationDto orderPrep = orderService.prepareDirectOrder(product);
+        OrderPreparationDto orderPrep = orderService.prepareDirectOrder(product, size, quantity);
 
         setOrderModelAttributes(model, orderPrep, OrderType.DIRECT);
-        model.addAttribute("directOrderInfo", directOrderInfo);
 
         return "fragments/productBuy";
     }

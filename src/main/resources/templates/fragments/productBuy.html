@@ -15,7 +15,7 @@
     <form class="form_obj" method="post" action="/product/buy">
         <div id="container">
             <p class="total">
-                주문상품 <span>(갯수)</span>
+                주문상품 <span>([[${orderItems.size()}]]개)</span>
             </p>
 
             <table class="tbl_col prd ord">
@@ -41,11 +41,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
+
+                    <!-- orderItems를 사용한 상품 정보 표시 -->
+                    <tr th:each="item : ${orderItems}">
                         <td class="img">
                             <div style="padding: 10px 0;">
                                 <a href="" target="_blank">
-                                    <img th:src="@{${product.imageUrl}}" alt="상품 이미지">
+                                    <img th:src="@{${item.imageUrl}}" alt="상품 이미지">
                                 </a>
                             </div>
                         </td>
@@ -55,28 +57,22 @@
                                 <img src="https://atimg.sonyunara.com/2023/renew/m/quick_m.png" style="height:15px; margin-right:5px; vertical-align: middle; transform:translateZ(0)">
                             </span>
                             <br>
-                            <a href="" th:text="${product.name}"></a>
+                            <a href="" th:text="${item.productName}"></a>
                         </td>
                         <td>
-                            Black /
-                            <br>
-                            90
+                            <span th:text="${item.size}"></span>
                         </td>
                         <td>
-                            <s>12,000원</s>
-                            <br>
-                            <span th:text="${product.price}"></span>
+                            <span th:text="${#numbers.formatInteger(item.price, 0, 'COMMA') + '원'}"></span>
                         </td>
-                        <td>1</td>
-                        <td class="total_prc" th:text="${product.price}"></td>
+                        <td th:text="${item.quantity}">1</td>
+                        <td class="total_prc" th:text="${#numbers.formatInteger(item.price * item.quantity, 0, 'COMMA') + '원'}"></td>
                         <td>
                             <img src="https://attrangs.co.kr/asset/img/shop/i_milage.gif" alt="마일리지" class="gif-lib-track">
                             <span class="mileage_obj">0</span>
                             원
                         </td>
-                        <td>
-
-                        </td>
+                        <td></td>
                     </tr>
                 </tbody>
             </table>
@@ -229,20 +225,20 @@
                             </div>
                             <div class="grid">
                                 <textarea style="line-height:130%; width:100%; height:60px;font-size:11px;" readonly="1">
-                                    에스엔패션그룹(주)가 운영하는 쇼핑몰 브랜드 '아뜨랑스'는 고객님의 개인정보를 중요시하며,  '정보통신망 이용촉진 및 정보보호'에 관한 법률을 준수하고 있습니다.
+                                    이성호(주)가 운영하는 쇼핑몰 브랜드 'ChageClothes'는 고객님의 개인정보를 중요시하며,  '정보통신망 이용촉진 및 정보보호'에 관한 법률을 준수하고 있습니다.
                                     개인정보처리방침을 통하여 고객님께서 제공하시는 개인정보가 어떠한 용도와 방식으로 이용되고 있으며, 개인정보보호를 위해 어떠한 조치가 취해지고 있는지 알려드립니다.
                                     개인정보처리방침을 개정하는 경우 웹사이트 공지사항(또는 개별공지)을 통하여 공지할 것입니다.
 
                                     ■ 수집하는 개인정보 항목
-                                    에스엔패션그룹(주)가 운영하는 쇼핑몰 브랜드 '아뜨랑스'는 비회원 주문시 아래와 같은 개인정보를 수집하고 있습니다.
+                                    이성호(주)가 운영하는 쇼핑몰 브랜드 'ChageClothes'는 비회원 주문시 아래와 같은 개인정보를 수집하고 있습니다.
                                     - 수집항목 : 이름, 전화번호, 주소, 휴대전화번호, 이메일, 결제기록
 
                                     ■ 개인정보의 수집 및 이용목적
-                                    에스엔패션그룹(주)가 운영하는 쇼핑몰 브랜드 '아뜨랑스'는  수집한 개인정보를 다음의 목적을 위해 활용합니다.
+                                    이성호(주)가 운영하는 쇼핑몰 브랜드 'ChageClothes'는  수집한 개인정보를 다음의 목적을 위해 활용합니다.
                                     - 서비스 제공에 관한 계약 이행 및 서비스 제공에 따른 요금정산, 구매 및 요금 결제, 물품배송
 
                                     ■ 개인정보의 보유 및 이용기간
-                                    에스엔패션그룹(주)가 운영하는 쇼핑몰 브랜드 '아뜨랑스'는  개인정보 수집 및 이용목적이 달성된 후에는 예외 없이 해당 정보를 지체 없이 파기합니다.
+                                    이성호(주)가 운영하는 쇼핑몰 브랜드 'ChageClothes'는  개인정보 수집 및 이용목적이 달성된 후에는 예외 없이 해당 정보를 지체 없이 파기합니다.
                                     - 계약 또는 청약철회 등에 관한 기록 : 5년
                                     - 대금결제 및 재화등의 공급에 관한 기록 : 5년
                                     - 소비자의 불만 또는 분쟁처리에 관한 기록 : 1년
@@ -339,123 +335,6 @@
                                 <input type="text" class="form_input form_addr2" id="del_addr2" name="del_addr2" value="" placeholder="상세주소">
                             </div>
 
-                            <!-- 해외배송 -->
-                            <div class="delTypeBox" style="display: none;">
-                                <div class="addbtn">
-                                    <div>
-                                        <div style="margin-bottom: 10px;">
-                                            <input type="hidden" name="country" id="country" value="">
-                                            <select name="area_code" id="area_code" class="area_code_obj" onchange="BuyProc.calcul()">
-                                                <option value="">- 국가선택 -</option>
-                                                <option value="3">그루지아 (GEORGIA)</option>
-                                                <option value="3">그리스 (GREECE)</option>
-                                                <option value="4">나이지리아 (NIGERIA)</option>
-                                                <option value="3">네덜란드 (NETHERLANDS)</option>
-                                                <option value="4">네덜란드령앤틸리스(네덜란드) (ANTILLES)</option>
-                                                <option value="2">네팔 (NEPAL)</option>
-                                                <option value="3">노르웨이 (NORWAY)</option>
-                                                <option value="15">뉴질랜드 (NEW ZEALAND)</option>
-                                                <option value="20">대만 (TAIWAN)</option>
-                                                <option value="3">덴마크 (DENMARK)</option>
-                                                <option value="4">도미니카공화국 (DOMINICAN REPUBLIC)</option>
-                                                <option value="10">독일 (GERMANY)</option>
-                                                <option value="1">라오스 (LAO PEOPLE'S DEM REP)</option>
-                                                <option value="3">라트비아 (LATVIA)</option>
-                                                <option value="17">러시아 (RUSSIA)</option>
-                                                <option value="3">루마니아 (ROMANIA)</option>
-                                                <option value="3">룩셈부르크 (LUXEMBOURG)</option>
-                                                <option value="4">르완다 (RWANDA)</option>
-                                                <option value="1">마카오 (MACAO)</option>
-                                                <option value="3">마케도니아 (MACEDONIA)</option>
-                                                <option value="14">말레이시아 (MALAYSIA)</option>
-                                                <option value="4">멕시코 (MEXICO)</option>
-                                                <option value="4">모로코 (MOROCCO)</option>
-                                                <option value="4">모리셔스 (MAURITIUS)</option>
-                                                <option value="4">모잠비크 (MOZAMBIQUE)</option>
-                                                <option value="2">몰디브 (MALDIVES)</option>
-                                                <option value="1">몽골 (MONGOLIA)</option>
-                                                <option value="22">미국 (U.S.A)</option>
-                                                <option value="1">미얀마 (MYANMAR)</option>
-                                                <option value="3">바레인 (BAHRAIN)</option>
-                                                <option value="2">방글라데시 (BANGLADESH)</option>
-                                                <option value="24">베트남 (VIET NAM)</option>
-                                                <option value="3">벨기에 (BELGIUM)</option>
-                                                <option value="3">벨라루스 (BELARUS)</option>
-                                                <option value="3">보스니아헤르체코비나 (Bosnia and Herzegovina)</option>
-                                                <option value="4">보츠와나 (BOTSWANA)</option>
-                                                <option value="2">부탄 (BHUTAN)</option>
-                                                <option value="3">불가리아 (BULGARIA(REP))</option>
-                                                <option value="6">브라질 (BRAZIL)</option>
-                                                <option value="2">브루나이 (BRUNEI DARUSSALAM)</option>
-                                                <option value="3">사우디아라비아 (SAUDI ARABIA)</option>
-                                                <option value="3">사이프러스 (CYPRUS)</option>
-                                                <option value="2">스리랑카 (SRI LANKA)</option>
-                                                <option value="3">스웨덴 (SWEDEN)</option>
-                                                <option value="3">스위스 (SWITZERLAND)</option>
-                                                <option value="19">스페인 (SPAIN)</option>
-                                                <option value="3">슬로바키아 (SLOVAKIA)</option>
-                                                <option value="3">슬로베니아 (SLOVENIA)</option>
-                                                <option value="18">싱가폴 (SINGAPORE)</option>
-                                                <option value="3">아랍에미리트연합국 (UNITED ARAB EMIRATES)</option>
-                                                <option value="3">아르메니아 (ARMENIA)</option>
-                                                <option value="4">아르헨티나 (ARGENTINA)</option>
-                                                <option value="3">아일란드 (IRELAND)</option>
-                                                <option value="3">아제르바이잔 (AZERBAIJAN)</option>
-                                                <option value="3">알바니아 (ALBANIA)</option>
-                                                <option value="4">알제리 (ALGERIA)</option>
-                                                <option value="3">에스토니아 (ESTONIA)</option>
-                                                <option value="4">에콰도르 (ECUADOR)</option>
-                                                <option value="4">에티오피아 (ETHIOPIA)</option>
-                                                <option value="23">영국 (UNITED KINGDOM)</option>
-                                                <option value="3">오만 (OMAN)</option>
-                                                <option value="3">오스트리아 (AUSTRIA)</option>
-                                                <option value="3">요르단 (JORDAN)</option>
-                                                <option value="3">우즈베키스탄 (UZBEKISTAN)</option>
-                                                <option value="3">우크라이나 (UKRAINE)</option>
-                                                <option value="3">이란 (IRAN)</option>
-                                                <option value="3">이스라엘 (ISRAEL)</option>
-                                                <option value="4">이집트 (EGYPT)</option>
-                                                <option value="2">인도 (INDIA)</option>
-                                                <option value="12">인도네시아 (INDONESIA)</option>
-                                                <option value="13">일본 (JAPAN)</option>
-                                                <option value="4">잠비아 (ZAMBIA)</option>
-                                                <option value="8">중국 (CHINA)</option>
-                                                <option value="4">지부티 (DJIBOUTI)</option>
-                                                <option value="3">체코 (CZECH REP)</option>
-                                                <option value="4">칠레 (CHILE)</option>
-                                                <option value="4">카보베르데 (CAPE VERDE)</option>
-                                                <option value="3">카자흐스탄 (KAZAKHSTAN)</option>
-                                                <option value="3">카타르 (QATAR)</option>
-                                                <option value="1">캄보디아 (CAMBODIA)</option>
-                                                <option value="7">캐나다 (CANADA)</option>
-                                                <option value="4">케냐 (KENYA)</option>
-                                                <option value="4">코스타리카 (COSTA RICA)</option>
-                                                <option value="4">쿠바 (CUBA)</option>
-                                                <option value="3">크로아티아 (CROATIA)</option>
-                                                <option value="4">탄자니아 (TANZANIA(UNITED REP))</option>
-                                                <option value="21">태국 (THAILAND)</option>
-                                                <option value="3">터키 (TURKEY)</option>
-                                                <option value="4">튀니지 (TUNISIA)</option>
-                                                <option value="4">파나마 (PANAMA(REP))</option>
-                                                <option value="3">파키스탄 (PAKISTAN)</option>
-                                                <option value="3">포르투갈 (PORTUGAL)</option>
-                                                <option value="3">폴란드 (POLAND(REP))</option>
-                                                <option value="9">프랑스 (FRANCE)</option>
-                                                <option value="4">피지 (FIJI)</option>
-                                                <option value="3">핀란드 (FINLAND)</option>
-                                                <option value="16">필리핀 (PHILIPPINES)</option>
-                                                <option value="3">헝가리 (HUNGARY(REP))</option>
-                                                <option value="5">호주 (AUSTRALIA)</option>
-                                                <option value="11">홍콩 (HONGKONG)</option>
-                                            </select>
-                                        </div>
-
-                                        <input type="text" class="form_input form_addr0 o_zip_obj" id="ozip1" name="ozip1" placeholder="우편번호">
-                                    </div>
-                                </div>
-                                <input type="text" class="form_input form_addr1" id="oaddr1" name="oaddr1" placeholder="주소">
-                                <input type="text" class="form_input form_addr2" id="oaddr2" name="oaddr2" placeholder="상세주소">
-                            </div>
                         </td>
                     </tr>
                     <tr>
@@ -556,14 +435,12 @@
                             <tbody>
                             <tr>
                                 <th scope="row">총 상품금액</th>
-                                <td><span class="total_goods_price_obj">45,000</span>원</td>
+                                <td><span class="total_goods_price_obj">[[${#numbers.formatInteger(totalAmount, 0, 'COMMA')}]]</span>원</td>
                             </tr>
                             <tr>
                                 <th scope="row">배송료</th>
                                 <td>
-                                    +
-                                    <span class="total_delaccount_obj">3,500</span>원
-
+                                    +<span class="total_delaccount_obj">[[${#numbers.formatInteger(deliveryFee, 0, 'COMMA')}]]</span>원
                                 </td>
                             </tr>
                             <tr style="display: none;">
@@ -607,7 +484,11 @@
                         </table>
                         <dl class="total_ord_prc">
                             <dt>총 결제금액</dt>
-                            <dd><strong class="use_account_obj" data-account="35500">35,500</strong>원</dd>
+                            <dd>
+                                <strong class="use_account_obj" th:data-account="${finalAmount}">
+                                    [[${#numbers.formatInteger(finalAmount, 0, 'COMMA')}]]
+                                </strong>원
+                            </dd>
                         </dl>
                     </div>
                     <div class="btn">

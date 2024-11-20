@@ -8,6 +8,7 @@
         <id property="id" column="cart_id" />
         <collection property="cartItems" ofType="com.example.crud.data.cart.dto.CartItemDto">
             <id property="id" column="cart_item_id"/>
+            <result property="productId" column="product_id"/>
             <result property="productName" column="product_name"/>
             <result property="productSize" column="product_size"/>
             <result property="price" column="price"/>
@@ -20,6 +21,7 @@
         SELECT
             c.id AS cart_id,
             ci.id AS cart_item_id,
+            p.number AS product_id,
             p.name AS product_name,
             ps.size AS product_size,
             p.price AS price,
