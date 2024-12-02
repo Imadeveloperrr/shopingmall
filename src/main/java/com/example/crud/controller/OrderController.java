@@ -9,8 +9,10 @@ import com.example.crud.data.order.service.OrderService;
 import com.example.crud.data.product.dto.ProductResponseDto;
 import com.example.crud.data.product.service.ProductService;
 import com.example.crud.entity.Orders;
+import com.example.crud.entity.ProductOption;
 import com.example.crud.enums.OrderType;
 import com.example.crud.enums.PaymentMethodType;
+import com.example.crud.repository.ProductOptionRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -28,10 +30,11 @@ public class OrderController {
     private final OrderService orderService;
     private final CartService cartService;
     private final ProductService productService;
+    private final ProductOptionRepository productOptionRepository;
 
     // 장바구니에서 주문
-    @PostMapping("/checkout")
-    public String checkoutFromCart(@RequestBody List<Long> cartItemIds, Model model) {
+    @GetMapping("/checkout")
+    public String checkoutFromCart(@RequestParam("items") List<Long> cartItemIds, Model model) {
         if (cartItemIds.isEmpty()) {
             throw new IllegalArgumentException("주문할 상품을 선택해주세요.");
         }
@@ -48,23 +51,26 @@ public class OrderController {
 
     // 상품 상세페이지에서 직접 주문
     @GetMapping("/checkout/direct")
-    public String checkoutDirect(@RequestParam("productId") Long productId,
-                                 @RequestParam("size") String size,
-                                 @RequestParam("quantity") int quantity,
-                                 Model model) {
+    public String checkoutDirect(
+            @RequestParam("productId") Long productId,
+            @RequestParam("color") String color,  // 추가
+            @RequestParam("size") String size,
+            @RequestParam("quantity") int quantity,
+            Model model) {
+
+        ProductOption productOption = productOptionRepository
+                .findByProduct_NumberAndColorAndSize(productId, color, size)
+                .orElseThrow(() -> new IllegalArgumentException("해당 옵션을 찾을 수 없습니다."));
+
         // 재고 확인
-        if (!orderService.checkStock(productId, size, quantity)) {
+        if (productOption.getStock() < quantity) {
             throw new IllegalStateException("재고가 부족합니다.");
         }
 
-        // 상품 정보 조회
         ProductResponseDto product = productService.getProductById(productId);
-
-
-        OrderPreparationDto orderPrep = orderService.prepareDirectOrder(product, size, quantity);
+        OrderPreparationDto orderPrep = orderService.prepareDirectOrder(product, color, size, quantity);
 
         setOrderModelAttributes(model, orderPrep, OrderType.DIRECT);
-
         return "fragments/productBuy";
     }
 

@@ -2,6 +2,8 @@ package com.example.crud.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -31,9 +33,6 @@ public class Product {
     @Column(nullable = false)
     private String intro;
 
-    @Column(nullable = false)
-    private String color;
-
     @Column(nullable = false, columnDefinition="TEXT")
     private String description;
 
@@ -51,12 +50,25 @@ public class Product {
     private Member member;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductSize> productSizes;
+    @Builder.Default
+    private List<ProductOption> productOptions = new ArrayList<>();
 
-    public ProductSize getProductSizeBySize(String size) {
-        return productSizes.stream().filter(productSize -> productSize.getSize().equals(size))
+    public ProductOption getProductOptionByColorAndSize(String color, String size) {
+        return productOptions.stream()
+                .filter(option -> option.getColor().equals(color) && option.getSize().equals(size))
                 .findFirst()
                 .orElse(null);
+    }
+
+    // 양방향 관계 관리 메서드 추가
+    public void addProductOption(ProductOption option) {
+        productOptions.add(option);
+        option.setProduct(this);
+    }
+
+    public void removeProductOption(ProductOption option) {
+        productOptions.remove(option);
+        option.setProduct(null);
     }
 
     public String getMemberEmail() {

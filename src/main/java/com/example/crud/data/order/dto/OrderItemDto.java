@@ -11,6 +11,7 @@ public class OrderItemDto {
     private Long productId;
     private String productName;
     private String size;
+    private String color;
     private int price;
     private int quantity;
     private String imageUrl;

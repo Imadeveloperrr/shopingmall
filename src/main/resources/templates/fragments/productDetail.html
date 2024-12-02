@@ -25,14 +25,23 @@
                 <table class="prd-opt-table">
                     <tbody class="prd-opt-tbody">
                     <tr>
+                        <th scope="row">COLOR</th>
+                        <td>
+                            <select id="productColor" name="color">
+                                <option value="">색상 선택</option>
+                                <option th:each="option : ${product.productOptions}"
+                                        th:value="${option.color}"
+                                        th:text="${option.color}"
+                                        th:attr="data-stock=${option.stock}">
+                                </option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row">SIZE</th>
                         <td>
-                            <select id="productSize" name="size">
+                            <select id="productSize" name="size" disabled>
                                 <option value="">사이즈 선택</option>
-                                <option th:each="size : ${product.productSizes}"
-                                        th:value="${size.size}"
-                                        th:text="${size.size + ' - 재고: ' + size.stock}">
-                                </option>
                             </select>
                         </td>
                     </tr>
@@ -80,6 +89,30 @@
         }
     </script>
     <script th:inline="javascript">
+        const productOptions = /*[[${product.productOptions}]]*/ [];
+
+        document.getElementById('productColor').addEventListener('change', function() {
+            const colorSelect = this;
+            const sizeSelect = document.getElementById('productSize');
+            const selectedColor = colorSelect.value;
+
+            sizeSelect.innerHTML = '<option value="">사이즈 선택</option>';
+            sizeSelect.disabled = !selectedColor;
+
+            if (selectedColor) {
+                const availableSizes = productOptions
+                    .filter(option => option.color === selectedColor)
+                    .map(option => option.size);
+
+                availableSizes.forEach(size => {
+                    const option = document.createElement('option');
+                    option.value = size;
+                    option.textContent = size;
+                    sizeSelect.appendChild(option);
+                });
+            }
+        });
+
         function buyNow() {
             const size = document.getElementById('productSize').value;
             const quantity = document.getElementById('quantity').value;
@@ -95,10 +128,15 @@
         }
 
         function addToCart() {
+            const color = document.getElementById('productColor').value;
             const size = document.getElementById('productSize').value;
             const quantity = document.getElementById('quantity').value;
-            const productId = [[${product.number}]];
+            const productId = /*[[${product.number}]]*/ null;
 
+            if (!color) {
+                alert('색상을 선택해주세요.');
+                return;
+            }
             if (!size) {
                 alert('사이즈를 선택해주세요.');
                 return;
@@ -111,6 +149,7 @@
                 },
                 body: JSON.stringify({
                     productId: productId,
+                    color: color,
                     size: size,
                     quantity: parseInt(quantity)
                 })

@@ -7,7 +7,9 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProductSizeDto {
+public class ProductOptionDto {
+    private Long id;
+    private String color;
     private String size;
     private Integer stock;
 }

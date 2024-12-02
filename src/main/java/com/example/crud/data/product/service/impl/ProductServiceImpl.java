@@ -1,20 +1,19 @@
 package com.example.crud.data.product.service.impl;
 
 import com.example.crud.data.product.dto.ProductDto;
+import com.example.crud.data.product.dto.ProductOptionDto;
 import com.example.crud.data.product.dto.ProductResponseDto;
-import com.example.crud.data.product.dto.ProductSizeDto;
 import com.example.crud.data.product.service.ProductService;
 import com.example.crud.entity.Member;
 import com.example.crud.entity.Product;
-import com.example.crud.entity.ProductSize;
+import com.example.crud.entity.ProductOption;
 import com.example.crud.mapper.ProductMapper;
 import com.example.crud.repository.MemberRepository;
+import com.example.crud.repository.ProductOptionRepository;
 import com.example.crud.repository.ProductRepository;
-import com.fasterxml.jackson.databind.util.BeanUtil;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageOptions;
 import com.google.firebase.cloud.StorageClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +40,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final MemberRepository memberRepository;
     private final ProductMapper productMapper;
+    private final ProductOptionRepository productOptionRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -87,22 +87,22 @@ public class ProductServiceImpl implements ProductService {
             Member member = getAuthenticatedUser();
             imageUrl = uploadImageToFirebase(image);
 
-            // DTO를 엔티티로 변환
             Product product = converToProductEntity(productDto, member);
             product.setImageUrl(imageUrl);
 
-            // ProductSize 엔티티 생성 및 설정
-            List<ProductSize> productSizeList = new ArrayList<>();
-            if (productDto.getProductSizes() != null) {
-                for (ProductSizeDto sizeDto : productDto.getProductSizes()) {
-                    ProductSize productSize = ProductSize.builder()
-                            .size(sizeDto.getSize())
-                            .stock(sizeDto.getStock())
+            // ProductOption 엔티티 생성 및 설정
+            List<ProductOption> productOptionList = new ArrayList<>();
+            if (productDto.getProductOptions() != null) {
+                for (ProductOptionDto optionDto : productDto.getProductOptions()) {
+                    ProductOption productOption = ProductOption.builder()
+                            .color(optionDto.getColor())
+                            .size(optionDto.getSize())
+                            .stock(optionDto.getStock())
                             .product(product)
                             .build();
-                    productSizeList.add(productSize);
+                    productOptionList.add(productOption);
                 }
-                product.setProductSizes(productSizeList);
+                product.setProductOptions(productOptionList);
             }
 
             Product savedProduct = productRepository.save(product);
@@ -119,39 +119,65 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductResponseDto getUpdateProduct(ProductDto productDto, MultipartFile image) throws IOException {
         Member member = getAuthenticatedUser();
-
         Product existingProduct = productRepository.findById(productDto.getNumber())
-                .orElseThrow(() -> new NoSuchElementException("ERROR : 없는 상품입니다."));
+                .orElseThrow(() -> new NoSuchElementException("ERROR : 존재하지 않는 상품입니다."));
 
-        // 기존 이미지 삭제
-        if (existingProduct.getImageUrl() != null && !existingProduct.getImageUrl().isEmpty()) {
+        // 1. 이미지 처리
+        String imageUrl = handleImageUpdate(image, existingProduct);
+
+        // 2. 기본 정보 업데이트
+        updateProductBasicInfo(existingProduct, productDto);
+
+        // 이미지 URL 설정
+        existingProduct.setImageUrl(imageUrl);
+
+        // 3. 옵션 처리
+        updateProductOptions(existingProduct, productDto.getProductOptions());
+
+        Product savedProduct = productRepository.save(existingProduct);
+        return convertToProductResponseDTO(savedProduct);
+    }
+
+    // 이미지 처리 메서드
+    private String handleImageUpdate(MultipartFile image, Product existingProduct) throws IOException {
+        if (image == null || image.isEmpty()) {
+            return existingProduct.getImageUrl();
+        }
+
+        if (existingProduct.getImageUrl() != null) {
             deletedImageFromFirebase(existingProduct.getImageUrl());
         }
+        return uploadImageToFirebase(image);
+    }
 
-        // 새 이미지 업로드
-        String imageUrl = uploadImageToFirebase(image);
+    // 기본 정보 업데이트 메서드
+    private void updateProductBasicInfo(Product product, ProductDto productDto) {
+        product.setName(productDto.getName());
+        product.setBrand(productDto.getBrand());
+        product.setPrice(productDto.getPrice());
+        product.setIntro(productDto.getIntro());
+        product.setDescription(productDto.getDescription());
+        product.setCategory(productDto.getCategory());
+    }
 
-        // DTO를 엔티티로 변환
-        Product updatedProduct = converToProductEntity(productDto, member);
-        updatedProduct.setImageUrl(imageUrl);
+    // 옵션 업데이트 메서드
+    private void updateProductOptions(Product product, List<ProductOptionDto> newOptions) {
+        if (newOptions == null) return;
 
-        // 기존 사이즈 정보 삭제
-        updatedProduct.getProductSizes().clear();
+        List<ProductOption> existingOptions = product.getProductOptions();
 
-        // 새로운 사이즈 정보 추가
-        if (productDto.getProductSizes() != null) {
-            List<ProductSize> productSizeList = productDto.getProductSizes().stream()
-                    .map(sizeDto -> ProductSize.builder()
-                            .size(sizeDto.getSize())
-                            .stock(sizeDto.getStock())
-                            .product(updatedProduct)
-                            .build())
-                    .collect(Collectors.toList());
-            updatedProduct.setProductSizes(productSizeList);
+        // 기존 옵션 모두 제거 (orphanRemoval로 자동 삭제됨)
+        existingOptions.clear();
+
+        // 새로운 옵션들 추가
+        for (ProductOptionDto optionDto : newOptions) {
+            ProductOption newOption = ProductOption.builder()
+                    .color(optionDto.getColor())
+                    .size(optionDto.getSize())
+                    .stock(optionDto.getStock())
+                    .build();
+            product.addProductOption(newOption);  // 양방향 관계 설정
         }
-
-        Product savedProduct = productRepository.save(updatedProduct);
-        return convertToProductResponseDTO(savedProduct);
     }
 
     @Override
@@ -214,6 +240,20 @@ public class ProductServiceImpl implements ProductService {
         return "https://firebasestorage.googleapis.com/v0/b/" + "webproject-83837.appspot.com" + "/o/" + encodedFileName + "?alt=media";
     }
 
+    @Override
+    public List<ProductOptionDto> getProductOptions(Long productId) {
+        List<ProductOption> options = productOptionRepository.findByProduct_Number(productId);
+
+        return options.stream()
+                .map(option -> ProductOptionDto.builder()
+                        .id(option.getId())
+                        .color(option.getColor())
+                        .size(option.getSize())
+                        .stock(option.getStock())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     private ProductResponseDto convertToProductResponseDTO(Product product) {
         ProductResponseDto productResponseDto = new ProductResponseDto();
         BeanUtils.copyProperties(product, productResponseDto);
@@ -221,15 +261,17 @@ public class ProductServiceImpl implements ProductService {
         productResponseDto.setPrice(formatter.format(product.getPrice()) + "원");
         productResponseDto.setDescription(product.getDescription().replace("\n", "<br>"));
 
-        // ProductSize 정보 변환
-        if (product.getProductSizes() != null) {
-            List<ProductSizeDto> sizeDtos = product.getProductSizes().stream()
-                    .map(size -> ProductSizeDto.builder()
-                            .size(size.getSize())
-                            .stock(size.getStock())
+        // ProductOption 정보 변환
+        if (product.getProductOptions() != null) {
+            List<ProductOptionDto> optionDtos = product.getProductOptions().stream()
+                    .map(option -> ProductOptionDto.builder()
+                            .id(option.getId())
+                            .color(option.getColor())
+                            .size(option.getSize())
+                            .stock(option.getStock())
                             .build())
                     .collect(Collectors.toList());
-            productResponseDto.setProductSizes(sizeDtos);
+            productResponseDto.setProductOptions(optionDtos);
         }
 
         return productResponseDto;

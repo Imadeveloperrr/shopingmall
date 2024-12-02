@@ -16,7 +16,7 @@ public interface OrderService {
     List<OrderItemDto> prepareOrderItems(List<CartItemDto> cartItems);
 
     // 직접 주문 준비
-    OrderPreparationDto prepareDirectOrder(ProductResponseDto product, String size, int quantity);
+    OrderPreparationDto prepareDirectOrder(ProductResponseDto product, String color, String size, int quantity);
 
     // 주문 준비 (공통)
     OrderPreparationDto prepareOrder(List<OrderItemDto> orderItems);
@@ -37,7 +37,7 @@ public interface OrderService {
     List<Orders> getMemberOrders(Long memberId);
 
     // 재고 확인
-    boolean checkStock(Long productId, String size, int quantity);
+    boolean checkStock(Long productId, String color, String size, int quantity);
 
     // 배송비 계산
     int calculateDeliveryFee(int totalAmount);

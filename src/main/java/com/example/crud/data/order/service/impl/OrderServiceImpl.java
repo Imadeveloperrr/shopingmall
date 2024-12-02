@@ -10,10 +10,7 @@ import com.example.crud.data.product.dto.ProductResponseDto;
 import com.example.crud.entity.*;
 import com.example.crud.enums.OrderStatus;
 import com.example.crud.enums.OrderType;
-import com.example.crud.repository.MemberRepository;
-import com.example.crud.repository.OrderRepository;
-import com.example.crud.repository.ProductRepository;
-import com.example.crud.repository.ProductSizeRepository;
+import com.example.crud.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,8 +30,8 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
-    private final ProductSizeRepository productSizeRepository;
     private final CartService cartService;
+    private final ProductOptionRepository productOptionRepository;
 
     /**
      * 장바구니 상품들을 주문 가능한 형태(OrderItemDto)로 변환
@@ -52,21 +49,23 @@ public class OrderServiceImpl implements OrderService {
      * 2. 배송비 계산하여 최종 주문 준비 정보(OrderPreparationDto) 반환
      */
     @Override
-    public OrderPreparationDto prepareDirectOrder(ProductResponseDto product, String size, int quantity) {
-        // 사용자가 선택한 상품 정보로 OrderItemDto 생성
+    public OrderPreparationDto prepareDirectOrder(ProductResponseDto product, String color, String size, int quantity) {
+        ProductOption productOption = productOptionRepository
+                .findByProduct_NumberAndColorAndSize(product.getNumber(), color, size)
+                .orElseThrow(() -> new IllegalArgumentException("해당 옵션을 찾을 수 없습니다."));
+
         OrderItemDto orderItemDto = OrderItemDto.builder()
                 .productId(product.getNumber())
                 .productName(product.getName())
                 .price(parsePrice(product.getPrice()))
                 .quantity(quantity)
                 .imageUrl(product.getImageUrl())
+                .color(color)
                 .size(size)
-                .stockAvailable(true)
+                .stockAvailable(productOption.getStock() >= quantity)
                 .build();
 
-        // 단일 상품 주문이므로 List로 변환하여 공통 주문 준비 로직 호출
-        List<OrderItemDto> orderItems = List.of(orderItemDto);
-        return prepareOrder(orderItems);
+        return prepareOrder(List.of(orderItemDto));
     }
 
     /**
@@ -139,22 +138,24 @@ public class OrderServiceImpl implements OrderService {
     private void createOrderItemsFromCart(Orders order, List<Long> cartItemIds) {
         cartItemIds.forEach(cartItemId -> {
             CartItem cartItem = cartService.getCartItem(cartItemId);
-            validateStock(cartItem.getProduct().getNumber(),
-                    cartItem.getProductSize().getSize(),
-                    cartItem.getQuantity());
+            ProductOption productOption = cartItem.getProductOption();
+
+            // 재고 검증 단순화
+            validateStock(productOption, cartItem.getQuantity());
 
             OrderItem orderItem = OrderItem.builder()
                     .orders(order)
                     .product(cartItem.getProduct())
-                    .productSizeEntity(cartItem.getProductSize())
+                    .productOption(productOption)
                     .quantity(cartItem.getQuantity())
                     .price(cartItem.getProduct().getPrice())
                     .productName(cartItem.getProduct().getName())
-                    .productSize(cartItem.getProductSize().getSize())
+                    .productColor(productOption.getColor())
+                    .productSize(productOption.getSize())
                     .build();
 
             order.addOrderItem(orderItem);
-            updateStock(cartItem.getProductSize(), cartItem.getQuantity());
+            updateStock(productOption, cartItem.getQuantity());
         });
     }
 
@@ -167,30 +168,32 @@ public class OrderServiceImpl implements OrderService {
      */
     private void createOrderItems(Orders order, List<OrderItemDto> orderItemDtos) {
         for (OrderItemDto itemDto : orderItemDtos) {
-            // 상품 및 사이즈 정보 조회
             Product product = productRepository.findById(itemDto.getProductId())
                     .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다."));
 
-            ProductSize productSize = productSizeRepository.findByProduct_NumberAndSize(
-                            itemDto.getProductId(), itemDto.getSize())
-                    .orElseThrow(() -> new NoSuchElementException("해당 사이즈를 찾을 수 없습니다."));
+            ProductOption productOption = productOptionRepository
+                    .findByProduct_NumberAndColorAndSize(
+                            itemDto.getProductId(),
+                            itemDto.getColor(),  // color 추가
+                            itemDto.getSize()
+                    )
+                    .orElseThrow(() -> new NoSuchElementException("해당 옵션을 찾을 수 없습니다."));
 
-            // 재고 확인
-            validateStock(itemDto.getProductId(), itemDto.getSize(), itemDto.getQuantity());
+            validateStock(productOption, itemDto.getQuantity());
 
-            // 주문 상품 생성
             OrderItem orderItem = OrderItem.builder()
                     .orders(order)
                     .product(product)
-                    .productSizeEntity(productSize)
+                    .productOption(productOption)
                     .quantity(itemDto.getQuantity())
                     .price(itemDto.getPrice())
                     .productName(itemDto.getProductName())
+                    .productColor(itemDto.getColor())  // color 추가
                     .productSize(itemDto.getSize())
                     .build();
 
             order.addOrderItem(orderItem);
-            updateStock(productSize, itemDto.getQuantity());
+            updateStock(productOption, itemDto.getQuantity());
         }
     }
 
@@ -198,9 +201,13 @@ public class OrderServiceImpl implements OrderService {
      * 재고 검증
      * 요청 수량만큼 재고가 있는지 확인
      */
-    private void validateStock(Long productId, String size, int quantity) {
-        if (!checkStock(productId, size, quantity)) {
-            throw new IllegalStateException("재고가 부족합니다.");
+    private void validateStock(ProductOption productOption, int quantity) {
+        if (productOption.getStock() < quantity) {
+            throw new IllegalStateException(
+                    String.format("재고가 부족합니다. 현재 재고: %d, 요청 수량: %d",
+                            productOption.getStock(),
+                            quantity)
+            );
         }
     }
 
@@ -208,9 +215,9 @@ public class OrderServiceImpl implements OrderService {
      * 재고 차감 처리
      * 주문 수량만큼 재고 감소
      */
-    private void updateStock(ProductSize productSize, int quantity) {
-        productSize.setStock(productSize.getStock() - quantity);
-        productSizeRepository.save(productSize);
+    private void updateStock(ProductOption productOption, int quantity) {
+        productOption.setStock(productOption.getStock() - quantity);
+        productOptionRepository.save(productOption);
     }
 
     @Override
@@ -241,10 +248,12 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public boolean checkStock(Long productId, String size, int quantity) {
-        ProductSize productSize = productSizeRepository.findByProduct_NumberAndSize(productId, size)
-                .orElseThrow(() -> new NoSuchElementException("해당 사이즈의 상품을 찾을 수 없습니다."));
-        return productSize.getStock() >= quantity;
+    public boolean checkStock(Long productId, String color, String size, int quantity) {
+        ProductOption productOption = productOptionRepository
+                .findByProduct_NumberAndColorAndSize(productId, color, size)
+                .orElseThrow(() -> new IllegalArgumentException("해당 옵션을 찾을 수 없습니다."));
+
+        return productOption.getStock() >= quantity;
     }
 
     @Override
