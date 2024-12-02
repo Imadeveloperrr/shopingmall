@@ -51,6 +51,7 @@ public class SecurityConfig {
                         .requestMatchers("/login").permitAll()
                         .requestMatchers("/logout").permitAll()
                         .requestMatchers("/mypage/**").hasRole("USER")
+                        .requestMatchers("/cart/**").hasRole("USER")
                         .requestMatchers("/product/**").hasRole("USER")
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                         .anyRequest().authenticated()

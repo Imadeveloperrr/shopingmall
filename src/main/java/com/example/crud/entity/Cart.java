@@ -30,7 +30,7 @@ public class Cart {
     public void addCartItem(CartItem cartItem) {
         Optional<CartItem> existingItem = cartItems.stream()
                 .filter(item -> item.getProduct().equals(cartItem.getProduct())
-                        && item.getProductSize().equals(cartItem.getProductSize()))
+                        && item.getProductOption().equals(cartItem.getProductOption())) // ProductSize -> ProductOption
                 .findFirst();
 
         if (existingItem.isPresent()) {
