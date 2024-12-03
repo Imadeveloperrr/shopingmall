@@ -1,30 +1,92 @@
 body {
     font-family: 'Work Sans', 'Noto Sans KR', sans-serif;
 }
-
-header.firsthead {
-    padding-top: 15.5rem;
-    padding-bottom: 6rem;
+.logo-carousel-section {
     text-align: center;
-    background-image: url("https://img.freepik.com/free-photo/abstract-blur-shopping-mall-interior_1203-8238.jpg?w=1380&t=st=1724991309~exp=1724991909~hmac=f2d8b99930412443781fe322e4ed66ce8c293f829d9d222298b9793b01172525");
-    height: 550px;
+    height: 650px; /* 550px에서 650px로 증가 */
+    position: relative;
+}
+
+.logo-carousel-container {
+    width: 100%;
+    height: 650px; /* 550px에서 650px로 증가 */
+    position: relative;
+    overflow: hidden;
+}
+
+.logo-carousel-slide {
+    display: flex;
+    position: absolute;
+    width: 400%;
+    height: 100%;
+    transition: transform 0.5s ease-in-out;
+}
+
+.logo-carousel-slide img {
+    width: 25%;
+    height: 100%;
+    object-fit: cover;
     background-repeat: no-repeat;
     background-position: center center;
     background-size: cover;
-    color: #323232;
 }
 
-header.firsthead .firsthead-subheading {
-    font-size: 2rem;
-    font-weight: 700;
+.logo-carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(35, 42, 52, 0.8);
+    border: none;
+    width: 70px; /* 50px에서 70px로 증가 */
+    height: 70px; /* 50px에서 70px로 증가 */
+    cursor: pointer;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+    z-index: 100;
 }
+
+.logo-carousel-btn:hover {
+    background: rgba(85, 76, 134, 0.9);
+}
+
+#prevBtn { left: 20px; }
+#nextBtn { right: 20px; }
+
+.logo-carousel-dots {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+}
+
+.logo-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.logo-dot.active {
+    background: #554c86;
+}
+
+.logo-arrow {
+    border: solid #fff;
+    border-width: 0 5px 5px 0; /* 3px에서 5px로 증가 */
+    display: inline-block;
+    padding: 10px; /* 6px에서 10px로 증가 */
+    margin-top: 8px; /* 5px에서 8px로 증가 */
+}
+
+.right { transform: rotate(-45deg); }
+.left { transform: rotate(135deg); }
 
 a {
-    text-decoration: none;
-}
+     text-decoration: none;
+ }
 
-header.firsthead .firsthead-heading {
-    font-size: 4rem;
-    font-weight: 700;
-
-}

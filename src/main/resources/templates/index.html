@@ -4,21 +4,34 @@
     <div th:replace="~{/fragments/header.html :: fragment-header}"></div>
     <title>spring framework study</title>
     <!-- index -->
-    <link href="css/styles.css" rel="stylesheet"/>
+    <link href="/css/styles.css" rel="stylesheet"/>
     <!-- footer -->
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
-    <link href="css/footer.css" rel="stylesheet"/>
+    <link href="/css/footer.css" rel="stylesheet"/>
 </head>
 <body>
 <!-- Navigation -->
     <div th:insert="~{/fragments/nav.html :: fragment-nav}"></div>
 <!-- Head -->
-<header class="firsthead">
-    <div class="container">
-        <div class="firsthead-subheading"> Spring Framework Parctice Website</div>
-        <div class="firsthead-heading"> Sungho ShoppingMall</div>
+<section class="logo-carousel-section">
+    <div class="logo-carousel-container">
+        <div class="logo-carousel-slide">
+            <img th:src="@{/img/main1.jpg}" alt="Logo 1">
+            <img th:src="@{/img/main2.jpg}" alt="Logo 2">
+            <img th:src="@{/img/main3.jpg}" alt="Logo 3">
+            <img th:src="@{/img/main4.jpg}" alt="Logo 4">
+        </div>
+
+        <button class="logo-carousel-btn" id="prevBtn">
+            <i class="logo-arrow left"></i>
+        </button>
+        <button class="logo-carousel-btn" id="nextBtn">
+            <i class="logo-arrow right"></i>
+        </button>
+
+        <div class="logo-carousel-dots"></div>
     </div>
-</header>
+</section>
 <!-- Service -->
 <section class="page-section" id="service">
     <div class="container px-4 px-lg-5 mt-5"> <!-- mt = 마진탑, px = 좌우패딩, lg = large 화면 크기일때-->
@@ -51,8 +64,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
         crossorigin="anonymous"></script>
-<script>
-
-</script>
+<script src="/js/carousel.js"></script>
 </body>
 </html>
