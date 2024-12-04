@@ -11,9 +11,11 @@
 </head>
 <body>
 <!-- Navigation -->
-    <div th:insert="~{/fragments/nav.html :: fragment-nav}"></div>
+
 <!-- Head -->
 <section class="logo-carousel-section">
+    <div th:insert="~{/fragments/nav.html :: fragment-nav}"></div>
+
     <div class="logo-carousel-container">
         <div class="logo-carousel-slide">
             <img th:src="@{/img/main1.jpg}" alt="Logo 1">
