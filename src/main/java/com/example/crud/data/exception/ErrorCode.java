@@ -5,21 +5,33 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public enum ErrorCode {
+    // Authentication & Authorization
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "auth.invalid.refresh.token"),
+    MISMATCH_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "auth.mismatch.refresh.token"),
+    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "auth.invalid.credentials"),
 
-    INVALID_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "유효하지 않은 Refresh Token입니다."),
-    MISMATCH_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "토큰의 유저 정보가 일치하지 않습니다."),
-    // 기타 에러 코드 추가...
+    // Resource Conflicts
+    DUPLICATE_EMAIL(HttpStatus.CONFLICT, "member.duplicate.email"),
+    DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "member.duplicate.nickname"),
 
-    DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
-    DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다."),
+    // Resource Not Found
+    MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "member.not.found"),
 
-    ;
+    // Validation
+    INVALID_INPUT(HttpStatus.BAD_REQUEST, "validation.invalid.input"),
+
+    // Server Errors
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "server.error.internal");
 
     private final HttpStatus status;
-    private final String message;
+    private final String messageKey;
 
-    ErrorCode(HttpStatus status, String message) {
+    ErrorCode(HttpStatus status, String messageKey) {
         this.status = status;
-        this.message = message;
+        this.messageKey = messageKey;
+    }
+
+    public String getMessage() {
+        return this.messageKey;
     }
 }
