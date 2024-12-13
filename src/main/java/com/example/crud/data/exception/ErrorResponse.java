@@ -1,17 +1,48 @@
 package com.example.crud.data.exception;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Builder;
 import lombok.Getter;
+import org.springframework.http.HttpStatus;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
-@AllArgsConstructor
+@Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
-
+    private final LocalDateTime timestamp;
     private final int status;
+    private final String error;
     private final String message;
+    private final String path;
+    private final List<ValidationError> validationErrors;
 
-    public ErrorResponse(ErrorCode errorCode) {
-        this.status = errorCode.getStatus().value();
-        this.message = errorCode.getMessage();
+    @Getter
+    @Builder
+    public static class ValidationError {
+        private final String field;
+        private final String message;
+    }
+
+    public static ErrorResponse of(ErrorCode errorCode, String path) {
+        return ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(errorCode.getStatus().value())
+                .error(errorCode.getStatus().getReasonPhrase())
+                .message(errorCode.getMessage())
+                .path(path)
+                .build();
+    }
+
+    public static ErrorResponse of(HttpStatus status, String message, String path) {
+        return ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(status.value())
+                .error(status.getReasonPhrase())
+                .message(message)
+                .path(path)
+                .build();
     }
 }
