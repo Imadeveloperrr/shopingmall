@@ -1,7 +1,6 @@
 package com.example.crud.data.member.service.impl;
 
 import com.example.crud.data.exception.BaseException;
-import com.example.crud.data.exception.CustomException;
 import com.example.crud.data.exception.ErrorCode;
 import com.example.crud.data.member.dto.MemberDto;
 import com.example.crud.data.member.dto.MemberResponseDto;
@@ -87,7 +86,7 @@ public class MemberServiceImpl implements MemberService {
 
         // 1. Refresh Token 검증
         if (!jwtTokenProvider.validateToken(tokenRequestDto.getRefreshToken())) {
-            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+            throw new BaseException(ErrorCode.INVALID_REFRESH_TOKEN);  // CustomException -> BaseException
         }
 
         // 2. Access Token에서 Authentication 객체 가져오기
@@ -95,11 +94,12 @@ public class MemberServiceImpl implements MemberService {
 
         // 3. 저장소에서 Refresh Token 가져오기
         RefreshToken refreshToken = refreshTokenRepository.findById(authentication.getName())
-                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REFRESH_TOKEN));
+                .orElseThrow(() -> new BaseException(ErrorCode.INVALID_REFRESH_TOKEN));  // CustomException -> BaseException
 
         // 4. Refresh Token 일치 여부 확인
-        if (!refreshToken.getToken().equals(tokenRequestDto.getRefreshToken()))
-            throw new CustomException(ErrorCode.MISMATCH_REFRESH_TOKEN);
+        if (!refreshToken.getToken().equals(tokenRequestDto.getRefreshToken())) {
+            throw new BaseException(ErrorCode.MISMATCH_REFRESH_TOKEN);  // CustomException -> BaseException
+        }
 
         // 5. 새로운 토큰 생성
         boolean rememberMe = refreshToken.isRememberMe();
