@@ -45,4 +45,14 @@ public class ErrorResponse {
                 .path(path)
                 .build();
     }
+
+    public static ErrorResponse of(ErrorCode errorCode, String message, String path) {
+        return ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(errorCode.getStatus().value())
+                .error(errorCode.getStatus().getReasonPhrase())
+                .message(message)
+                .path(path)
+                .build();
+    }
 }

@@ -36,6 +36,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse response = ErrorResponse.of(
                 e.getErrorCode(),
+                message,
                 request.getRequestURI()
         );
 
