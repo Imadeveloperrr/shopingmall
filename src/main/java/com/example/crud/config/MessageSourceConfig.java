@@ -17,6 +17,8 @@ public class MessageSourceConfig {
         ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
         messageSource.setBasename("messages/error_messages"); // message 폴더 아래의 error_messages.properties 파일을 사용
         messageSource.setDefaultEncoding("UTF-8");
+        messageSource.setCacheSeconds(60); // 60초 캐싱
+        messageSource.setUseCodeAsDefaultMessage(true); // 메시지가 없을 경우 코드 반환
         return messageSource;
     }
 

@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -76,8 +77,12 @@ public class MemberServiceImpl implements MemberService {
             refreshTokenRepository.save(refreshToken);
 
             return jwtToken;
+        } catch (AuthenticationException e) {
+            log.error("Authentication failed for user {}: {}", username, e.getMessage());
+            throw new BaseException(ErrorCode.INVALID_CREDENTIALS);
         } catch (Exception e) {
-            throw new BaseException(ErrorCode.INVALID_CREDENTIALS, "로그인에 실패했습니다.");
+            log.error("Login failed for user {}: {}", username, e.getMessage());
+            throw new BaseException(ErrorCode.LOGIN_FAILED);
         }
     }
 
@@ -89,27 +94,34 @@ public class MemberServiceImpl implements MemberService {
             throw new BaseException(ErrorCode.INVALID_REFRESH_TOKEN);  // CustomException -> BaseException
         }
 
-        // 2. Access Token에서 Authentication 객체 가져오기
-        Authentication authentication = jwtTokenProvider.getAuthentication(tokenRequestDto.getAccessToken());
+        try {
+            // 2. Access Token에서 Authentication 객체 가져오기
+            Authentication authentication = jwtTokenProvider.getAuthentication(tokenRequestDto.getAccessToken());
 
-        // 3. 저장소에서 Refresh Token 가져오기
-        RefreshToken refreshToken = refreshTokenRepository.findById(authentication.getName())
-                .orElseThrow(() -> new BaseException(ErrorCode.INVALID_REFRESH_TOKEN));  // CustomException -> BaseException
+            // 3. 저장소에서 Refresh Token 가져오기
+            RefreshToken refreshToken = refreshTokenRepository.findById(authentication.getName())
+                    .orElseThrow(() -> new BaseException(ErrorCode.INVALID_REFRESH_TOKEN));  // CustomException -> BaseException
 
-        // 4. Refresh Token 일치 여부 확인
-        if (!refreshToken.getToken().equals(tokenRequestDto.getRefreshToken())) {
-            throw new BaseException(ErrorCode.MISMATCH_REFRESH_TOKEN);  // CustomException -> BaseException
+            // 4. Refresh Token 일치 여부 확인
+            if (!refreshToken.getToken().equals(tokenRequestDto.getRefreshToken())) {
+                throw new BaseException(ErrorCode.MISMATCH_REFRESH_TOKEN);  // CustomException -> BaseException
+            }
+
+            // 5. 새로운 토큰 생성
+            boolean rememberMe = refreshToken.isRememberMe();
+            JwtToken newJwtToken = jwtTokenProvider.generateToken(authentication, rememberMe);
+
+            // 6. Refresh Token Update
+            refreshToken.updateToken(newJwtToken.getRefreshToken());
+            refreshTokenRepository.save(refreshToken);
+
+            return newJwtToken;
+        } catch (BaseException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Token reissue failed: {}", e.getMessage());
+            throw new BaseException(ErrorCode.TOKEN_EXPIRED);
         }
-
-        // 5. 새로운 토큰 생성
-        boolean rememberMe = refreshToken.isRememberMe();
-        JwtToken newJwtToken = jwtTokenProvider.generateToken(authentication, rememberMe);
-
-        // 6. Refresh Token Update
-        refreshToken.updateToken(newJwtToken.getRefreshToken());
-        refreshTokenRepository.save(refreshToken);
-
-        return newJwtToken;
     }
 
     @Transactional
@@ -167,19 +179,8 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     @Override
     public MemberResponseDto updateMember(MemberDto memberDto) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Member member = memberRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new BaseException(ErrorCode.MEMBER_NOT_FOUND));
-
-        if (!member.getEmail().equals(memberDto.getEmail()) &&
-                memberRepository.existsByEmail(memberDto.getEmail())) {
-            throw new BaseException(ErrorCode.DUPLICATE_EMAIL);
-        }
-
-        if (!member.getNickname().equals(memberDto.getNickname()) &&
-                memberRepository.existsByNickname(memberDto.getNickname())) {
-            throw new BaseException(ErrorCode.DUPLICATE_NICKNAME);
-        }
+        Member member = getCurrentMember();
+        validateMemberUpdate(member, memberDto);
 
         // 엔티티의 update 메서드 사용
         member.update(memberDto, passwordEncoder);
@@ -196,6 +197,22 @@ public class MemberServiceImpl implements MemberService {
                 .build();
     }
 
+    private Member getCurrentMember() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return memberRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new BaseException(ErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    private void validateMemberUpdate(Member member, MemberDto memberDto) {
+        if (!member.getEmail().equals(memberDto.getEmail()) && memberRepository.existsByEmail(memberDto.getEmail())) {
+            throw new BaseException(ErrorCode.DUPLICATE_EMAIL);
+        }
+
+        if (!member.getNickname().equals(memberDto.getNickname()) && memberRepository.existsByNickname(memberDto.getNickname())) {
+            throw new BaseException(ErrorCode.DUPLICATE_NICKNAME);
+        }
+    }
+
     public List<MemberResponseDto> getAllMembers() {
         List<Member> members = memberMapper.findAll();
         return members.stream()
@@ -209,6 +226,9 @@ public class MemberServiceImpl implements MemberService {
                 .email(member.getEmail())
                 .name(member.getName())
                 .nickname(member.getNickname())
+                .address(member.getAddress())
+                .phoneNumber(member.getPhoneNumber())
+                .introduction(member.getIntroduction())
                 .build();
     }
 }

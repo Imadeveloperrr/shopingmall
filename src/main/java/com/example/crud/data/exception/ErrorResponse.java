@@ -31,7 +31,7 @@ public class ErrorResponse {
                 .timestamp(LocalDateTime.now())
                 .status(errorCode.getStatus().value())
                 .error(errorCode.getStatus().getReasonPhrase())
-                .message(errorCode.getMessage())
+                .message(errorCode.getMessageKey())
                 .path(path)
                 .build();
     }
