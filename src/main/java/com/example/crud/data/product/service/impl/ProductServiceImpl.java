@@ -1,5 +1,7 @@
 package com.example.crud.data.product.service.impl;
 
+import com.example.crud.data.exception.BaseException;
+import com.example.crud.data.exception.ErrorCode;
 import com.example.crud.data.product.dto.ProductDto;
 import com.example.crud.data.product.dto.ProductOptionDto;
 import com.example.crud.data.product.dto.ProductResponseDto;
@@ -46,15 +48,14 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public List<ProductResponseDto> getProducts() {
         try {
-            //List<Product> products = productRepository.findAll();
             List<Product> products = productMapper.findAllProducts();
 
             return products.stream()
                     .map(this::convertToProductResponseDTO)
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            log.error("Error occurred while fetching products: {}", e.getMessage(), e);
-            throw e;
+            log.error("Failed to fetch products: {}", e.getMessage());
+            throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -81,18 +82,27 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public ProductResponseDto getAddProduct(ProductDto productDto, MultipartFile image) throws IOException {
-        String imageUrl = "";
+    public ProductResponseDto getAddProduct(ProductDto productDto, MultipartFile image) {
+        String imageUrl = null;  // null로 초기화
         try {
             Member member = getAuthenticatedUser();
-            imageUrl = uploadImageToFirebase(image);
+
+            // 이미지가 있을 때만 업로드
+            if (image != null && !image.isEmpty()) {
+                try {
+                    imageUrl = uploadImageToFirebase(image);
+                } catch (IOException e) {
+                    log.error("Failed to upload image: {}", e.getMessage());
+                    throw new BaseException(ErrorCode.IMAGE_UPLOAD_FAILED);
+                }
+            }
 
             Product product = converToProductEntity(productDto, member);
             product.setImageUrl(imageUrl);
 
             // ProductOption 엔티티 생성 및 설정
-            List<ProductOption> productOptionList = new ArrayList<>();
-            if (productDto.getProductOptions() != null) {
+            if (productDto.getProductOptions() != null && !productDto.getProductOptions().isEmpty()) {
+                List<ProductOption> productOptionList = new ArrayList<>();
                 for (ProductOptionDto optionDto : productDto.getProductOptions()) {
                     ProductOption productOption = ProductOption.builder()
                             .color(optionDto.getColor())
@@ -105,37 +115,73 @@ public class ProductServiceImpl implements ProductService {
                 product.setProductOptions(productOptionList);
             }
 
-            Product savedProduct = productRepository.save(product);
-            return convertToProductResponseDTO(savedProduct);
-        } catch (Exception e) {
-            if (image != null && !image.isEmpty()) {
-                deletedImageFromFirebase(imageUrl);
+            try {
+                Product savedProduct = productRepository.save(product);
+                return convertToProductResponseDTO(savedProduct);
+            } catch (Exception e) {
+                // 상품 저장 실패 시 업로드된 이미지 삭제
+                if (imageUrl != null) {
+                    try {
+                        deletedImageFromFirebase(imageUrl);
+                    } catch (IOException ex) {
+                        log.error("Failed to delete image after product save failure: {}", ex.getMessage());
+                    }
+                }
+                throw new BaseException(ErrorCode.PRODUCT_UPLOAD_FAILED);
             }
+        } catch (BaseException e) {
+            // BaseException은 그대로 전파
             throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error while adding product: {}", e.getMessage());
+            // 예상치 못한 에러 발생 시 이미지 삭제
+            if (imageUrl != null) {
+                try {
+                    deletedImageFromFirebase(imageUrl);
+                } catch (IOException ex) {
+                    log.error("Failed to delete image after unexpected error: {}", ex.getMessage());
+                }
+            }
+            throw new BaseException(ErrorCode.PRODUCT_UPLOAD_FAILED);
         }
     }
 
     @Override
     @Transactional
-    public ProductResponseDto getUpdateProduct(ProductDto productDto, MultipartFile image) throws IOException {
-        Member member = getAuthenticatedUser();
-        Product existingProduct = productRepository.findById(productDto.getNumber())
-                .orElseThrow(() -> new NoSuchElementException("ERROR : 존재하지 않는 상품입니다."));
+    public ProductResponseDto getUpdateProduct(ProductDto productDto, MultipartFile image) {
+        try {
+            Member member = getAuthenticatedUser();
+            Product existingProduct = productRepository.findById(productDto.getNumber())
+                    .orElseThrow(() -> new BaseException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        // 1. 이미지 처리
-        String imageUrl = handleImageUpdate(image, existingProduct);
+            // 권한 체크
+            if (!existingProduct.getMemberEmail().equals(member.getEmail())) {
+                throw new BaseException(ErrorCode.UNAUTHORIZED_PRODUCT_ACCESS);
+            }
 
-        // 2. 기본 정보 업데이트
-        updateProductBasicInfo(existingProduct, productDto);
+            // 1. 이미지 처리
+            String imageUrl = handleImageUpdate(image, existingProduct);
 
-        // 이미지 URL 설정
-        existingProduct.setImageUrl(imageUrl);
+            // 2. 기본 정보 업데이트
+            updateProductBasicInfo(existingProduct, productDto);
 
-        // 3. 옵션 처리
-        updateProductOptions(existingProduct, productDto.getProductOptions());
+            // 이미지 URL 설정
+            existingProduct.setImageUrl(imageUrl);
 
-        Product savedProduct = productRepository.save(existingProduct);
-        return convertToProductResponseDTO(savedProduct);
+            // 3. 옵션 처리
+            updateProductOptions(existingProduct, productDto.getProductOptions());
+
+            Product savedProduct = productRepository.save(existingProduct);
+            return convertToProductResponseDTO(savedProduct);
+        } catch (BaseException e) {
+            throw e;
+        } catch (IOException e) {
+            log.error("Failed to update product image: {}", e.getMessage());
+            throw new BaseException(ErrorCode.IMAGE_UPLOAD_FAILED);
+        } catch (Exception e) {
+            log.error("Failed to update product: {}", e.getMessage());
+            throw new BaseException(ErrorCode.PRODUCT_UPDATE_FAILED);
+        }
     }
 
     // 이미지 처리 메서드
@@ -181,28 +227,49 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void getDeleteProduct(Long id) throws IOException {
-        Member member = getAuthenticatedUser();
+    public void getDeleteProduct(Long id) {
+        try {
+            Member member = getAuthenticatedUser();
+            Product product = productMapper.findProductByNumber(id);
 
-        Product product = productMapper.findProductByNumber(id);
-        if (product == null)
-            throw new NoSuchElementException("ERROR  : 없는 상품 번호 입니다.");
+            if (product == null)
+                throw new BaseException(ErrorCode.PRODUCT_NOT_FOUND);
 
-        deletedImageFromFirebase(product.getImageUrl());
-        productRepository.delete(product);
+            if (!product.getMemberEmail().equals(member.getEmail())) {
+                throw new BaseException(ErrorCode.UNAUTHORIZED_PRODUCT_ACCESS);
+            }
+
+            if (product.getImageUrl() != null) {
+                deletedImageFromFirebase(product.getImageUrl());
+            }
+
+            productRepository.delete(product);
+        } catch (BaseException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to delete product: {}", e.getMessage());
+            throw new BaseException(ErrorCode.PRODUCT_DELETE_FAILED);
+        }
     }
 
     @Override
     public ProductResponseDto getProductById(Long id) {
-        Member member = getAuthenticatedUser();
+        try {
+            Member member = getAuthenticatedUser();
+            Product product = productMapper.findProductByNumber(id);
 
-        Product product = productMapper.findProductByNumber(id);
-        if (product == null)
-            throw new NoSuchElementException("ERROR : 없는 상품 번호 입니다.");
-
-        ProductResponseDto productResponseDto = convertToProductResponseDTO(product);
-        productResponseDto.setPermission(Objects.equals(member.getEmail(), product.getMemberEmail()));
-        return productResponseDto;
+            if (product == null) {
+                throw new BaseException(ErrorCode.PRODUCT_NOT_FOUND);
+            }
+            ProductResponseDto productResponseDto = convertToProductResponseDTO(product);
+            productResponseDto.setPermission(Objects.equals(member.getEmail(), product.getMemberEmail()));
+            return productResponseDto;
+        } catch (BaseException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to fetch product: {}", e.getMessage());
+            throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
@@ -212,11 +279,13 @@ public class ProductServiceImpl implements ProductService {
 
     private Member getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
-            throw new NoSuchElementException("ERROR : is not Authenticated User");
+        if (authentication == null || !authentication.isAuthenticated() ||
+                authentication instanceof AnonymousAuthenticationToken) {
+            throw new BaseException(ErrorCode.INVALID_CREDENTIALS);
         }
-        String userEmail = authentication.getName();
-        return memberRepository.findByEmail(userEmail).orElseThrow(() -> new NoSuchElementException("ERROR : Unknown User"));
+
+        return memberRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new BaseException(ErrorCode.MEMBER_NOT_FOUND));
     }
 
     private void deletedImageFromFirebase(String imageUrl) throws IOException {

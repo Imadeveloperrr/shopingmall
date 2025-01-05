@@ -23,12 +23,17 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
     private final MessageSource messageSource;
 
+    private void logException(String type, Exception e) {
+        log.error("{}: {}", type, e.getMessage(), e);
+    }
+
     @ExceptionHandler(BaseException.class)
     protected ResponseEntity<ErrorResponse> handleBaseException(
             BaseException e, HttpServletRequest request, Locale locale) {
-        log.error("BaseException: {}", e.getMessage(), e);
+        logException("BaseException", e);
+
         String message = messageSource.getMessage(
-                e.getErrorCode().getMessage(),
+                e.getErrorCode().getMessageKey(),
                 e.getArgs(),
                 e.getMessage(),
                 locale
@@ -40,7 +45,24 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
 
-        return new ResponseEntity<>(response, e.getErrorCode().getStatus());
+        return ResponseEntity.status(e.getErrorCode().getStatus()).body(response);
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    protected ResponseEntity<ErrorResponse> handleValidationException(
+            ValidationException e, HttpServletRequest request) {
+        logException("ValidationException", e);
+
+        ErrorResponse response = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(ErrorCode.INVALID_INPUT.getStatus().value())
+                .error(ErrorCode.INVALID_INPUT.getStatus().getReasonPhrase())
+                .message("Validation failed")
+                .path(request.getRequestURI())
+                .validationErrors(e.getValidationErrors())
+                .build();
+
+        return ResponseEntity.status(ErrorCode.INVALID_INPUT.getStatus()).body(response);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

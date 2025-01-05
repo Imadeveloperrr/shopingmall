@@ -10,7 +10,7 @@ public class BaseException extends RuntimeException {
 
     public BaseException(ErrorCode errorCode, Object... args) {
         this.errorCode = errorCode;
-        this.message = errorCode.getMessage();
+        this.message = errorCode.getMessageKey();
         this.args = args;
     }
 
