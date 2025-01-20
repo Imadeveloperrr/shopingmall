@@ -2,6 +2,8 @@ package com.example.crud.data.order.service.impl;
 
 import com.example.crud.data.cart.dto.CartItemDto;
 import com.example.crud.data.cart.service.CartService;
+import com.example.crud.data.exception.BaseException;
+import com.example.crud.data.exception.ErrorCode;
 import com.example.crud.data.order.dto.OrderDto;
 import com.example.crud.data.order.dto.OrderItemDto;
 import com.example.crud.data.order.dto.OrderPreparationDto;
@@ -12,6 +14,7 @@ import com.example.crud.enums.OrderStatus;
 import com.example.crud.enums.OrderType;
 import com.example.crud.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -52,7 +55,10 @@ public class OrderServiceImpl implements OrderService {
     public OrderPreparationDto prepareDirectOrder(ProductResponseDto product, String color, String size, int quantity) {
         ProductOption productOption = productOptionRepository
                 .findByProduct_NumberAndColorAndSize(product.getNumber(), color, size)
-                .orElseThrow(() -> new IllegalArgumentException("해당 옵션을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.PRODUCT_OPTION_NOT_FOUND,
+                        product.getNumber(),
+                        color,
+                        size));
 
         OrderItemDto orderItemDto = OrderItemDto.builder()
                 .productId(product.getNumber())
@@ -203,10 +209,10 @@ public class OrderServiceImpl implements OrderService {
      */
     private void validateStock(ProductOption productOption, int quantity) {
         if (productOption.getStock() < quantity) {
-            throw new IllegalStateException(
-                    String.format("재고가 부족합니다. 현재 재고: %d, 요청 수량: %d",
-                            productOption.getStock(),
-                            quantity)
+            throw new BaseException(
+                    ErrorCode.ORDER_INSUFFICIENT_STOCK,
+                    productOption.getStock(),
+                    quantity
             );
         }
     }
@@ -223,23 +229,32 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Orders getOrder(Long orderId) {
         return orderRepository.findById(orderId)
-                .orElseThrow(() -> new NoSuchElementException("주문을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.ORDER_NOT_FOUND, orderId));
     }
 
     @Override
     @Transactional
     public void cancelOrder(Long orderId) {
-        Orders order = getOrder(orderId);
-        order.cancel();
-        orderRepository.save(order);
+        try {
+            Orders order = getOrder(orderId);
+            order.cancel();
+            orderRepository.save(order);
+        } catch (Exception e) {
+            throw new BaseException(ErrorCode.ORDER_CANCEL_FAILED, orderId);
+        }
+
     }
 
     @Override
     @Transactional
     public void updateOrderStatus(Long orderId, OrderStatus newStatus) {
-        Orders order = getOrder(orderId);
-        order.setStatus(newStatus);
-        orderRepository.save(order);
+        try {
+            Orders order = getOrder(orderId);
+            order.setStatus(newStatus);
+            orderRepository.save(order);
+        } catch (Exception e) {
+            throw new BaseException(ErrorCode.ORDER_STATUS_UPDATE_FAILED, orderId);
+        }
     }
 
     @Override
@@ -266,9 +281,13 @@ public class OrderServiceImpl implements OrderService {
 
     private Member getCurrentMember() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() ||
+                authentication instanceof AnonymousAuthenticationToken) {
+            throw new BaseException(ErrorCode.INVALID_CREDENTIALS);
+        }
         String email = authentication.getName();
         return memberRepository.findByEmail(email)
-                .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.MEMBER_NOT_FOUND));
     }
 
     /**
