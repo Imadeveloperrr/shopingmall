@@ -31,7 +31,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (authentication != null) {
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 } else {
-
                     SecurityContextHolder.clearContext();
                 }
             } else {
@@ -66,7 +65,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 path.startsWith("/static/") ||
                 path.startsWith("/css/") ||
                 path.startsWith("/js/") ||
-                path.startsWith("/images/");
+                path.startsWith("/img/") ||
+                path.equals("/favicon.ico");
     }
 
     private String resolveToken(HttpServletRequest request) {

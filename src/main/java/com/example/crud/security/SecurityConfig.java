@@ -50,6 +50,10 @@ public class SecurityConfig {
                         .requestMatchers("/register").permitAll()
                         .requestMatchers("/login").permitAll()
                         .requestMatchers("/logout").permitAll()
+
+                        .requestMatchers("/img/**").permitAll()              // 추가: /img 경로 허용
+                        .requestMatchers("/favicon.ico").permitAll()          // 추가: favicon 허용
+
                         .requestMatchers("/mypage/**").hasRole("USER")
                         .requestMatchers("/cart/**").hasRole("USER")
                         .requestMatchers("/product/**").hasRole("USER")
