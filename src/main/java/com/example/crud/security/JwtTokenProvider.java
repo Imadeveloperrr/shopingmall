@@ -58,8 +58,8 @@ public class JwtTokenProvider {
             accessTokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRE_TIME_REMEMBER_ME);
             refreshTokenExpiresIn = new Date(now + REFRESH_TOKEN_EXPIRE_TIME_REMEMBER_ME);
         } else {
-            accessTokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRE_TIME);
-            refreshTokenExpiresIn = new Date(now + REFRESH_TOKEN_EXPIRE_TIME);
+            accessTokenExpiresIn = new Date(now + accessTokenValidityInMilliseconds);
+            refreshTokenExpiresIn = new Date(now + refreshTokenValidityInMilliseconds);
         }
 
         // Access Token 생성

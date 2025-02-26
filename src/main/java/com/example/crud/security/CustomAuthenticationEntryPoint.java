@@ -18,9 +18,13 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException, ServletException {
-        // 인증 실패 시 401 응답
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("{\"message\": \"아이디 또는 비밀번호가 다릅니다.\"}");
+        if ("GET".equalsIgnoreCase(request.getMethod())) {
+            response.sendRedirect("/login");
+        } else {
+            // 다른 HTTP 메서드 (예: POST, PUT 등)는 JSON 에러 메시지를 반환
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"message\": \"아이디 또는 비밀번호가 다릅니다.\"}");
+        }
     }
 }
