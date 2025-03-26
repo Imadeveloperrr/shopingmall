@@ -17,10 +17,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/order")
@@ -76,7 +80,8 @@ public class OrderController {
 
     // 주문 처리
     @PostMapping("/place")
-    public String placeOrder(@Valid @RequestBody OrderDto orderDto) {
+    @ResponseBody
+    public Map<String, Object> placeOrder(@Valid @RequestBody OrderDto orderDto) {
         Orders order = orderService.createOrder(orderDto);
 
         // 장바구니 주문인 경우 장바구니에서 제거
@@ -84,7 +89,11 @@ public class OrderController {
             cartService.removeOrderedItems(orderDto.getCartItemIds());
         }
 
-        return "redirect:/order/complete/" + order.getId();
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", order.getId());
+        response.put("finalAmount", order.getTotalAmount() + order.getDeliveryFee());
+        // 주문 생성 후 PaymentController의 결제 처리 엔드포인트로 리다이렉트
+        return response;
     }
 
     // 주문 완료 페이지
@@ -105,10 +114,22 @@ public class OrderController {
     }
 
     // 에러 처리 추가
-    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
-    public String handleException(Exception e, RedirectAttributes redirectAttributes) {
-        redirectAttributes.addFlashAttribute("error", e.getMessage());
-        return "redirect:/error";
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class, MethodArgumentNotValidException.class})
+    @ResponseBody
+    public Map<String, Object> handleException(Exception e) {
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("timestamp", LocalDateTime.now());
+        errorResponse.put("status", 500);
+        errorResponse.put("error", e.getMessage());
+        return errorResponse;
+    }
+
+    // 추가: 유효성 검사 실패 (MethodArgumentNotValidException) 예외 처리
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public String handleValidationExceptions(MethodArgumentNotValidException ex, RedirectAttributes redirectAttributes) {
+        String errorMessage = ex.getBindingResult().getAllErrors().get(0).getDefaultMessage();
+        redirectAttributes.addFlashAttribute("error", errorMessage);
+        return "redirect:/error"; // 또는 에러 페이지로 이동
     }
 
 }

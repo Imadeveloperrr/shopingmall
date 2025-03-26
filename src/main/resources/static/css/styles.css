@@ -2,53 +2,40 @@ body {
     font-family: 'Work Sans', 'Noto Sans KR', sans-serif;
 }
 
-/* Navigation styles */
-.navbar {
-    position: absolute;
-    width: 100%;
-    z-index: 1000;
-    background: transparent !important;
-    padding-top: 1rem;
-    top: 0;  /* 추가 */
-}
 
 .navbar-brand {
-    color: white !important;  /* 추가 */
+    color: black !important;  /* 추가 */
 }
 
 .navbar .nav-link {
-    color: white !important;
+    color: black !important;
     font-weight: 500;
-    text-shadow: -1px -1px 0 #000,
-    1px -1px 0 #000,
-    -1px 1px 0 #000,
-    1px 1px 0 #000;
 }
 
 .navbar .nav-link.active {
-    color: white !important;  /* 추가 */
+    color: black !important;  /* 추가 */
 }
 
 .navbar .nav-link:hover {
-    color: rgba(255, 255, 255, 0.8) !important;
+    color: #b09f8e !important;
 }
 
 .navbar .dropdown-menu {
-    background: rgba(0, 0, 0, 0.8);
+    background: #fff;
     backdrop-filter: blur(10px);
 }
 
+.navbar .dropdown-menu .dropdown-item {
+    font-size: 13px !important;
+}
+
 .navbar .dropdown-item {
-    color: white;
-    text-shadow: -1px -1px 0 #000,
-    1px -1px 0 #000,
-    -1px 1px 0 #000,
-    1px 1px 0 #000;
+    color: black;
 }
 
 .navbar .dropdown-item:hover {
     background: rgba(255, 255, 255, 0.1);
-    color: white;
+    color: #b09f8e;
 }
 
 .navbar .dropdown-toggle::after {
@@ -65,11 +52,7 @@ body {
 
 /* Login/Register links */
 .navbar .navbar-nav .nav-link.text-dark {
-    color: white !important;
-    text-shadow: -1px -1px 0 #000,
-    1px -1px 0 #000,
-    -1px 1px 0 #000,
-    1px 1px 0 #000;
+    color: black !important;
 }
 
 /* Remove margin-top from carousel section */
@@ -83,13 +66,13 @@ body {
 
 .logo-carousel-section {
     text-align: center;
-    height: 650px; /* 550px에서 650px로 증가 */
+    height: 800px; /* 550px에서 650px로 증가 */
     position: relative;
 }
 
 .logo-carousel-container {
     width: 100%;
-    height: 650px; /* 550px에서 650px로 증가 */
+    height: 800px; /* 550px에서 650px로 증가 */
     position: relative;
     overflow: hidden;
 }

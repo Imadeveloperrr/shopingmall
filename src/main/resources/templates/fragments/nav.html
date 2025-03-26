@@ -2,20 +2,55 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <script src="../../static/js/carousel.js"></script>
 <div th:fragment="fragment-nav">
-    <nav class="navbar navbar-expand-lg">
+
+    <!-- 상단 네비게이션 (사이트명, 로그인/회원가입) -->
+    <nav class="navbar navbar-expand-lg bg-white border-bottom">
         <div class="container-fluid">
+            <!-- 로고 (왼쪽) -->
             <a class="navbar-brand ms-2" href="#">
-                <img src="https://cdn-icons-png.flaticon.com/256/49/49039.png" alt="logo"
-                     width="32" height="32">
+                <img src="https://cdn-icons-png.flaticon.com/256/49/49039.png" alt="logo" width="32" height="32">
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-                    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+
+            <!-- 가운데 사이트명 Sungho -->
+            <div class="mx-auto">
+                <h1 class="my-3" style="font-size: 24px; padding: 25px 0; margin-left: 50px;">Sungho</h1>
+            </div>
+
+            <!-- 오른쪽 로그인/회원가입/마이페이지/로그아웃 -->
+            <ul class="navbar-nav me-2" style="margin-right: 50px !important;">
+                <!-- 로그인/회원가입: 로그인 안 된 상태에서만 표시 -->
+                <li class="nav-item" id="navLogin">
+                    <a class="nav-link text-dark fs-6" style="margin-right: 5px;" th:unless="${loginCheck}" th:href="@{/login}">LOGIN</a>
+                </li>
+                <li class="nav-item" id="navRegister">
+                    <a class="nav-link text-dark fs-6" th:unless="${loginCheck}" th:href="@{/register}">JOIN</a>
+                </li>
+
+                <!-- 마이페이지/로그아웃: 로그인 된 상태에서만 표시 -->
+                <li class="nav-item" id="navMyPage">
+                    <a class="nav-link text-dark fs-6" style="margin-right: 5px;" th:if="${loginCheck}" th:href="@{/mypage}">MY PAGE</a>
+                </li>
+                <li class="nav-item" id="navLogOut">
+                    <a class="nav-link text-dark fs-6" th:if="${loginCheck}" th:href="@{/logout}">LOGOUT</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 하단 네비게이션 (카테고리) -->
+    <nav class="navbar navbar-expand-lg bg-white category-nav">
+        <div class="container">
+            <!-- 모바일 토글 버튼 -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCategory"
+                    aria-controls="navbarCategory" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+            <!-- 카테고리 목록 (중앙정렬) -->
+            <div class="collapse navbar-collapse" id="navbarCategory">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link active fs-6 mx-3" aria-current="page" th:href="@{/}">Home</a>
+                        <a class="nav-link active fs-6 mx-3" th:href="@{/}">Home</a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle fs-6 mx-3" href="#" role="button" data-bs-toggle="dropdown"
@@ -31,121 +66,20 @@
                             <li><a class="dropdown-item" href="#">Season Best</a></li>
                         </ul>
                     </li>
-                    <li class="nav-item dropdown">
+                    <!-- 이하 아우터/상의/하의/원피스/스커트/가방/신발/악세서리 등 기존 카테고리 동일하게 -->
+                    <li class="nav-item dropdown" th:each="group : ${categoryGroups}">
                         <a class="nav-link dropdown-toggle fs-6 mx-3" href="#" role="button" data-bs-toggle="dropdown"
-                           aria-expanded="false">
-                            아우터
-                        </a>
+                           th:text="${group.groupName}" aria-expanded="false"></a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#">패딩</a></li>
-                            <li><a class="dropdown-item" href="#">코트</a></li>
-                            <li><a class="dropdown-item" href="#">자켓</a></li>
-                            <li><a class="dropdown-item" href="#">가디건</a></li>
-                            <li><a class="dropdown-item" href="#">블레이저</a></li>
-                            <li><a class="dropdown-item" href="#">플리스/뽀글이</a></li>
+                            <li th:each="cat : ${group.categoryList}">
+                                <a class="dropdown-item" th:href="@{'/products?category=' + ${cat.value}}" th:text="${cat.name}"></a>
+                            </li>
                         </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle fs-6 mx-3" href="#" role="button" data-bs-toggle="dropdown"
-                           aria-expanded="false">
-                            상의
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#">니트/스웨터</a></li>
-                            <li><a class="dropdown-item" href="#">후드/맨투맨</a></li>
-                            <li><a class="dropdown-item" href="#">티셔츠</a></li>
-                            <li><a class="dropdown-item" href="#">셔츠/블라우스</a></li>
-                            <li><a class="dropdown-item" href="#">민소매/나시</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle fs-6 mx-3" href="#" role="button" data-bs-toggle="dropdown"
-                           aria-expanded="false">
-                            하의
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#">청바지</a></li>
-                            <li><a class="dropdown-item" href="#">면바지</a></li>
-                            <li><a class="dropdown-item" href="#">슬랙스</a></li>
-                            <li><a class="dropdown-item" href="#">레깅스</a></li>
-                            <li><a class="dropdown-item" href="#">트레이닝</a></li>
-                            <li><a class="dropdown-item" href="#">숏팬츠</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle fs-6 mx-3" href="#" role="button" data-bs-toggle="dropdown"
-                           aria-expanded="false">
-                            원피스/스커트
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#">미니원피스</a></li>
-                            <li><a class="dropdown-item" href="#">미디원피스</a></li>
-                            <li><a class="dropdown-item" href="#">롱원피스</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#">미니스커트</a></li>
-                            <li><a class="dropdown-item" href="#">미디스커트</a></li>
-                            <li><a class="dropdown-item" href="#">롱스커트</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle fs-6 mx-3" href="#" role="button" data-bs-toggle="dropdown"
-                           aria-expanded="false">
-                            가방
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#">백팩</a></li>
-                            <li><a class="dropdown-item" href="#">크로스백</a></li>
-                            <li><a class="dropdown-item" href="#">숄더백</a></li>
-                            <li><a class="dropdown-item" href="#">토트백</a></li>
-                            <li><a class="dropdown-item" href="#">클러치</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle fs-6 mx-3" href="#" role="button" data-bs-toggle="dropdown"
-                           aria-expanded="false">
-                            신발
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#">운동화</a></li>
-                            <li><a class="dropdown-item" href="#">구두</a></li>
-                            <li><a class="dropdown-item" href="#">부츠</a></li>
-                            <li><a class="dropdown-item" href="#">샌들</a></li>
-                            <li><a class="dropdown-item" href="#">슬리퍼</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle fs-6 mx-3" href="#" role="button" data-bs-toggle="dropdown"
-                           aria-expanded="false">
-                            악세서리
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#">목걸이</a></li>
-                            <li><a class="dropdown-item" href="#">귀걸이</a></li>
-                            <li><a class="dropdown-item" href="#">반지</a></li>
-                            <li><a class="dropdown-item" href="#">팔찌</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#">모자</a></li>
-                            <li><a class="dropdown-item" href="#">스카프</a></li>
-                            <li><a class="dropdown-item" href="#">벨트</a></li>
-                        </ul>
-                    </li>
-                </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item" id="navLogin">
-                        <a class="nav-link text-dark fs-6" aria-current="page" th:unless="${loginCheck}" th:href="@{/login}">로그인</a>
-                    </li>
-                    <li class="nav-item" id="navRegister">
-                        <a class="nav-link text-dark fs-6" aria-current="page" th:unless="${loginCheck}" th:href="@{/register}">회원가입</a>
-                    </li>
-                    <li class="nav-item" id="navMyPage">
-                        <a class="nav-link text-dark fs-6" aria-current="page" th:if="${loginCheck}" th:href="@{/mypage}">마이페이지</a>
-                    </li>
-                    <li class="nav-item" id="navLogOut">
-                        <a class="nav-link text-dark fs-6" aria-current="page" th:if="${loginCheck}" th:href="@{/logout}">로그아웃</a>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
 </div>
+
 </html>

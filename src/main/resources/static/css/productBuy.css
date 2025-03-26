@@ -184,7 +184,9 @@ body {
 .box_btn.block > * {
     width: 100%;
 }
-.box_btn > * {
+
+.box_btn > a,
+.box_btn > button {
     display: inline-block;
     margin: 0;
     border: 1px solid #333;
@@ -199,6 +201,13 @@ body {
     cursor: pointer;
     -webkit-appearance: none;
     transition: all .2s ease;
+}
+
+/* 버튼 기본 스타일 초기화 */
+button {
+    background: none;
+    border: none;
+    padding: 0;
 }
 
 a, a:hover, a:active, a:focus {
