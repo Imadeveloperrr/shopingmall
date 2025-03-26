@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    let slideInterval = setInterval(autoSlide, 5000);
+    let slideInterval = setInterval(autoSlide, 10000);
 
     const carousel = document.querySelector('.logo-carousel-container');
     carousel.addEventListener('mouseenter', () => {
@@ -55,6 +55,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     carousel.addEventListener('mouseleave', () => {
-        slideInterval = setInterval(autoSlide, 5000);
+        slideInterval = setInterval(autoSlide, 10000);
     });
 });

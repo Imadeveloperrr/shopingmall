@@ -3,6 +3,10 @@
 <head>
     <div th:replace="~{/fragments/header.html :: fragment-header}"></div>
     <link href="/css/productBuy.css" rel="stylesheet"/>
+    <!-- Bootstrap CSS (팝업 모달 활용) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Toss Payments 표준 결제 위젯 스크립트. -->
+    <script src="https://js.tosspayments.com/v2/standard"></script>
 </head>
 
 <div th:insert="~{/fragments/nav.html :: fragment-nav}"></div>
@@ -12,7 +16,7 @@
         <div class="title"> 주문서 작성 </div>
     </header>
 
-    <form class="form_obj" method="post" action="/product/buy">
+    <form class="form_obj" method="post" action="/order/place">
         <div id="container">
             <p class="total">
                 주문상품 <span>([[${orderItems.size()}]]개)</span>
@@ -321,7 +325,7 @@
                                 <div class="addbtn">
                                     <div>
                                         <input type="text" class="form_input form_addr0 zip_obj" id="del_zip" name="del_zip" value="" readonly="" placeholder="우편번호">
-                                        <span class="box_btn w136 h35 white fs13 strong"><a href="javascript:" onclick="zippop()">우편번호 찾기</a></span>
+                                        <span class="box_btn w136 h35 white fs13 strong"><a href="javascript:" onclick="execDaumPostcode()">우편번호 찾기</a></span>
                                         <div id="find_zip" style="display:none;border:1px solid;position: relative;">
                                             <img src="//t1.daumcdn.net/postcode/resource/images/close.png" id="btnFoldWrap" style="cursor:pointer;position:absolute;right:0px;top:-1px;z-index:1" onclick="foldDaumPostcode()" alt="접기 버튼">
                                         </div>
@@ -349,75 +353,6 @@
                 <div style="margin-top: 5px; color:#999999; padding:10px 0; border-bottom:1px solid #e0e0e0; font-size: 12px; line-height: 1.6; vertical-align: baseline;">
                     배송메모는 배달기사님께 보여지는 메모입니다.<br>
                     주문건 관련하여 요청사항 있으실 경우 게시판에 꼭! 남겨주세요:)
-                </div>
-
-                <ul class="tab_method">
-                    <li class="deposit"><a href="javascript:" onclick="BuyProc.chooseMethod('B')">무통장입금</a></li>
-                    <li class="credit"><a href="javascript:" onclick="BuyProc.chooseMethod('C')" class="active">신용카드</a></li>
-                    <li class="realtime"><a href="javascript:" onclick="BuyProc.chooseMethod('R')">실시간계좌 이체</a></li>
-                    <li class="mobile"><a href="javascript:" onclick="BuyProc.chooseMethod('Y')">휴대폰 결제</a></li>
-                    <li class="samsung"><a href="javascript:" onclick="BuyProc.chooseMethod('S')">삼성PAY</a></li>
-                    <li class="payco"><a href="javascript:" onclick="BuyProc.chooseMethod('E')">PAYCO</a></li>
-                    <li class="kakao"><a href="javascript:" onclick="BuyProc.chooseMethod('W')" class="">카카오페이</a></li>
-
-                    <li class="smile">
-                        <a href="javascript:" onclick="BuyProc.chooseMethod('N')">
-                            스마일페이
-                        </a>
-                    </li>
-                </ul>
-
-                <div class="tabcnt_method tabcnt_method0 method2" style="display: block;">
-                    <div>
-                        <label>입금은행</label>
-                        <select name="bank" class="deposit bank_obj">
-                            <option value="">입금은행선택</option>
-                            <option value="국민은행">국민은행 / 468001-01-111971 / 에스엔패션그룹(주)
-                            </option>
-                            <option value="농협">농협 / 301-0095-6307-61 / 에스엔패션그룹(주)
-                            </option>
-                            <option value="우리은행">우리은행 / 1005-401-918043 / 에스엔패션그룹(주)
-                            </option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="">입금자</label>
-                        <input type="text" name="inname" value="" class="form_input provider inname_obj">
-                        <span class="msg">(입금자명을 정확히 작성하셔야 빠른 입금확인이 가능합니다)</span>
-                    </div>
-                    <div>
-                        <label>입금예정</label>
-                        <input type="text" name="indate" class="form_input provider orderDatepicker indate_obj hasDatepicker" value="2024-09-07" style="text-align:center;" readonly="" id="dp1725638886003">
-                        <span class="msg">
-                                주문일로부터 7일이내 입금해주셔야 됩니다.<br>
-                                7일이 지나면 자동으로 주문취소 됩니다.
-                            </span>
-                    </div>
-                </div>
-
-                <div class="tabcnt_method tabcnt_method1 method2" style="display: block;">
-                    <p class="choice"><strong class="p_color">'무통장입금'</strong>를 선택하셨습니다. 아래 주문하기를 눌러 결제를 이어가주세요.</p>
-
-                    <ul class="info_method">
-                        <li>
-                            <dl>
-                                <dt>무통장입금</dt>
-                                <dd>아뜨랑스에 지정된 계좌로 직접 입금하는 방식입니다. (인터넷뱅킹, 텔레뱅킹, ATM, 은행방문)</dd>
-                            </dl>
-                        </li>
-                        <li>
-                            <dl>
-                                <dt>실시간계좌이체</dt>
-                                <dd>은행을 거치지않고 회원님 계좌에서 바로 이체되는 편리한 서비스입니다. (이체수수료무료 / 공인인증서필수)</dd>
-                            </dl>
-                        </li>
-                        <li>
-                            <dl>
-                                <dt>휴대폰결제</dt>
-                                <dd>인증번호를 통해 간단히 휴대폰으로 결제처리가 되면 익월통신요금에 합산청구됩니다.</dd>
-                            </dl>
-                        </li>
-                    </ul>
                 </div>
 
             </div>
@@ -493,7 +428,8 @@
                     </div>
                     <div class="btn">
                         <span class="box_btn block h50 fs15">
-                            <a href="javascript:" onclick="BuyProc.buy();" id="buyBtn">결제하기</a>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                    data-bs-target="#tossPaymentModal">결제하기</button>
                         </span>
                         <span class="box_btn block h50 fs15 white2">
                             <a href="/">취소</a>
@@ -501,9 +437,281 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </form>
 
+    <div class="modal fade" id="tossPaymentModal" tabindex="-1" aria-labelledby="tossPaymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tossPaymentModalLabel">결제 진행</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- 할인 쿠폰 및 결제 위젯 영역 -->
+                    <div class="mb-3">
+                        <input type="checkbox" id="coupon-box">
+                        <label for="coupon-box">5,000원 쿠폰 적용</label>
+                    </div>
+                    <div id="payment-method"></div>
+                    <div id="agreement"></div>
+                </div>
+                <div class="modal-footer">
+                    <!-- 모달 내부에서 최종 결제 요청 실행 -->
+                    <button type="button" id="payment-button" class="btn btn-success" onclick="BuyProc.buy();">결제하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+        crossorigin="anonymous"></script>
+<script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Toss Payments 위젯 초기화
+        const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm"; // 실제 발급 받은 키로 교체
+        const tossPayments = TossPayments(clientKey);
+        // 회원 결제인 경우 customerKey 사용, 비회원일 경우 TossPayments.ANONYMOUS 사용
+        const customerKey = "FVsyeZOPnbAII8ZfTI3xo";
+        const widgets = tossPayments.widgets({customerKey });
+
+        // 초기 주문 금액을 finalAmount 변수( 서버에서 Thymeleaf로 전달된 값 등)로 설정
+        let orderAmount = finalAmount; // 얘: finalAmount가 50000원인 경우
+        widgets.setAmount({
+            currency: "KRW",
+            value: orderAmount
+        });
+
+        // 결제 UI 및 이용약관 렌더링 (모달 내부 컨테이너에 렌더링)
+        widgets.renderPaymentMethods({
+            selector: "#payment-method",
+            variantKey: "DEFAULT"
+        });
+
+        widgets.renderAgreement({
+            selector: "#agreement",
+            variantKey: "AGREEMENT"
+        });
+
+        // 쿠폰 체크박스 이벤트: 쿠폰 적용 시 금액 업데이트
+        document.getElementById("coupon-box").addEventListener("change", async function(){
+            if(this.checked){
+                orderAmount = finalAmount - 5000;
+            } else {
+                orderAmount = finalAmount;
+            }
+            await widgets.setAmount({
+                currency: "KRW",
+                value: orderAmount
+            });
+        });
+    });
+</script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var orderItems = /*[[${orderItems}]]*/ [];
+    var totalAmount = /*[[${totalAmount}]]*/ 0;
+    var deliveryFee = /*[[${deliveryFee}]]*/ 0;
+    var finalAmount = /*[[${finalAmount}]]*/ 0;
+    var orderType = /*[[${orderType}]]*/ "CART";
+    /*]]>*/
+</script>
+
+<script>
+    function execDaumPostcode() {
+        new daum.Postcode({
+            oncomplete: function (data) {
+                // 주소 및 우편번호 설정
+                document.getElementById('del_zip').value = data.zonecode;
+                document.getElementById('del_addr1').value = data.address;
+                // 선택적: 나머지 주소 정보 처리( 예: 건물명 등 )
+            },
+            onclose: function (state) {
+                // 팝업 닫힘 시 처리 (state: "FORCE_CLOSE" 등)
+            },
+        }).open();
+    }
+</script>
+
+<script>
+    document.getElementById("name_same").addEventListener("change", function () {
+        if (this.checked) {
+            // 주문자 정보에서 값을 가져와 배송지 입력란에 복사
+            document.querySelector('input[name="del_name"]').value =
+                document.querySelector('input[name="name"]').value;
+            // 전화번호 등 다른 필드도 필요한 경우 복사
+            var ordererPhones = document.querySelectorAll('input[name="phone[]"]');
+            var deliveryPhones = document.querySelectorAll('input[name="del_phone[]"]');
+            if (ordererPhones.length === deliveryPhones.length) {
+                for (var i = 0; i < ordererPhones.length; i++) {
+                    deliveryPhones[i].value = ordererPhones[i].value;
+                }
+            }
+        } else {
+            // 체크 해제 시 배송지 입력란 초기화
+            document.querySelector('input[name="del_name"]').value = "";
+            var deliveryPhones = document.querySelectorAll('input[name="del_phone"]');
+            deliveryPhones.forEach(function (input) {
+                input.value = "";
+            });
+        }
+    });
+</script>
+
+<script>
+    // 폼 데이터를 JSON으로 변환하는 유틸 함수
+    function serializeFormToJSON(form) {
+        var obj = {};
+        var formData = new FormData(form);
+
+        // formData의 각 key와 value를 순회.
+        formData.forEach(function(value, key) {
+            // 이미 같은 이름의 필드가 있다면, 배열로 처리
+            if (obj.hasOwnProperty(key)) {
+                if (Array.isArray(obj[key])) { // 기존 값이 배열이면
+                    obj[key].push(value); // 배열에 새 값 추가
+                } else { // 배열이 아니라면
+                    obj[key] = [obj[key], value]; // 기존 값과 새 값을 배열로 변환하여 저장
+                }
+            } else {
+                obj[key] = value; // 처음 보는 key이면 그대로 할당
+            }
+        });
+        return obj; // 최종적으로 직렬화된 Json 객체 반환
+    }
+
+    var BuyProc = {
+        // 숫자만 입력되도록 필터링하는 함수: 현재 활성화된(포커스된) input 요소의 값을 숫자만 남기도록 함.
+        onlyNum: function () {
+            var input = document.activeElement;
+            // input 요소가 존재하고, value가 있을 때만 처리
+            if (input && input.value) {
+                input.value = input.value.replace(/[^0-9]/g, '');
+            }
+        },
+
+
+        buy: function () {
+            // 주문서 폼 선택
+            var form = document.querySelector("form.form_obj");
+
+            // 클라이언트 측 필수 입력값 검증 예제
+            if (!form.querySelector('input[name="del_name"]').value.trim()) {
+                alert("수취인 이름을 입력해주세요.");
+                return;
+            }
+            if (!form.querySelector('input[name="del_zip"]').value.trim() ||
+                !form.querySelector('input[name="del_addr1"]').value.trim()) {
+                alert("배송 주소를 정확히 입력해주세요.");
+                return;
+            }
+            if (!form.querySelector('select[name="cp[]"]').value.trim()) {
+                alert("휴대폰 번호를 입력해주세요.");
+                return;
+            }
+            if (!form.querySelector('input[name="email"]').value.trim()) {
+                alert("이메일 주소를 입력해주세요.");
+                return;
+            }
+
+            // 폼 데이터를 JSON 객체로 직렬화
+            var formData = serializeFormToJSON(form);
+
+            // 전화번호 (일반 전화번호 및 휴대폰 번호)는 배열로 넘어올 수 있으므로 결합 처리
+            var receiverPhone = "";
+            if (formData["phone[]"]) {
+                receiverPhone = Array.isArray(formData["phone[]"]) ? formData["phone[]"].join("-") : formData("phone[]");
+            }
+
+            var receiverMobile = "";
+            if (formData["cp[]"]) {
+                receiverMobile = Array.isArray(formData["cp[]"]) ? formData["cp[]"].join("-") : formData("cp[]");
+            }
+
+            var receiverAddress = "";
+            if (formData.del_zip || formData.del_addr1 || formData.del_addr2) {
+                receiverAddress = (formData.del_zip ? formData.del_zip + " " : "") +
+                    (formData.del_addr1 ? formData.del_addr1 + " " : "") +
+                    (formData.del_addr2 ? formData.del_addr2 + " " : "");
+            }
+
+            // 배송방법은 라디오 버튼 (name = "is_dawn")에서 체크된 값
+            var deliveryMethod = "";
+            var isDawnRadios = document.getElementsByName("is_dawn");
+            for (var i = 0; i < isDawnRadios.length; i++) {
+                if (isDawnRadios[i].checked) {
+                    deliveryMethod = isDawnRadios[i].value;
+                    break;
+                }
+            }
+
+            // 주문 DTO 객체 구성 (OrderDto)
+            var orderDto = {
+                orderType: orderType,
+                receiverName: formData.del_name,               // 수취인 이름 (input name="del_name")
+                receiverPhone: receiverPhone,                   // 일반 전화번호
+                receiverMobile: receiverMobile,                 // 휴대폰 번호
+                receiverAddress: receiverAddress,               // 조합된 주소
+                deliveryMethod: deliveryMethod,                 // 배송방법 (예: "T", "A" 등)
+                deliveryMemo: formData.memo,                      // 배송 메모 (input name="memo")
+                // 장바구니 주문인 경우 cartItemIds가 필요함 (hidden input 또는 전역 변수로 전달)
+                cartItemIds: formData.cartItemIds ? formData.cartItemIds : [],
+                orderItems: orderItems,                         // 전역 변수로 Thymeleaf에서 전달된 주문 상품 목록
+                totalAmount: totalAmount,                       // 전역 변수
+                deliveryFee: deliveryFee,                       // 전역 변수
+                // 결제 방법은 폼이나 기본값 지정 (예: "CREDIT_CARD")
+                paymentMethod: formData.paymentMethod ? formData.paymentMethod : "CREDIT_CARD"
+            };
+
+            fetch('/order/place', {
+                method: 'POST',
+                headers: {
+                    'Content-Type' : 'application/json'
+                },
+                body: JSON.stringify(orderDto)
+            })
+            .then(function (response) {
+                if (!response.ok) {
+                    return response.text().then(function (text) {
+                        throw new Error(text || "주문 생성 실패");
+                    });
+                }
+                return response.json();
+            })
+            .then(function (orderResponse) {
+                paymentDto = {
+                    orderId: orderResponse.id,
+                    amount: orderResponse.finalAmount,
+                    paymentMethod: orderDto.paymentMethod
+                };
+                return fetch('/payment/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type' : 'application/json'
+                    },
+                    body: JSON.stringify(paymentDto)
+                });
+            })
+            .then(function (paymentResponse) {
+                if (!paymentResponse.ok) {
+                    return paymentResponse.text().then(function (text) {
+                        throw new Error(text || "결제 처리 실패");
+                    });
+                }
+                return paymentResponse.json();
+            })
+            .then(function (paymentResult) {
+                window.location.href = '/payment/success?orderId=' + paymentResult.orderId;
+            })
+            .catch(function (error) {
+                alert("오류 발생: " + error.message);
+            });
+        }
+    };
+</script>
 </html>

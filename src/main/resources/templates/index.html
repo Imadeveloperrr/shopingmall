@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:text-align="http://www.w3.org/1999/xhtml">
 <head>
     <div th:replace="~{/fragments/header.html :: fragment-header}"></div>
     <title>spring framework study</title>
@@ -11,17 +11,14 @@
 </head>
 <body>
 <!-- Navigation -->
-
+<div th:insert="~{/fragments/nav.html :: fragment-nav}"></div>
 <!-- Head -->
 <section class="logo-carousel-section">
-    <div th:insert="~{/fragments/nav.html :: fragment-nav}"></div>
 
     <div class="logo-carousel-container">
         <div class="logo-carousel-slide">
             <img th:src="@{/img/main1.jpg}" alt="Logo 1">
             <img th:src="@{/img/main2.jpg}" alt="Logo 2">
-            <img th:src="@{/img/main3.jpg}" alt="Logo 3">
-            <img th:src="@{/img/main4.jpg}" alt="Logo 4">
         </div>
 
         <button class="logo-carousel-btn" id="prevBtn">
@@ -35,24 +32,24 @@
     </div>
 </section>
 <!-- Service -->
-<section class="page-section" id="service">
+<section class="page-section" style="margin-top: 100px"; id="service">
     <div class="container px-4 px-lg-5 mt-5"> <!-- mt = 마진탑, px = 좌우패딩, lg = large 화면 크기일때-->
+        <h1 class="fw-bold" style="font-size: 24px; margin-bottom: 30px; text-align: center;"> New Arrivals </h1>
         <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
-
             <!-- gx-4 = x축(수평)간격, row-cols-2 = 한 행에 최대 2개의 열, md = medium일때 3개의 열, justify.. = 수평 중앙-->
-            <div th:each="product : ${products}" class="col mb-5" style="width:370px; height: 600px;"> <!-- mb = 마진바텀 -->
+            <div th:each="product : ${products}" class="col mb-5" style="width:390px; height: 600px;"> <!-- mb = 마진바텀 -->
                 <a th:href="@{/product/detail/{id}(id=${product.number})}">
-                    <div class="card h-100" >
+                    <div class="card h-100 border-0" >
                         <!-- Product image -->
                         <img th:src="@{${product.imageUrl}}" class="card-img-top" style="height: 450px;"/>
                         <!-- Product details -->
-                        <div class="card-body p-4"> <!-- p-크기 = 모든 방향의 패딩 -->
-                            <p th:text="${product.name}" class="fw-bold">Product Name</p>
-                            <hr>
-                            <p class="text-muted mb-0" th:text="${product.intro}">Product Description</p>
+                        <div class="card-body p-2"> <!-- p-크기 = 모든 방향의 패딩 -->
+                            <p th:text="${product.name}" class="fw-bold small">Product Name</p>
+                            <hr class="my-1">
+                            <p class="text-muted mb-0 small" th:text="${product.intro}">Product Description</p>
                         </div>
-                        <div class="card-footer p-4 pt-0 border-top-0 bg-transparent"> <!-- border-top-0 = 상단 테두리 제거, bg-transparent = 배경색 투명 -->
-                            <p th:text="${product.price}">Price</p>
+                        <div class="card-footer p-2 pt-0 border-top-0 bg-transparent"> <!-- border-top-0 = 상단 테두리 제거, bg-transparent = 배경색 투명 -->
+                            <p th:text="${product.price}" class="small">Price</p>
                         </div>
                     </div>
                 </a>
