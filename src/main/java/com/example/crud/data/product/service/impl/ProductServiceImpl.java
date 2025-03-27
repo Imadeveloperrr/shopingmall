@@ -97,7 +97,7 @@ public class ProductServiceImpl implements ProductService {
                 }
             }
 
-            Product product = converToProductEntity(productDto, member);
+            Product product = convertToProductEntity(productDto, member);
             product.setImageUrl(imageUrl);
 
             // ProductOption 엔티티 생성 및 설정
@@ -346,10 +346,12 @@ public class ProductServiceImpl implements ProductService {
         return productResponseDto;
     }
 
-    private Product converToProductEntity(ProductDto productDto, Member member) {
+    private Product convertToProductEntity(ProductDto productDto, Member member) {
         Product product = new Product();
         BeanUtils.copyProperties(productDto, product);
         product.setMember(member);
+
+        product.setSubCategory(productDto.getSubCategory());
         return product;
     }
 }

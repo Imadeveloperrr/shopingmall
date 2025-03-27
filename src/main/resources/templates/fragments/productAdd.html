@@ -64,15 +64,19 @@
                         <div class="form-outline mb-4">
                             <select id="category" name="category" class="form-select" >
                                 <option value="">카테고리를 선택하세요</option>
-                                <option value="T-shirt">티</option>
-                                <option value="Pants">바지</option>
-                                <option value="Shoes">신발</option>
-                                <option value="Knit">니트</option>
-                                <option value="Skirt">치마</option>
-                                <option value="Boots">부츠</option>
-                                <option value="Boots">기타</option>
+                                <th:block th:each="cat : ${T(com.example.crud.enums.Category).values()}">
+                                    <option th:value="${cat.name()}" th:text="${cat.groupName}"></option>
+                                </th:block>
                             </select>
-                            <label class="form-label" for="category">카테고리</label>
+                            <label class="form-label" for="category">메인 카테고리</label>
+                        </div>
+
+                        <!-- 세부 카테고리 선택 -->
+                        <div class="form-outline mb-4">
+                            <select id="subCategory" name="subCategory" class="form-select">
+                                <option value="">세부 카테고리를 선택하세요</option>
+                            </select>
+                            <label class="form-label" for="subCategory">세부 카테고리</label>
                         </div>
 
                         <!-- Image upload -->
@@ -113,6 +117,44 @@
         </div>
     </div>
 </div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var categoryMapping = {
+        /* 각 enum 상수명을 키로, subCategories 배열을 값으로 지정 */
+        /* 예시: */
+        OUTER: /*[[${T(com.example.crud.enums.Category).OUTER.getSubCategories()}]]*/,
+        TOP: /*[[${T(com.example.crud.enums.Category).TOP.getSubCategories()}]]*/,
+        BOTTOM: /*[[${T(com.example.crud.enums.Category).BOTTOM.getSubCategories()}]]*/,
+        DRESS: /*[[${T(com.example.crud.enums.Category).DRESS.getSubCategories()}]]*/,
+        BAG: /*[[${T(com.example.crud.enums.Category).BAG.getSubCategories()}]]*/,
+        SHOES: /*[[${T(com.example.crud.enums.Category).SHOES.getSubCategories()}]]*/,
+        ACCESSORY: /*[[${T(com.example.crud.enums.Category).ACCESSORY.getSubCategories()}]]*/
+    };
+    /*]]>*/
+</script>
+
+<script>
+    // 메인 카테고리 변경 이벤트 핸들러
+    document.getElementById('category').addEventListener('change', function() {
+        var selectedCategory = this.value;  // 예: "TOP"
+        var subCategorySelect = document.getElementById('subCategory');
+
+        // 기존 옵션 초기화
+        subCategorySelect.innerHTML = '<option value="">세부 카테고리를 선택하세요</option>';
+
+        if (selectedCategory && categoryMapping[selectedCategory]) {
+            // 선택된 카테고리의 세부 목록을 가져와서 옵션 추가
+            categoryMapping[selectedCategory].forEach(function(subCat) {
+                var option = document.createElement('option');
+                option.value = subCat;  // 저장할 값
+                option.text = subCat;   // 화면에 표시할 텍스트
+                subCategorySelect.appendChild(option);
+            });
+        }
+    });
+</script>
+
 <script>
     function addOptionRow() {
         const tableBody = document.querySelector('#optionTable tbody');

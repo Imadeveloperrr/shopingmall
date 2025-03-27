@@ -1,5 +1,6 @@
 package com.example.crud.entity;
 
+import com.example.crud.enums.Category;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -36,8 +37,12 @@ public class Product {
     @Column(nullable = false, columnDefinition="TEXT")
     private String description;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String category;
+    private Category category;
+
+    @Column(name = "sub_category")
+    private String subCategory;
 
     /*
         ManyToOne = 여러개의 Product가 하나의 Member에 연관될수 있음을 나타냄 다대일 관계
