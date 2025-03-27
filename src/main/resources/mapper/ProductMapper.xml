@@ -25,7 +25,9 @@
         <result property="imageUrl" column="image_url"/>
         <result property="intro" column="intro"/>
         <result property="description" column="description"/>
-        <result property="category" column="category"/>
+        <result property="category" column="category"
+                javaType="com.example.crud.enums.Category"
+                typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
 
         <association property="member" javaType="com.example.crud.entity.Member"
                      resultMap="MemberResultMap"/>
