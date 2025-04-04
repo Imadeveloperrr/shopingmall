@@ -18,6 +18,9 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
+# 외부 비밀 파일 무시
+/src/main/resources/application-secrets.properties
+
 ### IntelliJ IDEA ###
 .idea
 *.iws
