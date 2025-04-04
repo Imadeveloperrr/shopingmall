@@ -330,6 +330,13 @@ public class ProductServiceImpl implements ProductService {
         productResponseDto.setPrice(formatter.format(product.getPrice()) + "원");
         productResponseDto.setDescription(product.getDescription().replace("\n", "<br>"));
 
+        // category 필드를 수동으로 변환하여 설정
+        if (product.getCategory() != null) {
+            productResponseDto.setCategory(product.getCategory().name());
+        }
+
+        productResponseDto.setSubCategory(product.getSubCategory());
+
         // ProductOption 정보 변환
         if (product.getProductOptions() != null) {
             List<ProductOptionDto> optionDtos = product.getProductOptions().stream()

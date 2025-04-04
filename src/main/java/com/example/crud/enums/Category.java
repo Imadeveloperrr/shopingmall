@@ -26,4 +26,14 @@ public enum Category {
         return subCategories;
     }
 
+    // 추가: groupName을 이용하여 Enum 객체를 반환하는 메서드
+    public static Category fromGroupName(String groupName) {
+        for (Category category : values()) {
+            if (category.getGroupName().equalsIgnoreCase(groupName)) {
+                return category;
+            }
+        }
+        throw new IllegalArgumentException("No matching category found for: " + groupName);
+    }
+
 }

@@ -9,5 +9,25 @@
       "name": "jwt.refresh-token-validity-in-seconds",
       "type": "java.lang.String",
       "description": "Description for jwt.refresh-token-validity-in-seconds."
+    },
+    {
+      "name": "chatgpt.api.key",
+      "type": "java.lang.String",
+      "description": "Description for chatgpt.api.key."
+    },
+    {
+      "name": "chatgpt.api.url",
+      "type": "java.lang.String",
+      "description": "Description for chatgpt.api.url."
+    },
+    {
+      "name": "hf.api.url",
+      "type": "java.lang.String",
+      "description": "Description for hf.api.url."
+    },
+    {
+      "name": "hf.api.key",
+      "type": "java.lang.String",
+      "description": "Description for hf.api.key."
     }
   ] }

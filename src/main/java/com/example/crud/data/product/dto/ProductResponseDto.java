@@ -21,6 +21,7 @@ public class ProductResponseDto {
     private String imageUrl;
     private String description;
     private String category;
+    private String subCategory;
     private boolean permission;
     private List<ProductOptionDto> productOptions;
 
