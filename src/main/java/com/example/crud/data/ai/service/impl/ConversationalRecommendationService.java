@@ -1,14 +1,10 @@
 package com.example.crud.data.ai.service.impl;
 
-import com.example.crud.data.ai.dto.Preference;
 import com.example.crud.data.ai.dto.RecommendationResponseDto;
-import com.example.crud.data.ai.service.ChatGPTIntegrationService;
-import com.example.crud.data.product.dto.ProductResponseDto;
 import com.example.crud.entity.ConversationMessage;
 import com.example.crud.entity.UserPreference;
 import com.example.crud.enums.MessageType;
 import com.example.crud.repository.UserPreferenceRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,19 +17,26 @@ import java.util.concurrent.CompletableFuture;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class ConversationalRecommendationService{
+public class ConversationalRecommendationService {
 
     private final ConversationService conversationService;
     private final ChatGPTIntegrationService chatGPTIntegrationService;
     private final RecommendationService recommendationService;
     private final UserPreferenceRepository userPreferenceRepository;
-    private final PreferenceMergeService preferenceMergeService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * 사용자의 메시지를 처리하여 대화 기록을 업데이트하고,
-     * 두 소스의 NLP 결과(예: ChatGPT와 Hugging Face)를 비동기로 호출하여 선호 정보를 병합한 후,
-     * 이를 기반으로 추천 상품을 산출합니다.
+     * ChatGPT를 활용해 사용자 메시지에서 상세 의도 정보를 추출한 후,
+     * 해당 정보를 기반으로 고정밀 상품 추천을 수행합니다.
+     *
+     * 1. 사용자 메시지 저장 및 대화 기록 조회
+     * 2. ChatGPT를 통해 사용자 메시지 의도 분석 (상세 요구사항 JSON 형식)
+     * 3. 사용자 선호 정보(UserPreference) 업데이트
+     * 4. 고정밀 추천 로직 실행
+     *
+     * @param conversationId 대화 ID
+     * @param userMessage 사용자 메시지
+     * @return RecommendationResponseDto 추천 결과 DTO
      */
     @Transactional
     public RecommendationResponseDto processUserMessage(Long conversationId, String userMessage) {
@@ -41,51 +44,31 @@ public class ConversationalRecommendationService{
         conversationService.addMessage(conversationId, MessageType.USER, userMessage);
         List<ConversationMessage> messages = conversationService.getConversationMessages(conversationId);
 
-        // 2. 두 소스의 선호 정보 추출 (예시: ChatGPT와 Hugging Face)
-        CompletableFuture<String> chatGptFuture = chatGPTIntegrationService.extractUserPreferenceFromChatGPTAsync(messages, userMessage);
-        CompletableFuture<String> hfFuture = chatGPTIntegrationService.extractUserPreferenceFromHFAsync(messages, userMessage);
-        CompletableFuture.allOf(chatGptFuture, hfFuture).join();
+        // 2. ChatGPT를 활용하여 사용자 메시지에서 상세 의도 정보를 추출합니다.
+        String prompt = "사용자 메시지: " + userMessage + "\n"
+                + "상품 추천을 위한 사용자의 상세 요구사항을 아래 JSON 형식으로 추출해줘.\n"
+                + "예시: { \"category\": \"\", \"style\": \"\", \"color\": \"\", \"size\": \"\" }";
+        CompletableFuture<String> chatGptFuture = chatGPTIntegrationService.extractUserPreferenceFromChatGPTAsync(messages, prompt);
         String chatGptResult = chatGptFuture.join();
-        String hfResult = hfFuture.join();
-        log.info("ChatGPT 결과: {}", chatGptResult);
-        log.info("허깅페이스 결과: {}", hfResult);
+        log.info("ChatGPT로 추출된 사용자 상세 의도: {}", chatGptResult);
 
-        // 3. 두 결과를 병합하여 최종 Preference 객체를 생성하고 JSON으로 변환
-        Preference mergedPreference = preferenceMergeService.mergePreferences(hfResult, chatGptResult);
-        String unifiedPreferenceJson;
-        try {
-            unifiedPreferenceJson = objectMapper.writeValueAsString(mergedPreference);
-        } catch (Exception e) {
-            log.error("Preference JSON 변환 실패: {}", e.getMessage());
-            throw new RuntimeException("Preference JSON 변환 실패: " + e.getMessage(), e);
-        }
-
-        // 4. UserPreference 업데이트 (회원당 1개)
+        // 3. 사용자 선호 정보(UserPreference) 업데이트 (회원 당 1개)
         ConversationMessage firstMessage = messages.get(0);
         Long memberId = firstMessage.getConversation().getMember().getNumber();
-        Optional<UserPreference> optionalPreference = userPreferenceRepository.findByMemberId(memberId);
-        UserPreference userPreference;
-        if (optionalPreference.isPresent()) {
-            userPreference = optionalPreference.get();
-            userPreference.setPreferences(unifiedPreferenceJson);
-        } else {
-            userPreference = UserPreference.builder()
-                    .member(firstMessage.getConversation().getMember())
-                    .preferences(unifiedPreferenceJson)
-                    .build();
-        }
+        UserPreference userPreference = userPreferenceRepository.findByMemberId(memberId)
+                .orElseGet(() -> UserPreference.builder()
+                        .member(firstMessage.getConversation().getMember())
+                        .build());
+        userPreference.setPreferences(chatGptResult);
         userPreferenceRepository.save(userPreference);
-        log.info("UserPreference 업데이트 완료: {}", unifiedPreferenceJson);
+        log.info("UserPreference 업데이트 완료: {}", chatGptResult);
 
-        // 5. 대화 턴(예: 4턴 이상)이 확보되면 추천 로직 실행
-        List<ProductResponseDto> recommendations = null;
-        if (messages.size() >= 4) {
-            recommendations = recommendationService.getPersonalizedRecommendations(unifiedPreferenceJson);
-        }
+        // 4. 고정밀 추천 로직 실행: ChatGPT에서 추출한 상세 사용자 의도를 기반으로 추천 상품 조회
+        List<ProductResponseDto> recommendations = recommendationService.getHighPrecisionRecommendations(chatGptResult);
 
-        // 6. 최종 결과 반환
+        // 5. 추천 결과 DTO 구성 및 반환
         RecommendationResponseDto responseDto = new RecommendationResponseDto();
-        responseDto.setSystemResponse("통합된 사용자 선호 정보: " + unifiedPreferenceJson);
+        responseDto.setSystemResponse("추출된 사용자 상세 의도: " + chatGptResult);
         responseDto.setRecommendedProducts(recommendations);
         return responseDto;
     }

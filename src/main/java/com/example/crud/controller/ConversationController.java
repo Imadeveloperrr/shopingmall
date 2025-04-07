@@ -1,10 +1,5 @@
 package com.example.crud.controller;
 
-import com.example.crud.data.ai.dto.ConversationDto;
-import com.example.crud.data.ai.dto.UserMessageRequestDto;
-import com.example.crud.data.ai.dto.MessageDto;
-import com.example.crud.data.ai.dto.RecommendationResponseDto;
-import com.example.crud.data.ai.service.impl.ConversationService;
 import com.example.crud.data.ai.service.impl.ConversationalRecommendationService;
 import com.example.crud.entity.Conversation;
 import com.example.crud.entity.ConversationMessage;
