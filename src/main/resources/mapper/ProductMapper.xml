@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.crud.mapper.ProductMapper">
+<mapper namespace="com.example.crud.common.mapper.ProductMapper">
     <resultMap id="MemberResultMap" type="com.example.crud.entity.Member">
         <id property="number" column="m_number"/>
         <result property="email" column="m_email"/>
@@ -28,6 +28,11 @@
         <result property="category" column="category"
                 javaType="com.example.crud.enums.Category"
                 typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="descriptionVector"
+                column="description_vector"
+                javaType="float[]"
+                typeHandler="com.example.crud.ai.embedding.infrastructure.PgVectorFloatArrayTypeHandler"/>
+
 
         <association property="member" javaType="com.example.crud.entity.Member"
                      resultMap="MemberResultMap"/>

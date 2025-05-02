@@ -1,7 +1,7 @@
 package com.example.crud.data.product.service.impl;
 
-import com.example.crud.data.exception.BaseException;
-import com.example.crud.data.exception.ErrorCode;
+import com.example.crud.common.exception.BaseException;
+import com.example.crud.common.exception.ErrorCode;
 import com.example.crud.data.product.dto.ProductDto;
 import com.example.crud.data.product.dto.ProductOptionDto;
 import com.example.crud.data.product.dto.ProductResponseDto;
@@ -9,7 +9,7 @@ import com.example.crud.data.product.service.ProductService;
 import com.example.crud.entity.Member;
 import com.example.crud.entity.Product;
 import com.example.crud.entity.ProductOption;
-import com.example.crud.mapper.ProductMapper;
+import com.example.crud.common.mapper.ProductMapper;
 import com.example.crud.repository.MemberRepository;
 import com.example.crud.repository.ProductOptionRepository;
 import com.example.crud.repository.ProductRepository;

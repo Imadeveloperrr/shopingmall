@@ -11,15 +11,18 @@ java {
     sourceCompatibility = '17'
 }
 
-configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
-    }
-}
-
 repositories {
     mavenCentral()
 }
+
+tasks.named("bootJar") {
+    archiveFileName = "app.jar"
+}
+
+ext {
+    querydslVersion = '5.1.0'
+}
+
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
@@ -32,7 +35,48 @@ dependencies {
     implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.3.1'
 
     implementation 'com.google.firebase:firebase-admin:9.2.0'
-    
+
+    implementation "com.vladmihalcea:hibernate-types-60:2.21.1"   // pgvector 매핑용 Hibernate Types
+    implementation("org.postgresql:postgresql:42.7.3")          // PGVector
+    implementation "com.pgvector:pgvector:0.1.6" // 벡터 타입 매핑
+
+    // Resilience4j: BOM 으로 버전 관리
+    implementation platform("io.github.resilience4j:resilience4j-bom:2.2.0")// 공통 버전 관리 :contentReference[oaicite:0]{index=0}
+    implementation "io.github.resilience4j:resilience4j-reactor"            // Reactor 지원 :contentReference[oaicite:1]{index=1}
+    implementation "io.github.resilience4j:resilience4j-circuitbreaker"     // CircuitBreaker :contentReference[oaicite:2]{index=2}
+    implementation "io.github.resilience4j:resilience4j-ratelimiter"        // RateLimiter
+    implementation "io.github.resilience4j:resilience4j-timelimiter"        // TimeLimiter
+    implementation "io.github.resilience4j:resilience4j-bulkhead"           // Bulkhead
+
+    // OpenAI Java Client (TheoKanning)
+    implementation "com.theokanning.openai-gpt3-java:service:0.18.2"        // High-level Service API :contentReference[oaicite:3]{index=3}
+    implementation "com.theokanning.openai-gpt3-java:api:0.18.2"
+
+    // MapStruct 본체
+    implementation "org.mapstruct:mapstruct:1.5.5.Final"
+
+    // MapStruct 애노테이션 프로세서 (컴파일 타임에 구현체 생성)
+    annotationProcessor "org.mapstruct:mapstruct-processor:1.5.5.Final"
+
+    // 트레이싱/메트릭
+    implementation("io.micrometer:micrometer-tracing-bridge-brave")
+    implementation("io.opentelemetry:opentelemetry-exporter-otlp:1.38.0")
+
+    // Kafka
+    implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
+    implementation("org.springframework.kafka:spring-kafka")
+
+    // Spring Data Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // 로컬 L2 캐시
+    implementation("org.ehcache:ehcache:3.10.8")
+
+    // QueryDSL – Jakarta
+    implementation "com.querydsl:querydsl-jpa:${querydslVersion}:jakarta"
+    annotationProcessor "com.querydsl:querydsl-apt:${querydslVersion}:jakarta"
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api:3.1.0"
+
     implementation 'io.jsonwebtoken:jjwt-api:0.11.2'
     testImplementation 'org.projectlombok:lombok:1.18.28'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.2'
@@ -41,6 +85,13 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:3.1.4'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'com.h2database:h2'
+}
+
+
+/* ---------- Generated Q-Class 경로 ---------- */
+sourceSets {
+    main.java.srcDirs += "$buildDir/generated/sources/annotationProcessor/java/main"
 }
 
 test {

@@ -3,8 +3,7 @@ package com.example.crud.data.member.service;
 import com.example.crud.data.member.dto.MemberDto;
 import com.example.crud.data.member.dto.MemberResponseDto;
 import com.example.crud.data.token.TokenRequestDto;
-import com.example.crud.security.JwtToken;
-import org.springframework.transaction.annotation.Transactional;
+import com.example.crud.common.security.JwtToken;
 
 public interface MemberService {
     JwtToken signIn(String username, String password, boolean rememberMe);

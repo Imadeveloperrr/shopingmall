@@ -1,18 +1,18 @@
 package com.example.crud.data.member.service.impl;
 
-import com.example.crud.data.exception.BaseException;
-import com.example.crud.data.exception.ErrorCode;
+import com.example.crud.common.exception.BaseException;
+import com.example.crud.common.exception.ErrorCode;
 import com.example.crud.data.member.dto.MemberDto;
 import com.example.crud.data.member.dto.MemberResponseDto;
 import com.example.crud.data.member.service.MemberService;
 import com.example.crud.data.token.TokenRequestDto;
 import com.example.crud.entity.Member;
 import com.example.crud.entity.RefreshToken;
-import com.example.crud.mapper.MemberMapper;
+import com.example.crud.common.mapper.MemberMapper;
 import com.example.crud.repository.MemberRepository;
 import com.example.crud.repository.RefreshTokenRepository;
-import com.example.crud.security.JwtToken;
-import com.example.crud.security.JwtTokenProvider;
+import com.example.crud.common.security.JwtToken;
+import com.example.crud.common.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

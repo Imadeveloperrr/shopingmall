@@ -29,5 +29,7 @@ public class MemberDto {
     private String address;
     private String phoneNumber;
     private String introduction;
+
+    @Builder.Default
     private List<String> roles = new ArrayList<>();
 }

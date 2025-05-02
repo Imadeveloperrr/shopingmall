@@ -1,0 +1,54 @@
+
+services:
+  backend:
+    build:
+      context: .                 # 루트가 build context
+      dockerfile: docker/Dockerfile
+    container_name: spring-app
+    depends_on: [ db, ml, redis ]
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/app
+      SPRING_DATASOURCE_USERNAME: sungho
+      SPRING_DATASOURCE_PASSWORD: 0000
+      EMBEDDING_SERVICE_URL: http://ml:8000
+    ports:
+      - "8080:8080"
+    networks: [ appnet ]
+
+  ml:
+    build: ./ml-service
+    container_name: ml-service
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    depends_on: [ redis ]
+    ports:
+      - "8000:8000"
+    networks: [ appnet ]
+
+  db:
+    image: ankane/pgvector:latest
+    container_name: pgvector-db
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: sungho
+      POSTGRES_PASSWORD: 0000
+    volumes:
+      - ./docker/initdb:/docker-entrypoint-initdb.d
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks: [ appnet ]
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks: [ appnet ]
+
+volumes:
+  db_data:
+
+networks:
+  appnet:

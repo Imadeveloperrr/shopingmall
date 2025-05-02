@@ -3,6 +3,8 @@ package com.example.crud.entity;
 import com.example.crud.enums.Category;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,6 +77,12 @@ public class Product {
         productOptions.remove(option);
         option.setProduct(null);
     }
+
+    // 상품 설명 임베딩 (768-차원 BERT) - pgvector
+    @JdbcTypeCode(SqlTypes.OTHER)
+    @Column(name = "description_vector",
+    columnDefinition = "vector(768)", nullable = false)
+    private float[] descriptionVector;
 
     public String getMemberEmail() {
         return member.getEmail();
