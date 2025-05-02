@@ -1,12 +1,12 @@
 package com.example.crud.controller;
 
-import com.example.crud.data.exception.ValidationException;
+import com.example.crud.common.exception.ValidationException;
 import com.example.crud.data.member.dto.MemberDto;
 import com.example.crud.data.member.dto.MemberResponseDto;
 import com.example.crud.data.member.service.MemberService;
 import com.example.crud.data.product.dto.ProductResponseDto;
 import com.example.crud.data.product.service.ProductService;
-import com.example.crud.security.JwtToken;
+import com.example.crud.common.security.JwtToken;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;

@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.crud.mapper.CartMapper">
+<mapper namespace="com.example.crud.common.mapper.CartMapper">
     <resultMap id="CartResultMap" type="com.example.crud.data.cart.dto.CartDto">
         <id property="id" column="cart_id" />
         <collection property="cartItems" ofType="com.example.crud.data.cart.dto.CartItemDto">

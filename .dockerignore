@@ -1,0 +1,8 @@
+**/__pycache__
+**/*.pyc
+ml-service/.venv
+.idea
+.git
+**/.gradle
+**/build
+**/out

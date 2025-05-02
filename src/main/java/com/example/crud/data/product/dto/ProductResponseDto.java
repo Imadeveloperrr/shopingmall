@@ -25,6 +25,8 @@ public class ProductResponseDto {
     private boolean permission;
     private List<ProductOptionDto> productOptions;
 
+    private Double relevance;   // 유사도 점수(0.0~1.0)
+
     public void setDescription(String description) {
         this.description = description != null ? description.replace("\n", "<br>") : "";
     }

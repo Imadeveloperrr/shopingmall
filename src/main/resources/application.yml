@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/sunghodb
+    username: sungho
+    password: 0000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+      hibernate:
+        type:
+          array:
+            vector: com.vladmihalcea.hibernate.type.pgvector.PgVectorType

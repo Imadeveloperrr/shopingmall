@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
-    List<Product> findByMemberNumber(Long number);
+    List<Product> findByMember_Number(Long number);
 
     /**
      * 카테고리 기반으로 상품 목록을 조회합니다.
