@@ -66,15 +66,6 @@ public class ChatGptServiceLite {
             .build(true)
             .getCache("chatgpt", String.class, String.class);
 
-    /**
-     * 스트리밍 방식 API 호출 메서드
-     *  - Flux<String> 형태로 응답을 조각(chunk) 단위로 반환합니다.
-     *  - 이미 처리된 동일 요청은 캐시에서 바로 반환합니다.
-     *
-     * @param history 대화 이력(이전 메시지 리스트)
-     * @param prompt  새로 보낼 사용자 프롬프트
-     * @return API 응답 조각을 순차적으로 발행하는 Flux<String>
-     */
     public Flux<String> stream(List<ChatMessage> history, String prompt) {
         // 1) 요청 페이로드 생성
         ChatPayload body = ChatPayload.build(history, prompt, prop);
@@ -102,14 +93,6 @@ public class ChatGptServiceLite {
                 });
     }
 
-    /**
-     * 단일 응답 API 호출 메서드
-     *  - Mono<String> 형태로 전체 응답을 한 번에 반환합니다.
-     *
-     * @param history 대화 이력
-     * @param prompt  사용자 프롬프트
-     * @return API 응답 전체를 발행하는 Mono<String>
-     */
     public Mono<String> completion(List<ChatMessage> history, String prompt) {
         // 1) 요청 페이로드 생성
         ChatPayload body = ChatPayload.build(history, prompt, prop);
@@ -122,15 +105,6 @@ public class ChatGptServiceLite {
                 .transform(this::applyMonoGuards);       // 보호막 적용
     }
 
-    /**
-     * Flux<T>에 Resilience4j 보호막을 적용하는 헬퍼 메서드
-     *  - CircuitBreaker, RateLimiter, TimeLimiter, Bulkhead 순으로 적용
-     *  - 보호막에서 예외가 발생하면 빈 JSON("{}")을 폴백으로 반환
-     *
-     * @param flux 원본 Flux<T>
-     * @param <T>  발행 아이템 타입(String 사용 권장)
-     * @return 보호막 적용 후 Flux<T>
-     */
     private <T> Flux<T> applyFluxGuards(Flux<T> flux) {
         // 보호막 인스턴스 가져오기 (이름: "chatgpt")
         var cb = cbRegistry.circuitBreaker("chatgpt");
@@ -156,26 +130,6 @@ public class ChatGptServiceLite {
                 });
     }
 
-    /**
-     * Mono<T>에 Resilience4j 보호막을 적용하는 헬퍼 메서드
-     *  - 위 Flux용 메서드와 동일한 로직을 Mono에 적용
-     */
-    /**
-     * Mono<T>에 Resilience4j 보호막을 적용하는 헬퍼 메서드
-     *
-     * 보호막 적용 순서:
-     * 1. CircuitBreaker: API 실패율이 설정 값을 초과하면 이후 호출을 잠시 차단합니다.
-     * 2. RateLimiter: 지정된 초당 요청 수를 초과하면 호출을 지연시키거나 예외를 발생시킵니다.
-     * 3. TimeLimiter: 지정된 시간(초) 내에 응답이 없으면 타임아웃 예외를 발생시킵니다.
-     * 4. Bulkhead: 동시에 실행되는 호출 수를 제한하여 시스템 과부하를 방지합니다.
-     *
-     * 모든 보호막 적용 후에도 예외가 발생하면 onErrorResume 블록에서
-     * 에러 로그를 남기고 빈 JSON 문자열("{}")을 폴백으로 반환합니다.
-     *
-     * @param mono 원본 Mono<T> (API 응답을 담은 Mono)
-     * @param <T>  발행되는 데이터 타입 (주로 String)
-     * @return 보호막이 적용된 Mono<T>, 에러 시 폴백 Mono<String>
-     */
     private <T> Mono<T> applyMonoGuards(Mono<T> mono) {
         var cb = cbRegistry.circuitBreaker("chatgpt");
         var rl = rlRegistry.rateLimiter("chatgpt");
