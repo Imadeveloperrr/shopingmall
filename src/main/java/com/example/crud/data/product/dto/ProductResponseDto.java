@@ -13,19 +13,21 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProductResponseDto {
-    private String name;
-    private String price;
     private Long number;
+    private String name;
+    private String price;  // 원화 형식으로 반환 ("1,000원" 형태)
     private String brand;
     private String intro;
-    private String color;
     private String imageUrl;
     private String description;
     private String category;
+    private String subCategory;
     private boolean permission;
-    private List<ProductSizeDto> productSizes;
+    private List<ProductOptionDto> productOptions;
+
+    private Double relevance;   // 유사도 점수(0.0~1.0)
 
     public void setDescription(String description) {
-        this.description = description.replace("\n", "<br>");
+        this.description = description != null ? description.replace("\n", "<br>") : "";
     }
 }

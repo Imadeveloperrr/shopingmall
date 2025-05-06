@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <title>결제 성공</title>
+</head>
+<body>
+<h2>결제 성공</h2>
+<p id="paymentKey"></p>
+<p id="orderId"></p>
+<p id="amount"></p>
+
+<script>
+    // URL 쿼리 파라미터 추출
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentKey = urlParams.get("paymentKey");
+    const orderId = urlParams.get("orderId");
+    const amount = urlParams.get("amount");
+
+    async function confirmPayment() {
+        const requestData = {
+            paymentKey: paymentKey,
+            orderId: orderId,
+            amount: amount,
+        };
+
+        const response = await fetch("/confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestData),
+        });
+
+        const json = await response.json();
+
+        if (!response.ok) {
+            console.error(json);
+            // 실패 시 실패 페이지로 리다이렉트
+            window.location.href = `/payment/failure?orderId=${orderId}&message=${encodeURIComponent(json.message)}&code=${json.code}`;
+            return;
+        }
+
+        // 결제 확정 성공 시 성공 UI 처리 (필요한 경우 추가 로직 구현)
+        console.log("결제 확정:", json);
+    }
+
+    // 페이지 로드 시 결제 확정 호출
+    confirmPayment();
+
+    // 페이지에 결과 표시
+    document.getElementById("paymentKey").textContent = "paymentKey: " + paymentKey;
+    document.getElementById("orderId").textContent = "주문번호: " + orderId;
+    document.getElementById("amount").textContent = "결제 금액: " + amount;
+</script>
+</body>
+</html>

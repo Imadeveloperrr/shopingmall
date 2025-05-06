@@ -1,7 +1,7 @@
 # shopingmall
 
 
-<img width="{80%}" src="https://github.com/Imadeveloperrr/shopingmall/assets/99321607/54ffe5db-39d5-40a2-9d30-3b4bd6cd5de1"/>
+<img width="{80%}" src="https://github.com/user-attachments/assets/acbb1c67-c33a-43fe-88ef-054e3cc8a0c6"/>
 
 
 ### Frontend Stack

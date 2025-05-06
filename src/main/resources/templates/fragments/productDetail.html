@@ -24,22 +24,42 @@
             <div class="prd-opt">
                 <table class="prd-opt-table">
                     <tbody class="prd-opt-tbody">
-                        <tr>
-                            <th scope="row">SIZE</th>
-                            <td>
-                                <select id="productSize">
-                                    <option value="S">Small</option>
-                                    <option value="M">Medium</option>
-                                    <option value="L">Large</option>
-                                </select>
-                            </td>
-                        </tr>
+                    <tr>
+                        <th scope="row">COLOR</th>
+                        <td>
+                            <select id="productColor" name="color">
+                                <option value="">색상 선택</option>
+                                <option th:each="option : ${product.productOptions}"
+                                        th:value="${option.color}"
+                                        th:text="${option.color}"
+                                        th:attr="data-stock=${option.stock}">
+                                </option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">SIZE</th>
+                        <td>
+                            <select id="productSize" name="size" disabled>
+                                <option value="">사이즈 선택</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">수량</th>
+                        <td>
+                            <input type="number" id="quantity" name="quantity"
+                                   min="1" value="1" max="10">
+                        </td>
+                    </tr>
                     </tbody>
                 </table>
             </div>
 
             <div class="product-info-action">
-                <a th:href="@{/product/buy(id=${product.number})}" class="product-info-action-buy">Buy it Now</a>
+                <a href="javascript:void(0);" class="product-info-action-buy" onclick="buyNow()">
+                    Buy it Now
+                </a>
 
                 <a href="javascript:void(0);" class="product-info-action-cart" onclick="addToCart()">
                     <i class="fas fa-shopping-cart"></i>
@@ -69,14 +89,63 @@
         }
     </script>
     <script th:inline="javascript">
-        function addToCart() {
-            const productId = [[${product.number}]];
-            const sizeSelect = document.getElementById('productSize');
-            const size = sizeSelect.value;
-            const quantity = 1;
+        const productOptions = /*[[${product.productOptions}]]*/ [];
 
-            console.log('Product ID:', productId);
-            console.log('Selected Size:', size);
+        document.getElementById('productColor').addEventListener('change', function() {
+            const colorSelect = this;
+            const sizeSelect = document.getElementById('productSize');
+            const selectedColor = colorSelect.value;
+
+            sizeSelect.innerHTML = '<option value="">사이즈 선택</option>';
+            sizeSelect.disabled = !selectedColor;
+
+            if (selectedColor) {
+                const availableSizes = productOptions
+                    .filter(option => option.color === selectedColor)
+                    .map(option => option.size);
+
+                availableSizes.forEach(size => {
+                    const option = document.createElement('option');
+                    option.value = size;
+                    option.textContent = size;
+                    sizeSelect.appendChild(option);
+                });
+            }
+        });
+
+        function buyNow() {
+            const color = document.getElementById('productColor').value;
+            const size = document.getElementById('productSize').value;
+            const quantity = document.getElementById('quantity').value;
+            const productId = [[${product.number}]];
+
+            if (!color) {
+                alert('색상을 선택해주세요.');
+                return;
+            }
+            if (!size) {
+                alert('사이즈를 선택해주세요.');
+                return;
+            }
+
+            // 재고 확인 및 주문 페이지로 이동
+            location.href = `/order/checkout/direct?productId=${productId}&color=${color}&size=${size}&quantity=${quantity}`;
+        }
+
+        function addToCart() {
+            const color = document.getElementById('productColor').value;
+            const size = document.getElementById('productSize').value;
+            const quantity = document.getElementById('quantity').value;
+            const productId = /*[[${product.number}]]*/ null;
+
+            if (!color) {
+                alert('색상을 선택해주세요.');
+                return;
+            }
+            if (!size) {
+                alert('사이즈를 선택해주세요.');
+                return;
+            }
 
             fetch('/cart/add', {
                 method: 'POST',
@@ -85,17 +154,18 @@
                 },
                 body: JSON.stringify({
                     productId: productId,
+                    color: color,
                     size: size,
-                    quantity: quantity
+                    quantity: parseInt(quantity)
                 })
             })
                 .then(response => {
                     if (response.ok) {
-                        window.location.href = '/cart';
+                        if (confirm('상품이 장바구니에 추가되었습니다.\n장바구니로 이동하시겠습니까?')) {
+                            location.href = '/cart';
+                        }
                     } else {
-                        response.text().then(text => {
-                            alert('장바구니에 상품을 추가하는 데 실패했습니다: ' + text);
-                        });
+                        response.text().then(text => alert(text));
                     }
                 })
                 .catch(error => {
@@ -103,7 +173,21 @@
                     alert('오류가 발생했습니다.');
                 });
         }
+
+        // 재고에 따른 수량 제한
+        document.getElementById('productSize').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const stock = parseInt(selectedOption.text.split('재고: ')[1]);
+            const quantityInput = document.getElementById('quantity');
+            quantityInput.max = stock;
+            if (parseInt(quantityInput.value) > stock) {
+                quantityInput.value = stock;
+            }
+        });
     </script>
 
 </body>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+        crossorigin="anonymous"></script>
 </html>

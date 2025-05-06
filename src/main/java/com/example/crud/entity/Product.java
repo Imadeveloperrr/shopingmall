@@ -1,7 +1,12 @@
 package com.example.crud.entity;
 
+import com.example.crud.enums.Category;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -31,14 +36,15 @@ public class Product {
     @Column(nullable = false)
     private String intro;
 
-    @Column(nullable = false)
-    private String color;
-
     @Column(nullable = false, columnDefinition="TEXT")
     private String description;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String category;
+    private Category category;
+
+    @Column(name = "sub_category")
+    private String subCategory;
 
     /*
         ManyToOne = 여러개의 Product가 하나의 Member에 연관될수 있음을 나타냄 다대일 관계
@@ -51,13 +57,32 @@ public class Product {
     private Member member;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductSize> productSizes;
+    @Builder.Default
+    private List<ProductOption> productOptions = new ArrayList<>();
 
-    public ProductSize getProductSizeBySize(String size) {
-        return productSizes.stream().filter(productSize -> productSize.getSize().equals(size))
+    public ProductOption getProductOptionByColorAndSize(String color, String size) {
+        return productOptions.stream()
+                .filter(option -> option.getColor().equals(color) && option.getSize().equals(size))
                 .findFirst()
                 .orElse(null);
     }
+
+    // 양방향 관계 관리 메서드 추가
+    public void addProductOption(ProductOption option) {
+        productOptions.add(option);
+        option.setProduct(this);
+    }
+
+    public void removeProductOption(ProductOption option) {
+        productOptions.remove(option);
+        option.setProduct(null);
+    }
+
+    // 상품 설명 임베딩 (768-차원 BERT) - pgvector
+    @JdbcTypeCode(SqlTypes.OTHER)
+    @Column(name = "description_vector",
+    columnDefinition = "vector(768)", nullable = false)
+    private float[] descriptionVector;
 
     public String getMemberEmail() {
         return member.getEmail();

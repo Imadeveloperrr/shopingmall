@@ -3,8 +3,10 @@ package com.example.crud.data.cart.service.impl;
 import com.example.crud.data.cart.dto.CartDto;
 import com.example.crud.data.cart.dto.CartItemDto;
 import com.example.crud.data.cart.service.CartService;
+import com.example.crud.common.exception.BaseException;
+import com.example.crud.common.exception.ErrorCode;
 import com.example.crud.entity.*;
-import com.example.crud.mapper.CartMapper;
+import com.example.crud.common.mapper.CartMapper;
 import com.example.crud.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,16 +29,16 @@ public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
-    private final ProductSizeRepository productSizeRepository;
     private final CartMapper cartMapper;
+    private final ProductOptionRepository productOptionRepository;
 
     private Long getAuthenticatedMemberId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
-            throw new IllegalStateException("로그인이 필요합니다");
+            throw new BaseException(ErrorCode.INVALID_CREDENTIALS);
         }
         String userEmail = authentication.getName();
-        Member member = memberRepository.findByEmail(userEmail).orElseThrow(() -> new NoSuchElementException("ERROR : 존재하지 않는 사용자입니다."));
+        Member member = memberRepository.findByEmail(userEmail).orElseThrow(() -> new BaseException(ErrorCode.MEMBER_NOT_FOUND));
         return member.getNumber();
     }
 
@@ -63,28 +64,38 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public void addCartItem(Long productId, String size, int quantity) {
+    public void addCartItem(Long productId, String color, String size, int quantity) {
         Long memberId = getAuthenticatedMemberId();
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.PRODUCT_NOT_FOUND, productId));
 
         Cart cart = cartRepository.findByMemberNumber(memberId)
                 .orElseGet(() -> createCart(memberId));
 
-        ProductSize productSize = productSizeRepository.findByProduct_NumberAndSize(productId, size)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사이즈의 상품을 찾을 수 없습니다."));
+        ProductOption productOption = productOptionRepository
+                .findByProduct_NumberAndColorAndSize(productId, color, size)
+                .orElseThrow(() -> new BaseException(ErrorCode.CART_OPTION_NOT_FOUND,
+                                productId,
+                                color,
+                                size));
 
-        // 동일한 상품과 사이즈가 이미 있는지 확인
+        // 재고 확인
+        if (productOption.getStock() < quantity) {
+            throw new BaseException(ErrorCode.CART_INSUFFICIENT_STOCK, productOption.getStock(), quantity);
+        }
+
+        // 동일한 상품과 옵션이 이미 있는지 확인
         CartItem existingCartItem = cart.getCartItems().stream()
-                .filter(item -> item.getProduct().equals(product) && item.getProductSize().equals(productSize))
+                .filter(item -> item.getProduct().equals(product)
+                        && item.getProductOption().equals(productOption))
                 .findFirst()
                 .orElse(null);
 
-        if (existingCartItem != null) { // 기존 상품의 수량만 증가
+        if (existingCartItem != null) {
             existingCartItem.setQuantity(existingCartItem.getQuantity() + quantity);
-        } else { // 새로운 상품 추가
+        } else {
             CartItem newCartItem = CartItem.builder()
-                    .productSize(productSize)
+                    .productOption(productOption)
                     .product(product)
                     .quantity(quantity)
                     .build();
@@ -104,15 +115,16 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public void removeCartItem(Long cartItemId) {
         Long memberId = getAuthenticatedMemberId();
         Cart cart = cartRepository.findByMemberNumber(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.CART_NOT_FOUND, memberId));
 
         CartItem cartItem = cart.getCartItems().stream()
                 .filter(item -> item.getId().equals(cartItemId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("장바구니 항목을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.CART_ITEM_NOT_FOUND, cartItemId));
 
         cart.removeCartItem(cartItem);
         cartRepository.save(cart);
@@ -123,19 +135,19 @@ public class CartServiceImpl implements CartService {
     public void updateCartItemQuantity(Long cartItemId, int quantity) {
         Long memberId = getAuthenticatedMemberId();
         Cart cart = cartRepository.findByMemberNumber(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.CART_NOT_FOUND, memberId));
 
         CartItem cartItem = cart.getCartItems().stream()
                 .filter(item -> item.getId().equals(cartItemId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("장바구니 항목을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.CART_ITEM_NOT_FOUND, cartItemId));
 
         // 현재 수량에 변경값을 더합니다
         int newQuantity = cartItem.getQuantity() + quantity;
 
         // 새로운 수량이 0보다 작으면 에러
         if (newQuantity <= 0) {
-            throw new IllegalArgumentException("상품 수량은 1개 이상이어야 합니다.");
+            throw new BaseException(ErrorCode.CART_INSUFFICIENT_QUANTITY, newQuantity);
         }
 
         cartItem.setQuantity(newQuantity);
@@ -146,23 +158,25 @@ public class CartServiceImpl implements CartService {
     public void clearCart() {
         Long memberId = getAuthenticatedMemberId();
         Cart cart = cartRepository.findByMemberNumber(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.CART_NOT_FOUND, memberId));
         cart.getCartItems().clear();
     }
 
     @Override
     public CartDto convertToCartDto(Cart cart) {
-        // CartItemDTO
         List<CartItemDto> cartItemDtos = cart.getCartItems().stream().map(cartItem ->
                 CartItemDto.builder()
                         .id(cartItem.getId())
+                        .productId(cartItem.getProduct().getNumber())
                         .productName(cartItem.getProduct().getName())
-                        .productSize(cartItem.getProductSize().getSize())
+                        .productSize(cartItem.getProductOption().getSize())
+                        .productColor(cartItem.getProductOption().getColor())
                         .price(cartItem.getProduct().getPrice())
                         .quantity(cartItem.getQuantity())
                         .imageUrl(cartItem.getProduct().getImageUrl())
                         .build()
         ).collect(Collectors.toList());
+
         return CartDto.builder()
                 .id(cart.getId())
                 .cartItems(cartItemDtos)
@@ -171,4 +185,86 @@ public class CartServiceImpl implements CartService {
                         .sum())
                 .build();
     }
+
+    // ------------------------------- 24-11-18 추가 -------------------------------
+
+    @Override
+    @Transactional
+    public void removeOrderedItems(List<Long> cartItemIds) {
+        Long memberId = getAuthenticatedMemberId();
+        Cart cart = cartRepository.findByMemberNumber(memberId)
+                .orElseThrow(() -> new BaseException(ErrorCode.CART_NOT_FOUND, memberId));
+
+        List<CartItem> itemsToRemove = cart.getCartItems().stream()
+                .filter(item -> cartItemIds.contains(item.getId()))
+                .collect(Collectors.toList());
+
+        itemsToRemove.forEach(cart::removeCartItem);
+        cartRepository.save(cart);
+    }
+
+    @Override
+    public CartItem getCartItem(Long cartItemId) {
+        Long memberId = getAuthenticatedMemberId();
+        Cart cart = cartRepository.findByMemberNumber(memberId)
+                .orElseThrow(() -> new BaseException(ErrorCode.CART_NOT_FOUND, memberId));
+
+        return cart.getCartItems().stream()
+                .filter(item -> item.getId().equals(cartItemId))
+                .findFirst()
+                .orElseThrow(() -> new BaseException(ErrorCode.CART_ITEM_NOT_FOUND, cartItemId));
+    }
+
+    @Override
+    public CartDto getCartItems(List<Long> cartItemIds) {
+        CartDto fullCart = getCartByAuthenticateMember();
+
+        List<CartItemDto> selectedItems = fullCart.getCartItems().stream()
+                .filter(item -> cartItemIds.contains(item.getId()))
+                .collect(Collectors.toList());
+
+        return CartDto.builder()
+                .id(fullCart.getId())
+                .cartItems(selectedItems)
+                .totalPrice(selectedItems.stream()
+                        .mapToInt(item -> item.getPrice() * item.getQuantity())
+                        .sum())
+                .build();
+    }
+
+    // ------------------------------- 24-11-28 추가 -------------------------------
+    @Override
+    @Transactional
+    public void updateCartItemOption(Long cartItemId, String newColor, String newSize) {
+        Long memberId = getAuthenticatedMemberId();
+        Cart cart = cartRepository.findByMemberNumber(memberId)
+                .orElseThrow(() -> new BaseException(ErrorCode.CART_NOT_FOUND, memberId));
+
+        CartItem cartItem = cart.getCartItems().stream()
+                .filter(item -> item.getId().equals(cartItemId))
+                .findFirst()
+                .orElseThrow(() -> new BaseException(ErrorCode.CART_ITEM_NOT_FOUND, cartItemId));
+
+        ProductOption newOption = productOptionRepository
+                .findByProduct_NumberAndColorAndSize(
+                        cartItem.getProduct().getNumber(),
+                        newColor,
+                        newSize
+                )
+                .orElseThrow(() -> new BaseException(ErrorCode.CART_OPTION_NOT_FOUND,
+                        cartItem.getProduct().getNumber(),
+                        newColor,
+                        newSize));
+
+        // 재고 확인
+        if (newOption.getStock() < cartItem.getQuantity()) {
+            throw new BaseException(ErrorCode.CART_INSUFFICIENT_STOCK,
+                            newOption.getStock(),
+                            cartItem.getQuantity());
+        }
+
+        cartItem.setProductOption(newOption);
+        cartRepository.save(cart);
+    }
+
 }

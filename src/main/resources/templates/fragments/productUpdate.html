@@ -14,7 +14,7 @@
                     <h5 class="mb-0 justify-content-center">상품 수정</h5>
                 </div>
                 <div class="card-body">
-                    <form action="/product/add" method="post" id="productForm" enctype="multipart/form-data">
+                    <form action="/product/update" method="post" id="productForm" enctype="multipart/form-data">
                         <input type="hidden" id="number" name="number" th:value="${product.number}"/>
                         <!-- 2 column grid layout with text inputs for the first and last names -->
                         <div class="row mb-4 mt-4">
@@ -34,13 +34,11 @@
 
                         <!-- Text input -->
                         <div class="form-outline mb-4">
-                            <input type="text" id="color" name="color" class="form-control" th:value="${product.color}" />
-                            <label class="form-label" for="color">상품 색상</label>
-                        </div>
-
-                        <!-- Text input -->
-                        <div class="form-outline mb-4">
-                            <input type="number" id="price" name="price" class="form-control" th:value="${product.price}"/>
+                            <input type="number"
+                                   id="price"
+                                   name="price"
+                                   class="form-control"
+                                   th:value="${#strings.replace(#strings.replace(product.price, ',', ''), '원', '')}"/>
                             <label class="form-label" for="price">가격(원화)</label>
                         </div>
 
@@ -52,37 +50,78 @@
                                       name="intro"
                                       maxlength="30"
                                       rows="3"
-                                      th:value="${product.intro}"></textarea>
+                                      th:text="${product.intro}"></textarea>
                             <label class="form-label" for="intro">상품 한줄 설명</label>
                         </div>
 
                         <!-- Message input -->
                         <div class="form-outline mb-4">
-                            <textarea class="form-control" id="description" name="description"
+                            <textarea class="form-control"
+                                      id="description"
+                                      name="description"
                                       rows="4"
-                                      th:value="${product.description}"></textarea>
+                                      th:text="${#strings.replace(product.description, '<br>', '')}">
+                            </textarea>
                             <label class="form-label" for="description">상품 상세설명</label>
                         </div>
 
-                        <!-- Category input -->
+                        <!-- 메인 카테고리 선택 -->
                         <div class="form-outline mb-4">
-                            <select id="category" name="category" class="form-select" >
+                            <select id="category" name="category" class="form-select">
                                 <option value="">카테고리를 선택하세요</option>
-                                <option value="T-shirt" th:selected="${product.category == 'T-shirt'}">티</option>
-                                <option value="Pants" th:selected="${product.category == 'Pants'}">바지</option>
-                                <option value="Shoes" th:selected="${product.category == 'Shoes'}">신발</option>
-                                <option value="Knit" th:selected="${product.category == 'Knit'}">니트</option>
-                                <option value="Skirt" th:selected="${product.category == 'Skirt'}">치마</option>
-                                <option value="Boots" th:selected="${product.category == 'Boots'}">부츠</option>
-                                <option value="else" th:selected="${product.category == 'else'}">기타</option>
+                                <th:block th:each="cat : ${T(com.example.crud.enums.Category).values()}">
+                                    <!-- product.category가 enum이면 cat.name()과 비교 -->
+                                    <option th:value="${cat.name()}"
+                                            th:text="${cat.groupName}"
+                                            th:selected="${cat.name() == product.category}"></option>
+                                </th:block>
                             </select>
-                            <label class="form-label" for="category">카테고리</label>
+                            <label class="form-label" for="category">메인 카테고리</label>
+                        </div>
+
+                        <!-- 세부 카테고리 선택 -->
+                        <div class="form-outline mb-4">
+                            <select id="subCategory" name="subCategory" class="form-select"
+                                    th:attr="data-selected=${product.subCategory}">
+                                <option value="">세부 카테고리를 선택하세요</option>
+                            </select>
+                            <label class="form-label" for="subCategory">세부 카테고리</label>
                         </div>
 
                         <!-- Image upload -->
                         <div class="form-outline mb-4">
+                            <div class="mb-2" th:if="${product.imageUrl != null}">
+                                <img th:src="${product.imageUrl}" alt="현재 상품 이미지" style="max-width: 200px;" class="mb-2"/>
+                                <p class="text-muted small">현재 이미지</p>
+                            </div>
+                            <input type="hidden" name="currentImageUrl" th:value="${product.imageUrl}"/>
                             <input type="file" id="imageUrl" class="form-control" accept="image/*" name="imageUrl" />
-                            <label class="form-label" for="imageUrl">상품 이미지</label>
+                            <label class="form-label" for="imageUrl">상품 이미지 (변경하려면 새  이미지를 선택하세요)</label>
+                        </div>
+
+                        <!-- 옵션 테이블 부분 수정 -->
+                        <div class="form-outline mb-4">
+                            <label class="form-label">상품 옵션 및 재고</label>
+                            <table id="optionTable" class="table">
+                                <thead>
+                                <tr>
+                                    <th>색상</th>
+                                    <th>사이즈</th>
+                                    <th>재고</th>
+                                    <th>삭제</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <!-- 기존 옵션 데이터를 Thymeleaf로 반복해서 표시 -->
+                                <tr th:each="option : ${product.productOptions}">
+                                    <td><input type="text" name="colors" class="form-control" th:value="${option.color}"></td>
+                                    <td><input type="text" name="sizes" class="form-control" th:value="${option.size}"></td>
+                                    <td><input type="number" name="stocks" class="form-control" th:value="${option.stock}" min="0" max="99999"></td>
+                                    <td><button type="button" onclick="removeOptionRow(this)" class="btn btn-danger">삭제</button></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <button type="button" onclick="addOptionRow()" class="btn btn-primary">옵션 추가</button>
                         </div>
 
                         <div class="form-outline text-center mb-4">
@@ -99,33 +138,179 @@
         </div>
     </div>
 </div>
-<script>
-    document.getElementById('productForm').addEventListener('submit', function (event) {
-        event.preventDefault();
 
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var categoryMapping = {
+        OUTER: /*[[${T(com.example.crud.enums.Category).OUTER.getSubCategories()}]]*/,
+        TOP: /*[[${T(com.example.crud.enums.Category).TOP.getSubCategories()}]]*/,
+        BOTTOM: /*[[${T(com.example.crud.enums.Category).BOTTOM.getSubCategories()}]]*/,
+        DRESS: /*[[${T(com.example.crud.enums.Category).DRESS.getSubCategories()}]]*/,
+        BAG: /*[[${T(com.example.crud.enums.Category).BAG.getSubCategories()}]]*/,
+        SHOES: /*[[${T(com.example.crud.enums.Category).SHOES.getSubCategories()}]]*/,
+        ACCESSORY: /*[[${T(com.example.crud.enums.Category).ACCESSORY.getSubCategories()}]]*/
+    };
+    /*]]>*/
+</script>
+
+<script>
+    // 1. 초기화 함수들
+    window.onload = function() {
+        initializePriceInput();
+    };
+
+    // 세부 카테고리 옵션을 채우는 함수
+    function populateSubCategories(selectedCategory, preselectedSubCategory) {
+        var subCategorySelect = document.getElementById('subCategory');
+        // 기존 옵션 초기화
+        subCategorySelect.innerHTML = '<option value="">세부 카테고리를 선택하세요</option>';
+        if (selectedCategory && categoryMapping[selectedCategory]) {
+            categoryMapping[selectedCategory].forEach(function(subCat) {
+                var option = document.createElement('option');
+                option.value = subCat;
+                option.text = subCat;
+                if (preselectedSubCategory && subCat === preselectedSubCategory) {
+                    option.selected = true;
+                }
+                subCategorySelect.appendChild(option);
+            });
+        }
+    }
+
+    // 메인 카테고리 변경 시 이벤트 핸들러
+    document.getElementById('category').addEventListener('change', function() {
+        populateSubCategories(this.value, null);
+    });
+
+    // 페이지 로드 시 초기화: 기존 메인, 세부 카테고리 값을 반영
+    window.onload = function() {
+        // 가격 필드 초기화 (기존 코드)
+        initializePriceInput();
+        var catValue = document.getElementById('category').value;
+        var subCategorySelect = document.getElementById('subCategory');
+        var preselectedSub = subCategorySelect.getAttribute('data-selected');
+        populateSubCategories(catValue, preselectedSub);
+    };
+
+    function initializePriceInput() {
+        const priceElement = document.getElementById('price');
+        if(priceElement) {
+            const priceText = priceElement.value;
+            // "1,000원" 형식에서 숫자만 추출하고 정수로 변환
+            const numericPrice = parseInt(priceText.replace(/[^0-9]/g, ''), 10);
+            if (!isNaN(numericPrice)) {
+                priceElement.value = numericPrice;
+            }
+        }
+    }
+
+    // 2. 옵션 관련 함수들
+    function addOptionRow() {
+        const tableBody = document.querySelector('#optionTable tbody');
+        const newRow = document.createElement('tr');
+
+        newRow.innerHTML = `
+        <td><input type="text" name="colors" class="form-control" placeholder="예: Black, White"></td>
+        <td><input type="text" name="sizes" class="form-control" placeholder="예: S, M, L"></td>
+        <td><input type="number"
+                   name="stocks"
+                   class="form-control"
+                   placeholder="재고 수량"
+                   min="0"
+                   max="99999"></td>
+        <td><button type="button" onclick="removeOptionRow(this)" class="btn btn-danger">삭제</button></td>
+    `;
+
+        tableBody.appendChild(newRow);
+    }
+
+    function removeOptionRow(button) {
+        const row = button.parentElement.parentElement;
+        row.remove();
+    }
+
+    // 3. 폼 검증 함수
+    function validateForm(formData) {
         const fields = {
             name: '상품 이름',
             brand: '상품 브랜드',
-            color: '상품 색상',
             price: '가격',
             description: '상품 설명',
             category: '카테고리',
-            imageUrl: '상품 이미지',
             intro: '상품 1줄 설명',
-        }
+        };
 
+        // 기본 필드 검증
         for (let id in fields) {
             const input = document.getElementById(id);
             if (input.value.trim() === '') {
                 alert(fields[id] + '을(를) 입력하세요.');
                 input.focus();
-                return;
+                return false;
             }
         }
 
-        const form = document.getElementById('productForm');
+        // 옵션 검증
+        const colors = document.getElementsByName('colors');
+        const sizes = document.getElementsByName('sizes');
+        const stocks = document.getElementsByName('stocks');
+
+        if (colors.length === 0) {
+            alert('최소 하나의 옵션을 입력해야 합니다.');
+            return false;
+        }
+
+        for (let i = 0; i < colors.length; i++) {
+            if (colors[i].value.trim() === '' ||
+                sizes[i].value.trim() === '' ||
+                stocks[i].value.trim() === '') {
+                alert('색상, 사이즈, 재고를 모두 입력해야 합니다.');
+                return false;
+            }
+        }
+
+        return {colors, sizes, stocks};
+    }
+
+    // 4. 폼 데이터 처리 함수
+    function processFormData(form) {
         const formData = new FormData(form);
 
+        // 이미지 처리
+        const imageFile = document.getElementById('imageUrl').files[0];
+        if (!imageFile) {
+            const currentImageUrl = document.querySelector('input[name="currentImageUrl"]').value;
+            if (currentImageUrl) {
+                formData.delete('imageUrl');
+                formData.append('currentImageUrl', currentImageUrl);
+            }
+        }
+
+        // 옵션 데이터 처리
+        const validationResult = validateForm();
+        if (!validationResult) return null;
+
+        const {colors, sizes, stocks} = validationResult;
+
+        formData.delete('colors');
+        formData.delete('sizes');
+        formData.delete('stocks');
+
+        for (let i = 0; i < colors.length; i++) {
+            formData.append(`productOptions[${i}].color`, colors[i].value);
+            formData.append(`productOptions[${i}].size`, sizes[i].value);
+            formData.append(`productOptions[${i}].stock`, stocks[i].value);
+        }
+
+        return formData;
+    }
+
+    // 5. 폼 제출 이벤트 핸들러
+    document.getElementById('productForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const formData = processFormData(this);
+        if (!formData) return;
 
         fetch('/product/update', {
             method: 'POST',
@@ -133,7 +318,9 @@
         })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('상품 수정 실패 : ' + response.statusText);
+                    return response.text().then(text => {
+                        throw new Error(text || '상품 수정 실패');
+                    });
                 }
                 return response.json();
             })
@@ -142,11 +329,17 @@
                 window.location.href = '/mypage';
             })
             .catch(error => {
-                console.error('Error : ', error);
+                console.error('Error details:', error);
+                const errorMessage = error.message || '상품 수정 중 오류가 발생했습니다.';
+                console.error('Error message:', errorMessage);
+                alert(errorMessage);
             });
     });
 
 </script>
 
 </body>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+        crossorigin="anonymous"></script>
 </html>

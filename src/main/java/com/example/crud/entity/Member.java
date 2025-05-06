@@ -1,16 +1,13 @@
 package com.example.crud.entity;
 
+import com.example.crud.data.member.dto.MemberDto;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Entity
 @Getter
@@ -60,4 +57,14 @@ public class Member {
     @Builder.Default
     private List<String> roles = new ArrayList<>();
 
+    public void update(MemberDto memberDto, PasswordEncoder passwordEncoder) {
+        this.updatedAt = LocalDateTime.now();
+        this.name = memberDto.getName();
+        this.email = memberDto.getEmail();
+        this.nickname = memberDto.getNickname();
+        this.password = passwordEncoder.encode(memberDto.getPassword());
+        this.address = memberDto.getAddress();
+        this.introduction = memberDto.getIntroduction();
+        this.phoneNumber = memberDto.getPhoneNumber();
+    }
 }

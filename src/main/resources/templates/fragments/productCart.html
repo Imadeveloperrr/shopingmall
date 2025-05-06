@@ -3,6 +3,7 @@
 <head>
     <div th:replace="~{/fragments/header.html :: fragment-header}"></div>
     <link href="/css/productCart.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="../../static/css/productCart.css">
 </head>
 
 
@@ -147,42 +148,72 @@
 
                                             <div>
                                                 <img src="" style="height:20px; margin-right:5px;" onclick="$(this).closest('div.name').find('.time-wrap').show();">
-                                                <span style="font-size:13px; color:var(--season_color_11); font-weight:600">특가가</span>
-                                                <span class="attdaytime" style="font-size:13px; color:var(--season_color_11); font-weight:600">21시간 01분 1초</span><span style="font-size:13px; color:var(--season_color_11); font-weight:600">남았어요</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="opt">
-                                        <!-- DarkBeige / 미니 L -->
-                                        Ivory(model) / Free
-                                        <div class="box_btn w80 h30 white5" style="display:block; margin-top:10px;  ">
-                                            <a href="javascript:" style="border-radius: 3px;" onclick="optViewToggle(this)">옵션변경</a>
-                                        </div>
-                                        <div class="optchgBox" style="position: absolute; top: 50%; left: 0px; width: 100%; height: 100%; padding-top: 42px; transform: translateY(-50%); background-color: rgb(255, 255, 255); z-index: 1; display: none;">
-                                            <label style="display: inline-block;width: 60px; text-align: center;">색상</label>
-                                            <select name="change_op1" onchange="GoodsProc.set_opt_cart();" data-goods_idx="161051" style="width: 100px;">
-                                                <option value="">- 선택 -</option>
-                                                <option data-opname="Ivory(model)" value="651338">Ivory(model)</option>
-                                                <option data-opname="Melange(model)" value="651341">Melange(model)</option>
-                                                <option data-opname="Black(model)" value="651344">Black(model)</option>
-                                                <option data-opname="Camel(model)" value="651347">Camel(model)</option>
-                                                <option data-opname="Wine(model)" value="651350">Wine(model)</option>
-                                            </select>
 
-                                            <label style="display: inline-block;width: 60px; text-align: center;">사이즈</label>
-                                            <select name="change_op2" style="width:100px;">
-                                                <option value="">- 선택 -</option>
-                                            </select>
-                                            <span class="box_btn w65 h40 fs13" style="width: 65px; margin-top: 2px;"><a href="javascript:" onclick="OrderProc.cartChange()" style="width: 100%; height: 100%; display: inline-block;">변경</a></span>
-                                            <span class="box_btn w65 h40 fs13 gray6" style="width: 65px; margin-top: 2px;"><a href="javascript:" style="width: 100%; height: 100%; display: inline-block;" onclick="optViewToggle(this)">취소</a></span>
+                                    <div class="opt">
+                                        <div class="current-option">
+                                            <span th:text="${item.productColor}">Color</span> / <span th:text="${item.productSize}">Size</span>
+                                        </div>
+
+                                        <div class="box_btn w80 h30 white5" style="display:block; margin-top:10px;">
+                                            <button type="button"
+                                                    th:data-product-id="${item.productId}"
+                                                    th:data-item-id="${item.id}"
+                                                    th:data-color="${item.productColor}"
+                                                    th:data-size="${item.productSize}"
+                                                    onclick="openOptionModal(this)">
+                                                옵션변경
+                                            </button>
+                                        </div>
+
+                                        <!-- 옵션 변경 모달 -->
+                                        <div th:id="'optionModal-' + ${item.id}" class="option-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:20px; border-radius:5px; box-shadow:0 0 10px rgba(0,0,0,0.1); z-index:1000;">
+                                            <h4>옵션 변경</h4>
+                                            <div class="option-selects" style="margin:15px 0;">
+                                                <div class="color-select" style="margin-bottom:10px;">
+                                                    <label>색상:</label>
+                                                    <select class="form-select color-selector">
+                                                        <option value="">색상 선택</option>
+                                                    </select>
+                                                </div>
+                                                <div class="size-select">
+                                                    <label>사이즈:</label>
+                                                    <select class="form-select size-selector">
+                                                        <option value="">사이즈 선택</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="stock-info" style="margin:10px 0; font-size:0.9em; color:#666;">
+                                                재고: <span class="current-stock">0</span>개
+                                            </div>
+                                            <div class="modal-buttons" style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px;">
+                                                <button type="button" class="btn btn-primary confirm-option" style="padding:5px 15px;">변경</button>
+                                                <button type="button" class="btn btn-secondary close-modal" style="padding:5px 15px;" onclick="closeOptionModal(this)">취소</button>
+                                            </div>
                                         </div>
                                     </div>
 
+                                    <!-- 수량 변경 부분 -->
                                     <div class="opt_chg">
                                         <div class="box_qty">
-                                            <a href="javascript:void(0);" class="ea_down" th:onclick="'updateQuantity(' + ${item.id} + ', -1)'"></a>
-                                            <input type="text" th:value="${item.quantity}" class="form_input" readonly>
-                                            <a href="javascript:void(0);" class="ea_up" th:onclick="'updateQuantity(' + ${item.id} + ', 1)'"></a>
+                                            <a href="javascript:void(0);"
+                                               class="ea_down"
+                                               th:data-item-id="${item.id}"
+                                               onclick="updateQuantity(this.getAttribute('data-item-id'), -1)"
+                                               style="display: inline-block; cursor: pointer; text-decoration: none;">
+                                            </a>
+                                            <input type="text"
+                                                   th:value="${item.quantity}"
+                                                   class="form_input"
+                                                   readonly>
+                                            <a href="javascript:void(0);"
+                                               class="ea_up"
+                                               th:data-item-id="${item.id}"
+                                               onclick="updateQuantity(this.getAttribute('data-item-id'), 1)"
+                                               style="display: inline-block; cursor: pointer; text-decoration: none;">
+                                            </a>
                                         </div>
                                     </div>
 
@@ -217,29 +248,9 @@
                                         <span>80,000원이상</span> 구매시 <span>무료배송</span> 입니다.
                                     </div>
                                 </div>
-                                <div style="color:#333"><strong id="use_account">0</strong>원</div>
+                                <div style="color:#333"><span id="selectedTotalPrice2"><strong id="use_account">0</strong></span>원</div>
                             </div>
-                            <table class="tbl_order2" style="display:none;">
-                                <caption>결제금액</caption>
-                                <colgroup>
-                                    <col style="width:50%;">
-                                    <col>
-                                </colgroup>
-                                <tbody>
-                                <tr>
-                                    <th scope="row">상품 금액</th>
-                                    <td><span id="total_price">0</span>원</td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">배송료</th>
-                                    <td>+<span id="del_account">0</span>원</td>
-                                </tr>
-                                <tr class="total">
-                                    <th scope="row">총 결제 금액</th>
-                                    <td><strong id="use_account">0</strong>원</td>
-                                </tr>
-                                </tbody>
-                            </table>
+
                             <div class="btn-custom tac">
                                     <span style="background-color:var(--season_color_01); width:62px; padding:0; border:1px solid #cfcfcf; padding:7px 0;position:relative;text-align: center;display: inline-block;top:13px; height:62px" onclick="alert('선물하기는 모바일에서 이용가능합니다');" class="giftspanBtn">
                                     <a href="javascript:" style="background-color:transparent;">
@@ -254,11 +265,6 @@
                             </div>
                         </div>
 
-                        <div style="margin-bottom: 10px; display:none;">
-                            <a href="javascript:" onclick="GoodsProc.kakao_buy()">
-                                <img src="https://atimg.sonyunara.com/attrangs/assets/web03/asset/img/member/kakao_buy.png" style="width: 100%;"><br>
-                            </a>
-                        </div>
                     </div>
                     <div class="clear"></div>
                     <br>
@@ -269,6 +275,123 @@
     </div>
 
     <script th:inline="javascript">
+        // 상품 옵션 정보를 가져오는 함수
+        async function getProductOptions(productId) {
+            try {
+                const response = await fetch(`/cart/product/options/${productId}`);
+                if (!response.ok) {
+                    throw new Error('옵션 정보를 가져오는데 실패했습니다.');
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('옵션 정보 로딩 실패:', error);
+                return [];
+            }
+        }
+
+        // 옵션 변경 모달 열기
+        async function openOptionModal(button) {  // 파라미터를 button으로 받아야 함
+            const modal = document.getElementById(`optionModal-${button.getAttribute('data-item-id')}`);  // 모달 요소 찾기 추가
+            const colorSelect = modal.querySelector('.color-selector');
+            const sizeSelect = modal.querySelector('.size-selector');
+            const stockInfo = modal.querySelector('.current-stock');
+            const confirmBtn = modal.querySelector('.confirm-option');
+
+            const productId = button.getAttribute('data-product-id');
+            const itemId = button.getAttribute('data-item-id');
+            const currentColor = button.getAttribute('data-color');
+            const currentSize = button.getAttribute('data-size');
+
+            // 기존 이벤트 리스너 제거 및 새로운 리스너 추가
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+            newConfirmBtn.addEventListener('click', () => {
+                updateCartItemOption(itemId, colorSelect.value, sizeSelect.value);
+            });
+
+            // 상품 옵션 데이터 가져오기
+            const options = await getProductOptions(productId);
+
+            // 색상 옵션 세팅
+            const colors = [...new Set(options.map(opt => opt.color))];
+            colorSelect.innerHTML = '<option value="">색상 선택</option>' +
+                colors.map(color =>
+                    `<option value="${color}" ${color === currentColor ? 'selected' : ''}>${color}</option>`
+                ).join('');
+
+            // 초기 사이즈 옵션 설정
+            if (currentColor) {
+                const availableSizes = options.filter(opt => opt.color === currentColor);
+                sizeSelect.innerHTML = '<option value="">사이즈 선택</option>' +
+                    availableSizes.map(opt =>
+                        `<option value="${opt.size}" ${opt.size === currentSize ? 'selected' : ''}>${opt.size}</option>`
+                    ).join('');
+
+                const currentOption = options.find(opt => opt.color === currentColor && opt.size === currentSize);
+                if (currentOption) {
+                    stockInfo.textContent = currentOption.stock;
+                }
+            }
+
+            // 색상 선택 시 이벤트
+            colorSelect.addEventListener('change', () => {
+                const selectedColor = colorSelect.value;
+                const availableSizes = options.filter(opt => opt.color === selectedColor);
+
+                sizeSelect.innerHTML = '<option value="">사이즈 선택</option>' +
+                    availableSizes.map(opt => `<option value="${opt.size}">${opt.size}</option>`).join('');
+
+                stockInfo.textContent = '0';
+            });
+
+            // 사이즈 선택 시 이벤트
+            sizeSelect.addEventListener('change', () => {
+                const selectedColor = colorSelect.value;
+                const selectedSize = sizeSelect.value;
+                const selectedOption = options.find(opt =>
+                    opt.color === selectedColor && opt.size === selectedSize
+                );
+
+                stockInfo.textContent = selectedOption ? selectedOption.stock : '0';
+            });
+
+            modal.style.display = 'block';
+        }
+
+        // 옵션 변경 모달 닫기
+        function closeOptionModal(button) {
+            const modal = button.closest('.option-modal');
+            modal.style.display = 'none';
+        }
+
+        // 장바구니 아이템 옵션 업데이트
+        async function updateCartItemOption(cartItemId, color, size) {
+            if (!color || !size) {
+                alert('색상과 사이즈를 모두 선택해주세요.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/cart/update-option/${cartItemId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ color, size })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || '옵션 변경에 실패했습니다.');
+                }
+
+                location.reload();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
         function toggleAllItems() {
             const checked = document.getElementById('selectAll').checked;
             document.querySelectorAll('.itemCheckbox').forEach(checkbox => {
@@ -300,15 +423,15 @@
                 fetch(`/cart/remove/${itemId}`, {
                     method: 'DELETE'
                 })
-                    .then(response => {
-                        if (response.ok) {
-                            document.getElementById(`cartItem-${itemId}`).remove();
-                            updateTotalPrice();
-                        } else {
-                            throw new Error('삭제 실패');
-                        }
-                    })
-                    .catch(error => alert(error.message));
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById(`cartItem-${itemId}`).remove();
+                        updateTotalPrice();
+                    } else {
+                        throw new Error('삭제 실패');
+                    }
+                })
+                .catch(error => alert(error.message));
             }
         }
 
@@ -341,6 +464,7 @@
 
             document.getElementById('selectedItemCount').textContent = checkedItems.length;
             document.getElementById('selectedTotalPrice').textContent = totalPrice.toLocaleString();
+            document.getElementById('selectedTotalPrice2').textContent = totalPrice.toLocaleString(); // 나중에 배송비 값 추가해야함.
             document.getElementById('selectedCount').textContent = checkedItems.length;
         }
 
@@ -364,4 +488,7 @@
     </script>
 
 </body>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+        crossorigin="anonymous"></script>
 </html>

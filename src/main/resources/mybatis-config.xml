@@ -6,4 +6,8 @@
     <settings>
         <setting name="mapUnderscoreToCamelCase" value="true"/>
     </settings>
+    <typeHandlers>
+        <package name="com.example.crud.data.ai.service.impl"/>
+    </typeHandlers>
 </configuration>
+

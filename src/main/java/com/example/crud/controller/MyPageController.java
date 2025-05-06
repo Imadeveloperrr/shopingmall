@@ -46,7 +46,7 @@ public class MyPageController {
     public ResponseEntity<?> postProfileEdit(@RequestBody MemberDto memberDto) {
         try {
             log.info("프로필 업데이트 : {}", memberDto);
-            MemberResponseDto memberResponseDto = memberService.updateMemBer(memberDto);
+            MemberResponseDto memberResponseDto = memberService.updateMember(memberDto);
             return ResponseEntity.ok().body(memberResponseDto);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
