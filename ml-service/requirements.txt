@@ -1,0 +1,8 @@
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+sentence-transformers==2.7.0
+aiobreaker==1.0.0          # timeout_duration 사용
+prometheus-fastapi-instrumentator==7.0.0
+aiocache[redis]==0.12.2
+pydantic-settings==2.2.1
+redis==5.0.4

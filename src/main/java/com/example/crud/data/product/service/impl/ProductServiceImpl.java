@@ -1,20 +1,21 @@
 package com.example.crud.data.product.service.impl;
 
+import com.example.crud.common.exception.BaseException;
+import com.example.crud.common.exception.ErrorCode;
 import com.example.crud.data.product.dto.ProductDto;
+import com.example.crud.data.product.dto.ProductOptionDto;
 import com.example.crud.data.product.dto.ProductResponseDto;
-import com.example.crud.data.product.dto.ProductSizeDto;
 import com.example.crud.data.product.service.ProductService;
 import com.example.crud.entity.Member;
 import com.example.crud.entity.Product;
-import com.example.crud.entity.ProductSize;
-import com.example.crud.mapper.ProductMapper;
+import com.example.crud.entity.ProductOption;
+import com.example.crud.common.mapper.ProductMapper;
 import com.example.crud.repository.MemberRepository;
+import com.example.crud.repository.ProductOptionRepository;
 import com.example.crud.repository.ProductRepository;
-import com.fasterxml.jackson.databind.util.BeanUtil;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageOptions;
 import com.google.firebase.cloud.StorageClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,20 +42,20 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final MemberRepository memberRepository;
     private final ProductMapper productMapper;
+    private final ProductOptionRepository productOptionRepository;
 
     @Override
     @Transactional(readOnly = true)
     public List<ProductResponseDto> getProducts() {
         try {
-            //List<Product> products = productRepository.findAll();
             List<Product> products = productMapper.findAllProducts();
 
             return products.stream()
                     .map(this::convertToProductResponseDTO)
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            log.error("Error occurred while fetching products: {}", e.getMessage(), e);
-            throw e;
+            log.error("Failed to fetch products: {}", e.getMessage());
+            throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -81,102 +82,194 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public ProductResponseDto getAddProduct(ProductDto productDto, MultipartFile image) throws IOException {
-        String imageUrl = "";
+    public ProductResponseDto getAddProduct(ProductDto productDto, MultipartFile image) {
+        String imageUrl = null;  // null로 초기화
         try {
             Member member = getAuthenticatedUser();
-            imageUrl = uploadImageToFirebase(image);
 
-            // DTO를 엔티티로 변환
-            Product product = converToProductEntity(productDto, member);
+            // 이미지가 있을 때만 업로드
+            if (image != null && !image.isEmpty()) {
+                try {
+                    imageUrl = uploadImageToFirebase(image);
+                } catch (IOException e) {
+                    log.error("Failed to upload image: {}", e.getMessage());
+                    throw new BaseException(ErrorCode.IMAGE_UPLOAD_FAILED);
+                }
+            }
+
+            Product product = convertToProductEntity(productDto, member);
             product.setImageUrl(imageUrl);
 
-            // ProductSize 엔티티 생성 및 설정
-            List<ProductSize> productSizeList = new ArrayList<>();
-            if (productDto.getProductSizes() != null) {
-                for (ProductSizeDto sizeDto : productDto.getProductSizes()) {
-                    ProductSize productSize = ProductSize.builder()
-                            .size(sizeDto.getSize())
-                            .stock(sizeDto.getStock())
+            // ProductOption 엔티티 생성 및 설정
+            if (productDto.getProductOptions() != null && !productDto.getProductOptions().isEmpty()) {
+                List<ProductOption> productOptionList = new ArrayList<>();
+                for (ProductOptionDto optionDto : productDto.getProductOptions()) {
+                    ProductOption productOption = ProductOption.builder()
+                            .color(optionDto.getColor())
+                            .size(optionDto.getSize())
+                            .stock(optionDto.getStock())
                             .product(product)
                             .build();
-                    productSizeList.add(productSize);
+                    productOptionList.add(productOption);
                 }
-                product.setProductSizes(productSizeList);
+                product.setProductOptions(productOptionList);
             }
 
-            Product savedProduct = productRepository.save(product);
-            return convertToProductResponseDTO(savedProduct);
-        } catch (Exception e) {
-            if (image != null && !image.isEmpty()) {
-                deletedImageFromFirebase(imageUrl);
+            try {
+                Product savedProduct = productRepository.save(product);
+                return convertToProductResponseDTO(savedProduct);
+            } catch (Exception e) {
+                // 상품 저장 실패 시 업로드된 이미지 삭제
+                if (imageUrl != null) {
+                    try {
+                        deletedImageFromFirebase(imageUrl);
+                    } catch (IOException ex) {
+                        log.error("Failed to delete image after product save failure: {}", ex.getMessage());
+                    }
+                }
+                throw new BaseException(ErrorCode.PRODUCT_UPLOAD_FAILED);
             }
+        } catch (BaseException e) {
+            // BaseException은 그대로 전파
             throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error while adding product: {}", e.getMessage());
+            // 예상치 못한 에러 발생 시 이미지 삭제
+            if (imageUrl != null) {
+                try {
+                    deletedImageFromFirebase(imageUrl);
+                } catch (IOException ex) {
+                    log.error("Failed to delete image after unexpected error: {}", ex.getMessage());
+                }
+            }
+            throw new BaseException(ErrorCode.PRODUCT_UPLOAD_FAILED);
         }
     }
 
     @Override
     @Transactional
-    public ProductResponseDto getUpdateProduct(ProductDto productDto, MultipartFile image) throws IOException {
-        Member member = getAuthenticatedUser();
+    public ProductResponseDto getUpdateProduct(ProductDto productDto, MultipartFile image) {
+        try {
+            Member member = getAuthenticatedUser();
+            Product existingProduct = productRepository.findById(productDto.getNumber())
+                    .orElseThrow(() -> new BaseException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        Product existingProduct = productRepository.findById(productDto.getNumber())
-                .orElseThrow(() -> new NoSuchElementException("ERROR : 없는 상품입니다."));
+            // 권한 체크
+            if (!existingProduct.getMemberEmail().equals(member.getEmail())) {
+                throw new BaseException(ErrorCode.UNAUTHORIZED_PRODUCT_ACCESS);
+            }
 
-        // 기존 이미지 삭제
-        if (existingProduct.getImageUrl() != null && !existingProduct.getImageUrl().isEmpty()) {
+            // 1. 이미지 처리
+            String imageUrl = handleImageUpdate(image, existingProduct);
+
+            // 2. 기본 정보 업데이트
+            updateProductBasicInfo(existingProduct, productDto);
+
+            // 이미지 URL 설정
+            existingProduct.setImageUrl(imageUrl);
+
+            // 3. 옵션 처리
+            updateProductOptions(existingProduct, productDto.getProductOptions());
+
+            Product savedProduct = productRepository.save(existingProduct);
+            return convertToProductResponseDTO(savedProduct);
+        } catch (BaseException e) {
+            throw e;
+        } catch (IOException e) {
+            log.error("Failed to update product image: {}", e.getMessage());
+            throw new BaseException(ErrorCode.IMAGE_UPLOAD_FAILED);
+        } catch (Exception e) {
+            log.error("Failed to update product: {}", e.getMessage());
+            throw new BaseException(ErrorCode.PRODUCT_UPDATE_FAILED);
+        }
+    }
+
+    // 이미지 처리 메서드
+    private String handleImageUpdate(MultipartFile image, Product existingProduct) throws IOException {
+        if (image == null || image.isEmpty()) {
+            return existingProduct.getImageUrl();
+        }
+
+        if (existingProduct.getImageUrl() != null) {
             deletedImageFromFirebase(existingProduct.getImageUrl());
         }
+        return uploadImageToFirebase(image);
+    }
 
-        // 새 이미지 업로드
-        String imageUrl = uploadImageToFirebase(image);
+    // 기본 정보 업데이트 메서드
+    private void updateProductBasicInfo(Product product, ProductDto productDto) {
+        product.setName(productDto.getName());
+        product.setBrand(productDto.getBrand());
+        product.setPrice(productDto.getPrice());
+        product.setIntro(productDto.getIntro());
+        product.setDescription(productDto.getDescription());
+        product.setCategory(productDto.getCategory());
+    }
 
-        // DTO를 엔티티로 변환
-        Product updatedProduct = converToProductEntity(productDto, member);
-        updatedProduct.setImageUrl(imageUrl);
+    // 옵션 업데이트 메서드
+    private void updateProductOptions(Product product, List<ProductOptionDto> newOptions) {
+        if (newOptions == null) return;
 
-        // 기존 사이즈 정보 삭제
-        updatedProduct.getProductSizes().clear();
+        List<ProductOption> existingOptions = product.getProductOptions();
 
-        // 새로운 사이즈 정보 추가
-        if (productDto.getProductSizes() != null) {
-            List<ProductSize> productSizeList = productDto.getProductSizes().stream()
-                    .map(sizeDto -> ProductSize.builder()
-                            .size(sizeDto.getSize())
-                            .stock(sizeDto.getStock())
-                            .product(updatedProduct)
-                            .build())
-                    .collect(Collectors.toList());
-            updatedProduct.setProductSizes(productSizeList);
+        // 기존 옵션 모두 제거 (orphanRemoval로 자동 삭제됨)
+        existingOptions.clear();
+
+        // 새로운 옵션들 추가
+        for (ProductOptionDto optionDto : newOptions) {
+            ProductOption newOption = ProductOption.builder()
+                    .color(optionDto.getColor())
+                    .size(optionDto.getSize())
+                    .stock(optionDto.getStock())
+                    .build();
+            product.addProductOption(newOption);  // 양방향 관계 설정
         }
-
-        Product savedProduct = productRepository.save(updatedProduct);
-        return convertToProductResponseDTO(savedProduct);
     }
 
     @Override
-    public void getDeleteProduct(Long id) throws IOException {
-        Member member = getAuthenticatedUser();
+    public void getDeleteProduct(Long id) {
+        try {
+            Member member = getAuthenticatedUser();
+            Product product = productMapper.findProductByNumber(id);
 
-        Product product = productMapper.findProductByNumber(id);
-        if (product == null)
-            throw new NoSuchElementException("ERROR  : 없는 상품 번호 입니다.");
+            if (product == null)
+                throw new BaseException(ErrorCode.PRODUCT_NOT_FOUND);
 
-        deletedImageFromFirebase(product.getImageUrl());
-        productRepository.delete(product);
+            if (!product.getMemberEmail().equals(member.getEmail())) {
+                throw new BaseException(ErrorCode.UNAUTHORIZED_PRODUCT_ACCESS);
+            }
+
+            if (product.getImageUrl() != null) {
+                deletedImageFromFirebase(product.getImageUrl());
+            }
+
+            productRepository.delete(product);
+        } catch (BaseException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to delete product: {}", e.getMessage());
+            throw new BaseException(ErrorCode.PRODUCT_DELETE_FAILED);
+        }
     }
 
     @Override
     public ProductResponseDto getProductById(Long id) {
-        Member member = getAuthenticatedUser();
+        try {
+            Member member = getAuthenticatedUser();
+            Product product = productMapper.findProductByNumber(id);
 
-        Product product = productMapper.findProductByNumber(id);
-        if (product == null)
-            throw new NoSuchElementException("ERROR : 없는 상품 번호 입니다.");
-
-        ProductResponseDto productResponseDto = convertToProductResponseDTO(product);
-        productResponseDto.setPermission(Objects.equals(member.getEmail(), product.getMemberEmail()));
-        return productResponseDto;
+            if (product == null) {
+                throw new BaseException(ErrorCode.PRODUCT_NOT_FOUND);
+            }
+            ProductResponseDto productResponseDto = convertToProductResponseDTO(product);
+            productResponseDto.setPermission(Objects.equals(member.getEmail(), product.getMemberEmail()));
+            return productResponseDto;
+        } catch (BaseException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to fetch product: {}", e.getMessage());
+            throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
@@ -186,11 +279,13 @@ public class ProductServiceImpl implements ProductService {
 
     private Member getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
-            throw new NoSuchElementException("ERROR : is not Authenticated User");
+        if (authentication == null || !authentication.isAuthenticated() ||
+                authentication instanceof AnonymousAuthenticationToken) {
+            throw new BaseException(ErrorCode.INVALID_CREDENTIALS);
         }
-        String userEmail = authentication.getName();
-        return memberRepository.findByEmail(userEmail).orElseThrow(() -> new NoSuchElementException("ERROR : Unknown User"));
+
+        return memberRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new BaseException(ErrorCode.MEMBER_NOT_FOUND));
     }
 
     private void deletedImageFromFirebase(String imageUrl) throws IOException {
@@ -214,6 +309,20 @@ public class ProductServiceImpl implements ProductService {
         return "https://firebasestorage.googleapis.com/v0/b/" + "webproject-83837.appspot.com" + "/o/" + encodedFileName + "?alt=media";
     }
 
+    @Override
+    public List<ProductOptionDto> getProductOptions(Long productId) {
+        List<ProductOption> options = productOptionRepository.findByProduct_Number(productId);
+
+        return options.stream()
+                .map(option -> ProductOptionDto.builder()
+                        .id(option.getId())
+                        .color(option.getColor())
+                        .size(option.getSize())
+                        .stock(option.getStock())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     private ProductResponseDto convertToProductResponseDTO(Product product) {
         ProductResponseDto productResponseDto = new ProductResponseDto();
         BeanUtils.copyProperties(product, productResponseDto);
@@ -221,24 +330,35 @@ public class ProductServiceImpl implements ProductService {
         productResponseDto.setPrice(formatter.format(product.getPrice()) + "원");
         productResponseDto.setDescription(product.getDescription().replace("\n", "<br>"));
 
-        // ProductSize 정보 변환
-        if (product.getProductSizes() != null) {
-            List<ProductSizeDto> sizeDtos = product.getProductSizes().stream()
-                    .map(size -> ProductSizeDto.builder()
-                            .size(size.getSize())
-                            .stock(size.getStock())
+        // category 필드를 수동으로 변환하여 설정
+        if (product.getCategory() != null) {
+            productResponseDto.setCategory(product.getCategory().name());
+        }
+
+        productResponseDto.setSubCategory(product.getSubCategory());
+
+        // ProductOption 정보 변환
+        if (product.getProductOptions() != null) {
+            List<ProductOptionDto> optionDtos = product.getProductOptions().stream()
+                    .map(option -> ProductOptionDto.builder()
+                            .id(option.getId())
+                            .color(option.getColor())
+                            .size(option.getSize())
+                            .stock(option.getStock())
                             .build())
                     .collect(Collectors.toList());
-            productResponseDto.setProductSizes(sizeDtos);
+            productResponseDto.setProductOptions(optionDtos);
         }
 
         return productResponseDto;
     }
 
-    private Product converToProductEntity(ProductDto productDto, Member member) {
+    private Product convertToProductEntity(ProductDto productDto, Member member) {
         Product product = new Product();
         BeanUtils.copyProperties(productDto, product);
         product.setMember(member);
+
+        product.setSubCategory(productDto.getSubCategory());
         return product;
     }
 }

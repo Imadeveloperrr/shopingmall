@@ -1,5 +1,6 @@
 package com.example.crud.controller;
 
+import com.example.crud.data.category.service.CategoryService;
 import com.example.crud.data.member.dto.MemberResponseDto;
 import com.example.crud.data.member.service.MemberService;
 import com.example.crud.data.product.dto.ProductDto;
@@ -26,17 +27,11 @@ public class ProductController {
     private static final Logger log = LoggerFactory.getLogger(ProductController.class);
     private final ProductService productService;
     private final MemberService memberService;
+    private final CategoryService categoryService;
 
     @GetMapping
     public String product() {
         return "fragments/productAdd";
-    }
-
-    @GetMapping("/buy")
-    public String productBuy(@RequestParam("id") Long productId, Model model) {
-        ProductResponseDto productResponseDto = productService.getProductById(productId);
-        model.addAttribute("product", productResponseDto);
-        return "fragments/productBuy";
     }
 
     @PostMapping("/add")
@@ -75,16 +70,20 @@ public class ProductController {
     }
 
     @PostMapping("/update")
-    public ResponseEntity<?> updateProduct(@ModelAttribute ProductDto productDto, @RequestParam("imageUrl") MultipartFile file) {
+    public ResponseEntity<?> updateProduct(
+            @ModelAttribute ProductDto productDto,
+            @RequestParam(value = "imageUrl", required = false) MultipartFile file) {
         try {
-            log.info("Received product: {}", productDto);
-            if (file.isEmpty()) {
-                log.error("File is empty");
-                return ResponseEntity.badRequest().body("File is Empty");
-            }
-            ProductResponseDto productResponseDto = productService.getUpdateProduct(productDto, file);
-            return ResponseEntity.ok().body(productResponseDto);
+            log.info("Updating product with ID: {}", productDto.getNumber());
+            log.info("Options count: {}",
+                    productDto.getProductOptions() != null ? productDto.getProductOptions().size() : 0);
+
+            ProductResponseDto response = productService.getUpdateProduct(productDto, file);
+            log.info("Product updated successfully. ID: {}", response.getNumber());
+
+            return ResponseEntity.ok().body(response);
         } catch (Exception e) {
+            log.error("Failed to update product ID: " + productDto.getNumber(), e);
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

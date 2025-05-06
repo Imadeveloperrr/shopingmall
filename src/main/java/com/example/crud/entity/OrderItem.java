@@ -20,8 +20,8 @@ public class OrderItem {
     private Orders orders;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_size_id")
-    private ProductSize productSizeEntity;
+    @JoinColumn(name = "product_option_id")
+    private ProductOption productOption;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
@@ -39,10 +39,13 @@ public class OrderItem {
     @Column(nullable = false)
     private String productSize;  // 주문 당시의 사이즈
 
+    @Column(nullable = false)
+    private String productColor; // Color
+
     // 취소 시 재고 원복을 위한 메서드
     public void cancel() {
-        ProductSize size = this.getProductSizeEntity();
-        size.setStock(size.getStock() + this.quantity);
+        ProductOption option = this.getProductOption();
+        option.setStock(option.getStock() + this.quantity);
     }
 
     // 주문 상품 금액 계산

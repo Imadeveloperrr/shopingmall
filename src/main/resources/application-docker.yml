@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://db:5432/app      # ← compose와 동일
+    username: sungho
+    password: 0000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        type:
+          array:
+            vector: com.vladmihalcea.hibernate.type.pgvector.PgVectorType

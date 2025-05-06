@@ -1,106 +1,87 @@
 package com.example.crud;
 
 import com.example.crud.data.member.dto.MemberDto;
-import com.example.crud.data.member.dto.MemberResponseDto;
-import com.example.crud.data.member.service.MemberService;
-import com.example.crud.repository.MemberRepository;
-import com.example.crud.security.JwtToken;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
-
-import org.junit.jupiter.api.BeforeEach;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.http.*;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.net.http.HttpResponse;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Slf4j
-public class MemberControllerTest {
+/**
+ * 컨트롤러 통합 테스트
+ *  - H2 in-memory DB (application-test.properties)
+ *  - MockMvc 로 실제 HTTP 레이어 검증
+ */
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+class MemberControllerIntegrationTest {
 
     @Autowired
-    MemberService memberService;
+    MockMvc mockMvc;
     @Autowired
-    TestRestTemplate testRestTemplate;
-    @Autowired
-    MemberRepository memberRepository;
-    @LocalServerPort
-    int randomServerPort;
+    ObjectMapper om;   // JSON 직렬화·역직렬화
 
-    private MemberDto memberDto;
-
-    @BeforeEach
-    void beforEach() {
-        // Test 실행 되기 전 초기화 작업
-        memberDto = MemberDto.builder()
+    /** 공통으로 쓸 테스트 사용자 */
+    private MemberDto givenMember() {
+        return MemberDto.builder()
                 .email("ddooochii@gmail.com")
+                .password("12345678")
                 .name("이성호")
                 .nickname("헬로ㅋ")
-                .password("1234")
-                .build();
-    }
-
-    @AfterEach
-    void afterEach() {
-        // Test 실행 후 초기화
-        memberRepository.deleteAll();
-    }
-
-    @Test
-    public void signUpTest() {
-
-        String url = "http://localhost:" + randomServerPort + "/register";
-        ResponseEntity<MemberResponseDto> response = testRestTemplate.postForEntity(url, memberDto, MemberResponseDto.class);
-
-        //log.info("response : {}", response.getBody());
-        // 응답 검증
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-
-        assertEquals(response.getBody().getEmail(), memberDto.getEmail());
-        assertEquals(response.getBody().getName(), memberDto.getName());
-    }
-
-    @Test
-    public void signInTest() {
-        memberService.signUp(memberDto);
-
-        MemberDto memberRequestDto = MemberDto.builder()
-                .email("ddooochii@gmail.com")
-                .password("1234")
                 .rememberMe(true)
                 .build();
+    }
 
-        // 로그인 요청
-        /*
-        String url = "http://localhost:" + randomServerPort + "/login";
-        ResponseEntity<JwtToken> response = testRestTemplate.postForEntity(url, memberRequestDto, JwtToken.class);
-        assertEquals(response.getStatusCode(), HttpStatus.OK);*/
+    @Nested
+    @DisplayName("회원 가입 + 로그인 + 마이페이지 시나리오")
+    class SignUpLoginFlow {
 
-        JwtToken jwtToken = memberService.signIn(memberRequestDto.getEmail(), memberRequestDto.getPassword(), memberRequestDto.isRememberMe());
+        @Test
+        @Transactional
+        void signUp_login_then_getMyPage() throws Exception {
 
+            /* ---------- 1) 회원가입 ---------- */
+            mockMvc.perform(post("/register")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(om.writeValueAsString(givenMember())))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.email").value("ddooochii@gmail.com"))
+                    .andExpect(jsonPath("$.nickname").value("헬로ㅋ"));
 
-        // API 요청 설정
+            /* ---------- 2) 로그인(쿠키에 JWT 세팅) ---------- */
+            var loginResult = mockMvc.perform(post("/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(om.writeValueAsString(givenMember())))
+                    .andExpect(status().isOk())
+                    .andExpect(cookie().exists("accessToken"))
+                    .andExpect(cookie().exists("refreshToken"))
+                    .andReturn();
 
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setBearerAuth(jwtToken.getAccessToken());
-        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+            // accessToken 쿠키 꺼내기
+            Cookie accessTokenCookie = loginResult.getResponse().getCookie("accessToken");
+            assertThat(accessTokenCookie).isNotNull();
 
-        String url = "http://localhost:" + randomServerPort + "/mypage";
-        ResponseEntity<String> responseEntity = testRestTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                new HttpEntity<>(httpHeaders),
-                String.class);
-        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        //assertEquals(responseEntity.getBody(), memberRequestDto.getEmail());
+            /* ---------- 3) JWT 가 든 쿠키로 마이페이지 호출 ---------- */
+            mockMvc.perform(get("/mypage")
+                            .cookie(accessTokenCookie))
+                    .andExpect(status().isOk())
+                    .andExpect(view().name("fragments/mypage"))
+                    .andExpect(model().attributeExists("member"))
+                    .andExpect(model().attributeExists("products"));
+        }
     }
 }

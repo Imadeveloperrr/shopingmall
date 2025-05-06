@@ -1,5 +1,6 @@
 package com.example.crud.data.product.dto;
 
+import com.example.crud.enums.Category;
 import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,9 +20,10 @@ public class ProductDto {
     private int price;
     private String brand;
     private String intro;
-    private String color;
     private String description;
-    private String category;
+    private Category category;
+    private String subCategory;
+    private String imageUrl;
 
-    private List<ProductSizeDto> productSizes;
+    private List<ProductOptionDto> productOptions;
 }
