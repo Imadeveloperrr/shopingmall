@@ -1,16 +1,41 @@
 
 services:
+  # ――――――[NEW] zookeeper ――――――
+  zookeeper:
+    image: bitnami/zookeeper:3.8
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+    networks: [ appnet ]
+
+  # ――――――[NEW] kafka ――――――
+  kafka:
+    image: bitnami/kafka:3.4
+    depends_on: [ zookeeper ]
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+    networks: [ appnet ]
+    ports:
+      - "9092:9092"
+
   backend:
     build:
       context: .                 # 루트가 build context
       dockerfile: docker/Dockerfile
     container_name: spring-app
-    depends_on: [ db, ml, redis ]
+    depends_on:
+      - kafka
+      - db
+      - ml
+      - redis
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/app
       SPRING_DATASOURCE_USERNAME: sungho
       SPRING_DATASOURCE_PASSWORD: 0000
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       EMBEDDING_SERVICE_URL: http://ml:8000
     ports:
       - "8080:8080"

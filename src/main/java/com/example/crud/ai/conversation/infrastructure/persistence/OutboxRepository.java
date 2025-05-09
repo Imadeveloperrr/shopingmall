@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.Instant;
 import java.util.List;
 
 public interface OutboxRepository extends JpaRepository<Outbox, Long> {
@@ -21,6 +22,6 @@ public interface OutboxRepository extends JpaRepository<Outbox, Long> {
     List<Outbox> pollUnsent(@Param("limit") int limit);
 
     @Modifying
-    @Query("UPDATE Outbox o SET o.sent=true, o.sentAt=current_timestamp WHERE o.id IN :ids")
-    void markSent(@Param("ids") List<Long> ids);
+    @Query("UPDATE Outbox o SET o.sent=true, o.sentAt=:now WHERE o.id IN :ids")
+    void markSent(@Param("ids") List<Long> ids, @Param("now") Instant now);
 }

@@ -1,8 +1,8 @@
 package com.example.crud.controller;
 
+import com.example.crud.common.security.JwtToken;
 import com.example.crud.data.member.service.MemberService;
 import com.example.crud.data.token.TokenRequestDto;
-import com.example.crud.security.JwtToken;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;

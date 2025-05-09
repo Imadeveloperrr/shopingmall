@@ -1,8 +1,19 @@
+# ─── application-docker.yml (컨테이너) ─────────────────
 spring:
   datasource:
     url: jdbc:postgresql://db:5432/app      # ← compose와 동일
     username: sungho
     password: 0000
+  kafka:
+    bootstrap-servers: kafka:9092           # kafka
+    consumer:
+      group-id: es-sync                     # 기본 그룹 ID 설정
+      auto-offset-reset: earliest           # 오프셋 리셋 설정
+      enable-auto-commit: true              # 자동 커밋 활성화
+      auto-commit-interval: 1000            # 커밋 간격 (ms)
+    producer:
+      acks: 1                               # 전송 확인 설정
+      retries: 3                            # 재시도 횟수
   jpa:
     hibernate:
       ddl-auto: update

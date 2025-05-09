@@ -41,7 +41,7 @@ public class ConversationalRecommendationService {
         /* 2️⃣ 대화 히스토리 조회 (fetchMessages 사용) */
         List<MessageDto> messageSlice = qrySvc.fetchMessages(convId, null, 0, 100).getContent();
         List<ChatMessage> chatMessages = messageSlice.stream()
-                .map(m -> new ChatMessage(m.getMessageType().toString(), m.getContent()))
+                .map(m -> new ChatMessage(m.getRole(), m.getContent()))
                 .toList();
 
         /* 3️⃣ ChatGPT로 세밀 의도 JSON 추출 */

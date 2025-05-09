@@ -1,8 +1,11 @@
+# ─── application.yml (로컬) ─────────────────────────────
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/sunghodb
     username: sungho
     password: 0000
+  kafka:
+    bootstrap-servers: localhost:9092
   jpa:
     hibernate:
       ddl-auto: update

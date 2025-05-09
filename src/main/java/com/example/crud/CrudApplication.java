@@ -9,7 +9,7 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
-@MapperScan(basePackages = "com.example.crud.mapper")
+@MapperScan(basePackages = "com.example.crud.common.mapper")
 @EnableConfigurationProperties(ChatGptProperties.class)
 @EnableScheduling      // OutboxDispatcher
 @EnableKafka           // Kafka Listener
