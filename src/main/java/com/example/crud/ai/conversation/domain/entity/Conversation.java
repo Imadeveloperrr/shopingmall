@@ -44,6 +44,7 @@ public class Conversation {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private ConversationStatus status = ConversationStatus.ACTIVE;
 
     @Version                       // ▶ Optimistic Lock

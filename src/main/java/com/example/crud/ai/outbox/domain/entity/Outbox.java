@@ -34,6 +34,7 @@ public class Outbox {
     private Instant sentAt;        // null = 미전송
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean sent = false;  // 전송 여부
 
     /*── 정적 팩토리 ──*/

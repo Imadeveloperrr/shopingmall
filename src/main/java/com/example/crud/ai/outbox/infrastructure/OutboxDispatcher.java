@@ -11,6 +11,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -34,32 +36,28 @@ public class OutboxDispatcher {
         if (batch.isEmpty()) return;
 
         /* ② Kafka 전송 (sync) */
-        boolean allOk = true;
+        List<Long> successIds = new ArrayList<>();
         for (Outbox ob : batch) {
             try {
                 // send() 는 기본적으로 async; get(timeout) 으로 성공 확인
-                CompletableFuture<SendResult<String,String>> fut =
+                CompletableFuture<SendResult<String, String>> fut =
                         kafka.send(ob.getTopic(), ob.getPayload());
-                SendResult<String,String> res = fut.get(2, TimeUnit.SECONDS);  // timeout=2s
+                SendResult<String, String> res = fut.get(2, TimeUnit.SECONDS);  // timeout=2s
                 RecordMetadata m = res.getRecordMetadata();
                 log.debug("[Outbox] sent to Kafka {}-{} offset {}", m.topic(), m.partition(), m.offset());
+
+                // 성공한 메시지 ID 추가
+                successIds.add(ob.getId());
             } catch (Exception e) {
-                allOk = false;
                 log.error("[Outbox] Kafka send fail id={} → {}", ob.getId(), e.getMessage());
                 // 실패한 경우 해당 레코드 그대로 두고 루프 계속
             }
         }
 
         /* ③ 성공한 건만 sent=true 업데이트 */
-        if (allOk) {
-            repo.markSent(batch.stream().map(Outbox::getId).toList());
-        } else {
-            // 일부 실패 ⇒ 성공한 id 집합만 업데이트
-            List<Long> okIds = batch.stream()
-                    .filter(Outbox::isSent)        // KafkaTemplate 성공 콜백에서 flag set하도록 해도 됨
-                    .map(Outbox::getId)
-                    .toList();
-            if (!okIds.isEmpty()) repo.markSent(okIds);
+        if (!successIds.isEmpty()) {
+            repo.markSent(successIds, Instant.now());
+            log.debug("[Outbox] marked {} messages as sent", successIds.size());
         }
     }
 }
