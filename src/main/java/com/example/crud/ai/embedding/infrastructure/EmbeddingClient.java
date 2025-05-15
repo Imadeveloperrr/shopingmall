@@ -21,7 +21,7 @@ public class EmbeddingClient {
 
     /**
      * 생성자 주입
-     * - baseUrl: application.yml(or properties)에 정의된 embedding.service.url
+     * - baseUrl: application.properties에 정의된 embedding.service.url
      * - WebClient.Builder: 스프링이 제공하는 빌더
      * - CircuitBreaker: resilience4j-circuitbreaker 빈으로 주입
      */

@@ -34,7 +34,7 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/app
       SPRING_DATASOURCE_USERNAME: sungho
-      SPRING_DATASOURCE_PASSWORD: 0000
+      SPRING_DATASOURCE_PASSWORD: "0000"
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       EMBEDDING_SERVICE_URL: http://ml:8000
     ports:
@@ -57,7 +57,7 @@ services:
     environment:
       POSTGRES_DB: app
       POSTGRES_USER: sungho
-      POSTGRES_PASSWORD: 0000
+      POSTGRES_PASSWORD: "0000"
     volumes:
       - ./docker/initdb:/docker-entrypoint-initdb.d
       - db_data:/var/lib/postgresql/data
