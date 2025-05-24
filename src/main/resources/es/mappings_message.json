@@ -1,0 +1,32 @@
+{
+  "properties": {
+    "id": {
+      "type": "keyword"
+    },
+    "conversationId": {
+      "type": "long"
+    },
+    "messageId": {
+      "type": "long"
+    },
+    "type": {
+      "type": "keyword"
+    },
+    "content": {
+      "type": "text",
+      "analyzer": "standard",
+      "fields": {
+        "keyword": {
+          "type": "keyword",
+          "ignore_above": 256
+        }
+      }
+    },
+    "timestamp": {
+      "type": "date"
+    },
+    "userId": {
+      "type": "long"
+    }
+  }
+}

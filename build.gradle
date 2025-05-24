@@ -63,8 +63,12 @@ dependencies {
     implementation("io.opentelemetry:opentelemetry-exporter-otlp:1.38.0")
 
     // Kafka
-    implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+    implementation 'jakarta.json:jakarta.json-api:2.1.1'
     implementation("org.springframework.kafka:spring-kafka")
+
+    // Elasticsearch 8.x 클라이언트를 위한 추가 의존성
+    implementation 'co.elastic.clients:elasticsearch-java:8.11.0'
 
     // Spring Data Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'

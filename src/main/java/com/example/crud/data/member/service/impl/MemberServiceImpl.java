@@ -20,6 +20,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -218,6 +219,11 @@ public class MemberServiceImpl implements MemberService {
         return members.stream()
                 .map(this::convertToMemberResponseDto)
                 .collect(Collectors.toList());
+    }
+
+    public Member getMemberEntity(String email) {
+        return memberRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
     }
 
     private MemberResponseDto convertToMemberResponseDto(Member member) {
