@@ -1,114 +1,97 @@
-# shopingmall
-<img width="{80%}" src="https://github.com/user-attachments/assets/acbb1c67-c33a-43fe-88ef-054e3cc8a0c6"/>
+# 🛍️ AI-Powered Shopping Mall
 
-### Frontend Stack
-Template Engine: Thymeleaf
-CSS Framework: Bootstrap 5
-Ajax Communication:
+<img width="80%" src="https://github.com/user-attachments/assets/acbb1c67-c33a-43fe-88ef-054e3cc8a0c6"/>
 
-XMLHttpRequest (기본)
-Fetch API (학습 목적으로 주석 처리)
+> **AI 기반 대화형 추천 시스템을 탑재한 현대적인 쇼핑몰 플랫폼**  
+> 실시간 사용자 행동 분석과 벡터 유사도 검색을 통한 개인화된 상품 추천 서비스
 
+## 🚀 주요 특징
 
-### Backend Stack
-Core Framework
+- **🤖 AI 대화형 추천**: GPT-4와 벡터 유사도 기반 개인화 추천
+- **⚡ 실시간 처리**: Kafka 이벤트 스트리밍으로 실시간 사용자 행동 분석  
+- **🛡️ 고가용성**: Circuit Breaker와 다층 캐싱으로 안정적인 서비스
+- **📈 확장 가능**: 마이크로서비스 아키텍처와 독립적인 ML 파이프라인
 
-Spring Boot 3.1.4
-Spring Security 6.x with JWT Token Authentication
-Spring Data JPA + Hibernate
-Spring WebFlux (Reactive Programming)
+## 🛠️ 기술 스택
 
-Database & Storage
+### Frontend
+| 기술 | 설명 |
+|------|------|
+| **Template Engine** | Thymeleaf |
+| **CSS Framework** | Bootstrap 5 |
+| **Ajax Communication** | XMLHttpRequest, Fetch API |
 
-PostgreSQL with pgvector extension (벡터 유사도 검색)
-MariaDB (기존 데이터)
-Redis (캐싱 및 세션 관리)
-Elasticsearch (대화 검색 및 분석)
-Firebase Storage (이미지 저장)
+### Backend Core
+| 카테고리 | 기술 스택 |
+|----------|-----------|
+| **Framework** | Spring Boot 3.1.4, Spring Security 6.x (JWT), Spring Data JPA, Spring WebFlux |
+| **Database** | PostgreSQL + pgvector, MariaDB, Redis, Elasticsearch |
+| **Storage** | Firebase Storage |
+| **Message Queue** | Apache Kafka, Zookeeper |
 
-Message Queue & Event Streaming
+### AI/ML Services
+| 기술 | 용도 |
+|------|------|
+| **FastAPI** | Python 임베딩 서비스 |
+| **Sentence Transformers** | 텍스트 임베딩 (384차원) |
+| **OpenAI GPT-4** | 대화형 AI 및 선호도 분석 |
 
-Apache Kafka (이벤트 기반 아키텍처)
-Zookeeper (Kafka 클러스터 관리)
+### Data Access & Mapping
+- **ORM**: JPA/Hibernate, QueryDSL, MyBatis
+- **Mapping**: MapStruct (DTO 매핑)
 
-ORM & Database Access
+### Performance & Resilience
+- **Circuit Breaker**: Resilience4j
+- **Caching**: EHCache (로컬), Redis (분산)
+- **Connection Pool**: Apache Commons Pool2
 
-JPA/Hibernate
-QueryDSL (동적 쿼리)
-MyBatis (복잡한 쿼리 매핑)
-MapStruct (DTO 매핑)
+### Monitoring & DevOps
+- **Metrics**: Micrometer, Prometheus, Spring Boot Actuator
+- **Development**: Lombok, JUnit 5, Docker & Docker Compose
 
-AI/ML Services
+### Architecture Patterns
+- Event-Driven Architecture (Kafka)
+- Microservices Pattern (AI 서비스 분리)
+- CQRS Pattern (Command/Query 분리)
+- Outbox Pattern (트랜잭션 보장)
+- Circuit Breaker Pattern (장애 대응)
+- Cache-Aside Pattern (캐싱 전략)
 
-FastAPI (Python) - 임베딩 서비스
-Sentence Transformers - 텍스트 임베딩
-OpenAI GPT-4 API - 대화형 AI
+## 🏗️ 인프라 구성
 
-Resilience & Performance
-
-Resilience4j (Circuit Breaker, Rate Limiter, Bulkhead)
-EHCache (로컬 캐싱)
-Apache Commons Pool2 (연결 풀링)
-
-Monitoring & Metrics
-
-Micrometer (메트릭 수집)
-Prometheus (모니터링)
-Spring Boot Actuator
-
-Development Tools
-
-Lombok (보일러플레이트 코드 감소)
-JUnit 5 (Jupiter) (테스트 프레임워크)
-Docker & Docker Compose (컨테이너화)
-
-Architecture Patterns
-
-Event-Driven Architecture (Kafka)
-Microservices Pattern (AI 서비스 분리)
-CQRS Pattern (Command/Query 분리)
-Outbox Pattern (트랜잭션 보장)
-Circuit Breaker Pattern (장애 대응)
-Cache-Aside Pattern (캐싱 전략)
-
-🔧 Infrastructure
-yamlServices:
+```yaml
+Services:
   - Spring Boot Application (Port: 8080)
   - PostgreSQL + pgvector (Port: 5432)
   - Redis Cache (Port: 6379)
   - Kafka Broker (Port: 9092)
   - Elasticsearch (Port: 9200)
   - FastAPI ML Service (Port: 8000)
-📊 Key Features
+```
 
-AI 기반 대화형 추천 시스템
+## 📊 핵심 기능
 
-실시간 사용자 행동 분석
-벡터 유사도 기반 상품 추천
-대화 컨텍스트 이해
+### 🤖 AI 기반 대화형 추천 시스템
+- 실시간 사용자 행동 분석
+- 벡터 유사도 기반 상품 추천
+- 대화 컨텍스트 이해 및 선호도 분석
 
+### ⚡ 실시간 이벤트 처리
+- Kafka 기반 이벤트 스트리밍
+- 비동기 메시지 처리
+- 실시간 트렌드 분석
 
-실시간 이벤트 처리
+### 🛡️ 고가용성 아키텍처
+- Circuit Breaker로 장애 격리
+- 다층 캐싱 전략 (L1: EHCache, L2: Redis)
+- 트랜잭션 아웃박스 패턴
 
-Kafka 기반 이벤트 스트리밍
-비동기 메시지 처리
-실시간 트렌드 분석
+### 🔧 확장 가능한 ML 파이프라인
+- 독립적인 ML 서비스 (FastAPI)
+- 임베딩 벡터 검색 (pgvector)
+- GPT-4 API 통합
 
-
-고가용성 아키텍처
-
-Circuit Breaker로 장애 격리
-다층 캐싱 전략
-트랜잭션 아웃박스 패턴
-
-
-확장 가능한 ML 파이프라인
-
-독립적인 ML 서비스
-임베딩 벡터 검색
-GPT-4 통합
-
-
+---
 
 # 🏗️ 대화형 상품 추천 시스템 아키텍처
 
@@ -276,4 +259,3 @@ GPT-4 통합
 - 실시간 피드백 반영
 - 다국어 지원
 - 고급 협업 필터링
-
