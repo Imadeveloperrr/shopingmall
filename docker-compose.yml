@@ -1,13 +1,12 @@
-
 services:
-  # ――――――[NEW] zookeeper ――――――
+  # ――――――[Zookeeper] ――――――
   zookeeper:
     image: bitnami/zookeeper:3.8
     environment:
       ALLOW_ANONYMOUS_LOGIN: "yes"
     networks: [ appnet ]
 
-  # ――――――[NEW] kafka ――――――
+  # ――――――[Kafka] ――――――
   kafka:
     image: bitnami/kafka:3.4
     depends_on: [ zookeeper ]
@@ -16,13 +15,29 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       ALLOW_PLAINTEXT_LISTENER: "yes"
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     networks: [ appnet ]
     ports:
       - "9092:9092"
 
+  # ――――――[Elasticsearch] ――――――
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    networks: [ appnet ]
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  # ――――――[Backend] ――――――
   backend:
     build:
-      context: .                 # 루트가 build context
+      context: .
       dockerfile: docker/Dockerfile
     container_name: spring-app
     depends_on:
@@ -30,6 +45,7 @@ services:
       - db
       - ml
       - redis
+      - elasticsearch
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/app
@@ -37,10 +53,13 @@ services:
       SPRING_DATASOURCE_PASSWORD: "0000"
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       EMBEDDING_SERVICE_URL: http://ml:8000
+      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
+      SPRING_REDIS_HOST: redis
     ports:
       - "8080:8080"
     networks: [ appnet ]
 
+  # ――――――[ML Service] ――――――
   ml:
     build: ./ml-service
     container_name: ml-service
@@ -51,6 +70,7 @@ services:
       - "8000:8000"
     networks: [ appnet ]
 
+  # ――――――[PostgreSQL with pgvector] ――――――
   db:
     image: ankane/pgvector:latest
     container_name: pgvector-db
@@ -65,15 +85,22 @@ services:
       - "5432:5432"
     networks: [ appnet ]
 
+  # ――――――[Redis] ――――――
   redis:
     image: redis:7-alpine
     container_name: redis
+    command: redis-server --appendonly yes
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
     networks: [ appnet ]
 
 volumes:
   db_data:
+  es_data:
+  redis_data:
 
 networks:
   appnet:
+    driver: bridge

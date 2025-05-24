@@ -1,5 +1,6 @@
 package com.example.crud.data.product.service.impl;
 
+import com.example.crud.ai.embedding.application.ProductEmbeddingService;
 import com.example.crud.common.exception.BaseException;
 import com.example.crud.common.exception.ErrorCode;
 import com.example.crud.data.product.dto.ProductDto;
@@ -43,6 +44,7 @@ public class ProductServiceImpl implements ProductService {
     private final MemberRepository memberRepository;
     private final ProductMapper productMapper;
     private final ProductOptionRepository productOptionRepository;
+    private final ProductEmbeddingService embeddingService;
 
     @Override
     @Transactional(readOnly = true)
@@ -117,6 +119,9 @@ public class ProductServiceImpl implements ProductService {
 
             try {
                 Product savedProduct = productRepository.save(product);
+                // 임베딩 비동기 생성 (응답 지연 방지)
+                embeddingService.createAndSaveEmbeddingAsync(savedProduct.getNumber());
+
                 return convertToProductResponseDTO(savedProduct);
             } catch (Exception e) {
                 // 상품 저장 실패 시 업로드된 이미지 삭제
@@ -172,6 +177,10 @@ public class ProductServiceImpl implements ProductService {
             updateProductOptions(existingProduct, productDto.getProductOptions());
 
             Product savedProduct = productRepository.save(existingProduct);
+
+            // 상품 업데이트 후 임베딩 재생성
+            embeddingService.createAndSaveEmbeddingAsync(savedProduct.getNumber());
+
             return convertToProductResponseDTO(savedProduct);
         } catch (BaseException e) {
             throw e;

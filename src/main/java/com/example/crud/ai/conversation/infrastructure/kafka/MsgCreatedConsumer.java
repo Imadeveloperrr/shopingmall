@@ -1,6 +1,8 @@
 package com.example.crud.ai.conversation.infrastructure.kafka;
 
+import com.example.crud.ai.conversation.domain.entity.Conversation;
 import com.example.crud.ai.conversation.domain.event.MsgCreatedPayload;
+import com.example.crud.ai.conversation.domain.repository.ConversationRepository;
 import com.example.crud.ai.es.model.EsMessageDoc;
 import com.example.crud.common.utility.Json;
 import lombok.RequiredArgsConstructor;
@@ -15,16 +17,30 @@ import org.springframework.stereotype.Component;
 public class MsgCreatedConsumer {
 
     private final ElasticsearchOperations esOps;
+    private final ConversationRepository convRepo;
 
     @KafkaListener(topics = "conv-msg-created", groupId = "es-sync")
     public void handle(String json) {
         try {
             MsgCreatedPayload p = Json.decode(json, MsgCreatedPayload.class);
-            esOps.save(EsMessageDoc.from(p));
-            log.debug("[ES] indexed message {}", p.messageId());
+
+            // conversationId로 userId 조회
+            Long userId = convRepo.findById(p.conversationId())
+                    .map(conv -> conv.getMember().getNumber())
+                    .orElse(null);
+
+            if (userId == null) {
+                log.warn("대화 {} 에 대한 사용자를 찾을 수 없음", p.conversationId());
+                userId = 0L; // 기본값
+            }
+
+            // userId를 포함하여 ES 문서 생성
+            EsMessageDoc doc = EsMessageDoc.from(p, userId);
+            esOps.save(doc);
+
+            log.debug("[ES] indexed message {} for user {}", p.messageId(), userId);
         } catch (Exception e) {
             log.error("[ES] Failed to process message: {}", e.getMessage(), e);
-            // 예외를 던지지 않고 로깅만 하여 메시지 처리 실패가 컨슈머 그룹 이탈로 이어지지 않도록 함
         }
     }
 }
