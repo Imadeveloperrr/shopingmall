@@ -2,7 +2,7 @@
 -- 기존 768차원에서 384차원으로 변경
 
 -- 1. 기존 컬럼이 있다면 삭제 후 재생성 (차원 변경)
-DO $
+DO $$
 BEGIN
     IF EXISTS (
         SELECT 1 FROM information_schema.columns
@@ -19,7 +19,7 @@ END IF;
 
     -- 384차원 벡터 컬럼 추가
 ALTER TABLE product ADD COLUMN description_vector vector(384);
-END $;
+END $$;
 
 -- 2. 벡터 검색을 위한 인덱스 생성
 CREATE INDEX IF NOT EXISTS idx_product_desc_vec

@@ -23,15 +23,4 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     """)
     Optional<Member> findByConversationId(@Param("conversationId") Long conversationId);
 
-    @Query("""
-    SELECT DISTINCT m FROM Member m 
-    JOIN m.conversations c 
-    JOIN c.messages msg 
-    WHERE msg.content LIKE %:keyword% 
-    AND m.number != :excludeMemberId
-    """)
-    List<Member> findMembersWithSimilarInterests(
-            @Param("keyword") String keyword,
-            @Param("excludeMemberId") Long excludeMemberId
-    );
 }

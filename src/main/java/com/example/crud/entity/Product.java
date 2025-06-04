@@ -78,10 +78,10 @@ public class Product {
         option.setProduct(null);
     }
 
-    // 상품 설명 임베딩 (768-차원 BERT) - pgvector
+    // 상품 설명 임베딩 (384-차원 BERT) - pgvector
     @JdbcTypeCode(SqlTypes.OTHER)
     @Column(name = "description_vector",
-    columnDefinition = "vector(768)", nullable = false)
+    columnDefinition = "vector(384)", nullable = true)
     private float[] descriptionVector;
 
     public String getMemberEmail() {

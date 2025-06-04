@@ -64,5 +64,10 @@
       "name": "management.tracing.sampling.probability",
       "type": "java.lang.String",
       "description": "Description for management.tracing.sampling.probability."
+    },
+    {
+      "name": "spring.jpa.hibernate.format_sql",
+      "type": "java.lang.String",
+      "description": "Description for spring.jpa.hibernate.format_sql."
     }
   ] }

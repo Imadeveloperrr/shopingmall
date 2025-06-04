@@ -4,7 +4,10 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "product_option")
+@Table(name = "product_option",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"product_id", "color", "size"})
+        })
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,15 +19,16 @@ public class ProductOption {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id")
+    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String color;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private String size;
 
     @Column(nullable = false)
-    private Integer stock;
+    @Builder.Default
+    private Integer stock = 0;
 }
