@@ -9,10 +9,17 @@ version = '0.0.1-SNAPSHOT'
 
 java {
     sourceCompatibility = '17'
+    targetCompatibility = '17'
 }
 
 repositories {
     mavenCentral()
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 tasks.named("bootJar") {
@@ -20,86 +27,113 @@ tasks.named("bootJar") {
 }
 
 ext {
-    querydslVersion = '5.1.0'
+    set('querydslVersion', '5.0.0')
 }
 
-
 dependencies {
+    // Spring Boot Starters
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.springframework.security:spring-security-test'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.kafka:spring-kafka'
+
+    // MyBatis
     implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.3.1'
 
+    // Firebase
     implementation 'com.google.firebase:firebase-admin:9.2.0'
 
-    implementation "com.vladmihalcea:hibernate-types-60:2.21.1"   // pgvector 매핑용 Hibernate Types
-    implementation("org.postgresql:postgresql:42.7.3")          // PGVector
-    implementation "com.pgvector:pgvector:0.1.6" // 벡터 타입 매핑
+    // PostgreSQL & PGVector
+    implementation 'org.postgresql:postgresql:42.7.3'
+    implementation 'com.pgvector:pgvector:0.1.6'
+    implementation 'com.vladmihalcea:hibernate-types-60:2.21.1'
 
-    // Resilience4j: BOM 으로 버전 관리
-    implementation platform("io.github.resilience4j:resilience4j-bom:2.2.0")// 공통 버전 관리 :contentReference[oaicite:0]{index=0}
-    implementation "io.github.resilience4j:resilience4j-reactor"            // Reactor 지원 :contentReference[oaicite:1]{index=1}
-    implementation "io.github.resilience4j:resilience4j-circuitbreaker"     // CircuitBreaker :contentReference[oaicite:2]{index=2}
-    implementation "io.github.resilience4j:resilience4j-ratelimiter"        // RateLimiter
-    implementation "io.github.resilience4j:resilience4j-timelimiter"        // TimeLimiter
-    implementation "io.github.resilience4j:resilience4j-bulkhead"           // Bulkhead
+    // Resilience4j
+    implementation platform('io.github.resilience4j:resilience4j-bom:2.2.0')
+    implementation 'io.github.resilience4j:resilience4j-reactor'
+    implementation 'io.github.resilience4j:resilience4j-circuitbreaker'
+    implementation 'io.github.resilience4j:resilience4j-ratelimiter'
+    implementation 'io.github.resilience4j:resilience4j-timelimiter'
+    implementation 'io.github.resilience4j:resilience4j-bulkhead'
 
-    // OpenAI Java Client (TheoKanning)
-    implementation "com.theokanning.openai-gpt3-java:service:0.18.2"        // High-level Service API :contentReference[oaicite:3]{index=3}
-    implementation "com.theokanning.openai-gpt3-java:api:0.18.2"
+    // OpenAI
+    implementation 'com.theokanning.openai-gpt3-java:service:0.18.2'
+    implementation 'com.theokanning.openai-gpt3-java:api:0.18.2'
 
-    // MapStruct 본체
-    implementation "org.mapstruct:mapstruct:1.5.5.Final"
+    // Monitoring
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.38.0'
 
-    // MapStruct 애노테이션 프로세서 (컴파일 타임에 구현체 생성)
-    annotationProcessor "org.mapstruct:mapstruct-processor:1.5.5.Final"
-
-    // 트레이싱/메트릭
-    implementation("io.micrometer:micrometer-tracing-bridge-brave")
-    implementation("io.opentelemetry:opentelemetry-exporter-otlp:1.38.0")
-
-    // Kafka
-    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+    // Elasticsearch
+    implementation 'co.elastic.clients:elasticsearch-java'  // 버전 없이 선언
     implementation 'jakarta.json:jakarta.json-api:2.1.1'
-    implementation("org.springframework.kafka:spring-kafka")
 
-    // Elasticsearch 8.x 클라이언트를 위한 추가 의존성
-    implementation 'co.elastic.clients:elasticsearch-java:8.11.0'
-
-    // Spring Data Redis
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-
-    // 로컬 L2 캐시
-    implementation("org.ehcache:ehcache:3.10.8")
-
-    // Redis 커넥션 풀링
+    // Cache
+    implementation 'org.ehcache:ehcache:3.10.8'
     implementation 'org.apache.commons:commons-pool2:2.11.1'
 
-    // QueryDSL – Jakarta
-    implementation "com.querydsl:querydsl-jpa:${querydslVersion}:jakarta"
-    annotationProcessor "com.querydsl:querydsl-apt:${querydslVersion}:jakarta"
-    annotationProcessor "jakarta.persistence:jakarta.persistence-api:3.1.0"
-
+    // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.11.2'
-    testImplementation 'org.projectlombok:lombok:1.18.28'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.2'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.2'
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
+
+    // Lombok - 버전을 명시적으로 지정
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    // MapStruct - 버전을 명시적으로 지정
+    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+
+    // Annotation Processors - 순서 중요!
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+
+    // QueryDSL - Spring Boot 3.x 호환 버전
+    implementation "com.querydsl:querydsl-jpa:${querydslVersion}:jakarta"
+    implementation "com.querydsl:querydsl-core:${querydslVersion}"
+    annotationProcessor "com.querydsl:querydsl-apt:${querydslVersion}:jakarta"
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+    annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+
+    // Database
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:3.1.4'
+
+    // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'com.h2database:h2'
+    testCompileOnly 'org.projectlombok:lombok:1.18.30'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
 }
 
+// QueryDSL 설정
+def querydslDir = "$buildDir/generated/querydsl"
 
-/* ---------- Generated Q-Class 경로 ---------- */
 sourceSets {
-    main.java.srcDirs += "$buildDir/generated/sources/annotationProcessor/java/main"
+    main.java.srcDirs += [ querydslDir ]
+}
+
+tasks.withType(JavaCompile) {
+    options.annotationProcessorGeneratedSourcesDirectory = file(querydslDir)
+}
+
+clean.doLast {
+    file(querydslDir).deleteDir()
+}
+
+// 컴파일 옵션
+compileJava {
+    options.compilerArgs = [
+            '-parameters',
+            '-Amapstruct.defaultComponentModel=spring',
+            '-Amapstruct.unmappedTargetPolicy=IGNORE'
+    ]
 }
 
 test {

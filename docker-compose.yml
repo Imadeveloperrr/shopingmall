@@ -15,10 +15,28 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       ALLOW_PLAINTEXT_LISTENER: "yes"
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
     networks: [ appnet ]
     ports:
       - "9092:9092"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --list --bootstrap-server localhost:9092"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+
+  # ――――――[Kafka Init] ――――――
+  kafka-init:
+    image: bitnami/kafka:3.4
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks: [ appnet ]
+    volumes:
+      - ./docker/init-kafka.sh:/init-kafka.sh
+    entrypoint: [ "/bin/bash", "/init-kafka.sh" ]
+    restart: "no" # 한 번만 실행
 
   # ――――――[Elasticsearch] ――――――
   elasticsearch:
@@ -42,6 +60,7 @@ services:
     container_name: spring-app
     depends_on:
       - kafka
+      - kafka-init # 토픽 초기화 후 시작
       - db
       - ml
       - redis
@@ -58,6 +77,7 @@ services:
     ports:
       - "8080:8080"
     networks: [ appnet ]
+    restart: unless-stopped
 
   # ――――――[ML Service] ――――――
   ml:
@@ -84,6 +104,11 @@ services:
     ports:
       - "5432:5432"
     networks: [ appnet ]
+    healthcheck: # 기존 healthcheck 유지
+      test: [ "CMD-SHELL", "pg_isready -U sungho -d app" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # ――――――[Redis] ――――――
   redis:

@@ -8,6 +8,7 @@ import org.mapstruct.*;
 import org.springframework.context.annotation.Primary;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 @Primary
@@ -22,10 +23,14 @@ public interface ConversationMapper {
     @Mapping(source = "messageType", target = "role")
     MessageDto toDto(ConversationMessage msg);
 
-    /* List 변환 */
-    @Named("messagesToDtos")                               // 이름 맞춤
-    default List<MessageDto> messagesToDtos(List<ConversationMessage> list) {
-        return list == null ? null
-                : list.stream().map(this::toDto).toList();
+    /* List 변환 - default 메서드로 구현 제공 */
+    @Named("messagesToDtos")  // 이 어노테이션을 추가해야 합니다
+    default List<MessageDto> messagesToDtos(List<ConversationMessage> messages) {
+        if (messages == null) {
+            return null;
+        }
+        return messages.stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 }
