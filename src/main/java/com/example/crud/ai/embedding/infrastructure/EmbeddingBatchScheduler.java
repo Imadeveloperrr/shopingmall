@@ -27,8 +27,14 @@ public class EmbeddingBatchScheduler {
     public void onApplicationReady() {
         log.info("애플리케이션 시작 - 누락된 임베딩 확인 중...");
         try {
+            Thread.sleep(5000);
+
             embeddingService.createMissingEmbeddings();
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
+            log.warn("임베딩 초기화 중단");
+            Thread.currentThread().interrupt();
+        }
+        catch (Exception e) {
             log.error("초기 임베딩 생성 실패", e);
         }
     }

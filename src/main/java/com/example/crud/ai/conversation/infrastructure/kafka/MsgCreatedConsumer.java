@@ -1,12 +1,12 @@
 package com.example.crud.ai.conversation.infrastructure.kafka;
 
-import com.example.crud.ai.conversation.domain.entity.Conversation;
 import com.example.crud.ai.conversation.domain.event.MsgCreatedPayload;
 import com.example.crud.ai.conversation.domain.repository.ConversationRepository;
 import com.example.crud.ai.es.model.EsMessageDoc;
 import com.example.crud.common.utility.Json;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(value = "kafka.consumers.enabled", havingValue = "true", matchIfMissing = true)
 public class MsgCreatedConsumer {
 
     private final ElasticsearchOperations esOps;
