@@ -1,22 +1,34 @@
+version: '3.8'
+
 services:
   # ――――――[Zookeeper] ――――――
   zookeeper:
     image: bitnami/zookeeper:3.8
     environment:
       ALLOW_ANONYMOUS_LOGIN: "yes"
-    networks: [ appnet ]
+    networks: [appnet]
+    healthcheck:
+      test: ["CMD", "zkServer.sh", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # ――――――[Kafka] ――――――
   kafka:
     image: bitnami/kafka:3.4
-    depends_on: [ zookeeper ]
+    depends_on:
+      zookeeper:
+        condition: service_healthy
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       ALLOW_PLAINTEXT_LISTENER: "yes"
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
-    networks: [ appnet ]
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true" # false에서 true로 변경
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_NUM_PARTITIONS: 3
+    networks: [appnet]
     ports:
       - "9092:9092"
     healthcheck:
@@ -32,63 +44,11 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-    networks: [ appnet ]
+    networks: [appnet]
     volumes:
       - ./docker/init-kafka.sh:/init-kafka.sh
-    entrypoint: [ "/bin/bash", "/init-kafka.sh" ]
-    restart: "no" # 한 번만 실행
-
-  # ――――――[Elasticsearch] ――――――
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
-    container_name: elasticsearch
-    environment:
-      - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - xpack.security.enabled=false
-    ports:
-      - "9200:9200"
-    networks: [ appnet ]
-    volumes:
-      - es_data:/usr/share/elasticsearch/data
-
-  # ――――――[Backend] ――――――
-  backend:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-    container_name: spring-app
-    depends_on:
-      - kafka
-      - kafka-init # 토픽 초기화 후 시작
-      - db
-      - ml
-      - redis
-      - elasticsearch
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/app
-      SPRING_DATASOURCE_USERNAME: sungho
-      SPRING_DATASOURCE_PASSWORD: "0000"
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      EMBEDDING_SERVICE_URL: http://ml:8000
-      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
-      SPRING_REDIS_HOST: redis
-    ports:
-      - "8080:8080"
-    networks: [ appnet ]
-    restart: unless-stopped
-
-  # ――――――[ML Service] ――――――
-  ml:
-    build: ./ml-service
-    container_name: ml-service
-    environment:
-      REDIS_URL: redis://redis:6379/0
-    depends_on: [ redis ]
-    ports:
-      - "8000:8000"
-    networks: [ appnet ]
+    entrypoint: ["/bin/bash", "/init-kafka.sh"]
+    restart: "no"
 
   # ――――――[PostgreSQL with pgvector] ――――――
   db:
@@ -103,12 +63,13 @@ services:
       - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-    networks: [ appnet ]
-    healthcheck: # 기존 healthcheck 유지
-      test: [ "CMD-SHELL", "pg_isready -U sungho -d app" ]
+    networks: [appnet]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sungho -d app"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   # ――――――[Redis] ――――――
   redis:
@@ -119,7 +80,83 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    networks: [ appnet ]
+    networks: [appnet]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ――――――[Elasticsearch] ――――――
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    networks: [appnet]
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # ――――――[ML Service] ――――――
+  ml:
+    build: ./ml-service
+    container_name: ml-service
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    networks: [appnet]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ――――――[Backend] ――――――
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: spring-app
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      ml:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/app
+      SPRING_DATASOURCE_USERNAME: sungho
+      SPRING_DATASOURCE_PASSWORD: "0000"
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EMBEDDING_SERVICE_URL: http://ml:8000
+      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
+      SPRING_REDIS_HOST: redis
+    ports:
+      - "8080:8080"
+    networks: [appnet]
+    restart: unless-stopped
 
 volumes:
   db_data:

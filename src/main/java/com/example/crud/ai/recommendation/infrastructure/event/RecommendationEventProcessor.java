@@ -16,6 +16,7 @@ import com.example.crud.entity.ProductOption;
 import com.example.crud.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -39,6 +40,7 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(name = "kafka.consumers.enabled", havingValue = "true", matchIfMissing = true)
 public class RecommendationEventProcessor {
 
     private final EnhancedRecommendationService recommendationService;

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,6 +26,7 @@ public class OutboxDispatcher {
 
     private final KafkaTemplate<String, String> kafka;
     private final OutboxRepository repo;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Value("${outbox.dispatcher.batch-size:500}")
     private int batchSize;
@@ -32,21 +34,29 @@ public class OutboxDispatcher {
     @Value("${outbox.dispatcher.timeout-seconds:2}")
     private int timeoutSeconds;
 
+    // 백오프 전략을 위한 변수
+
+
     /** 설정된 주기로 미전송 메시지를 Kafka로 전송 */
     @Scheduled(fixedDelayString = "${outbox.dispatcher.delay:200}")
     public void flush() {
-        // 동시에 여러 인스턴스가 실행되는 것을 방지하기 위한 로깅
-        log.debug("[Outbox] Starting dispatch cycle");
+        try {
+            // 동시에 여러 인스턴스가 실행되는 것을 방지하기 위한 로깅
+            log.debug("[Outbox] Starting dispatch cycle");
 
-        // 미전송 레코드 조회 (트랜잭션 분리)
-        List<Outbox> batch = pollUnsent();
+            // 미전송 레코드 조회 (트랜잭션 분리)
+            List<Outbox> batch = pollUnsent();
 
-        if (batch.isEmpty()) {
-            return;
+            if (batch.isEmpty()) {
+                return;
+            }
+
+            // Kafka 전송 및 상태 업데이트 (별도 로직)
+            processOutboxBatch(batch);
+        } catch (Exception e) {
+            log.debug("[Outbox] No messages to dispatch or error occurred: {}", e.getMessage());
         }
 
-        // Kafka 전송 및 상태 업데이트 (별도 로직)
-        processOutboxBatch(batch);
     }
 
     /**

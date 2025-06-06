@@ -68,6 +68,11 @@ public class ProductEmbeddingService {
 
         log.info("임베딩 생성 대상 상품 수: {}", productsWithoutEmbedding.size());
 
+        if (productsWithoutEmbedding.isEmpty()) {
+            log.info("생성할 임베딩 데이터가 존재하지 않습니다.");
+            return ;
+        }
+
         for (Product product : productsWithoutEmbedding) {
             createAndSaveEmbedding(product);
             // 과도한 요청 방지를 위한 딜레이
