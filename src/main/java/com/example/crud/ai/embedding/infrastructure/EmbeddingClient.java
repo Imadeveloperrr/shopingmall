@@ -12,6 +12,12 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * ML 서비스와 통신하는 임베딩 클라이언트
+ * - 캐싱 기능 강화
+ * - 배치 처리 지원
+ * - 장애 대응 개선
+ */
 @Component
 @Slf4j
 public class EmbeddingClient {

@@ -1,7 +1,8 @@
 package com.example.crud.ai.outbox.infrastructure;
 
 import com.example.crud.ai.outbox.domain.entity.Outbox;
-import com.example.crud.ai.conversation.infrastructure.persistence.OutboxRepository;
+import com.example.crud.ai.outbox.domain.repository.OutboxRepository;
+import com.example.crud.ai.outbox.infrastructure.monitoring.OutboxMetrics;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -13,11 +14,15 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 @RequiredArgsConstructor
@@ -26,91 +31,119 @@ public class OutboxDispatcher {
 
     private final KafkaTemplate<String, String> kafka;
     private final OutboxRepository repo;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final OutboxMetrics metrics;
 
-    @Value("${outbox.dispatcher.batch-size:500}")
-    private int batchSize;
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
+    private static final String OUTBOX_LOCK_KEY = "outbox:dispatcher:lock";
 
-    @Value("${outbox.dispatcher.timeout-seconds:2}")
-    private int timeoutSeconds;
-
-    // 백오프 전략을 위한 변수
-
-
-    /** 설정된 주기로 미전송 메시지를 Kafka로 전송 */
-    @Scheduled(fixedDelayString = "${outbox.dispatcher.delay:200}")
-    public void flush() {
-        try {
-            // 동시에 여러 인스턴스가 실행되는 것을 방지하기 위한 로깅
-            log.debug("[Outbox] Starting dispatch cycle");
-
-            // 미전송 레코드 조회 (트랜잭션 분리)
-            List<Outbox> batch = pollUnsent();
-
-            if (batch.isEmpty()) {
-                return;
-            }
-
-            // Kafka 전송 및 상태 업데이트 (별도 로직)
-            processOutboxBatch(batch);
-        } catch (Exception e) {
-            log.debug("[Outbox] No messages to dispatch or error occurred: {}", e.getMessage());
+    @Scheduled(fixedDelayString = "${outbox.dispatcher.delay:5000}")
+    public void dispatch() {
+        // 이미 실행 중이면 스킵
+        if (!isRunning.compareAndSet(false, true)) {
+            return;
         }
 
-    }
+        // 분산 락 획득
+        Boolean lockAcquired = redisTemplate.opsForValue().setIfAbsent(OUTBOX_LOCK_KEY, "locked", Duration.ofMinutes(1));
 
-    /**
-     * 미전송 레코드를 조회하는 메서드 (DB 트랜잭션)
-     */
-    @Transactional(readOnly = true)
-    public List<Outbox> pollUnsent() {
+        if (!Boolean.TRUE.equals(lockAcquired)) {
+            isRunning.set(false);
+            return;
+        }
+
         try {
-            return repo.pollUnsent(batchSize);
-        } catch (Exception e) {
-            log.error("[Outbox] Failed to poll unsent messages: {}", e.getMessage(), e);
-            return new ArrayList<>();
+            processMessages();
+        } finally {
+            redisTemplate.delete(OUTBOX_LOCK_KEY);
+            isRunning.set(false);
         }
     }
 
-    /**
-     * 각 Outbox 메시지를 Kafka로 전송하고 성공한 메시지만 상태 업데이트
-     */
-    public void processOutboxBatch(List<Outbox> batch) {
-        List<Long> successIds = new ArrayList<>();
+    private void processMessages() {
+        Long pendingCount = repo.countPendingMessages();
 
-        for (Outbox ob : batch) {
+        if (pendingCount == 0) {
+            log.trace("No pending messages");
+            return;
+        }
+
+        log.info("Processing {} pending messages", pendingCount);
+
+        int totalProcessed = 0;
+        int totalFailed = 0;
+
+        while (totalProcessed + totalFailed < pendingCount) {
+            List<Outbox> batch = repo.pollUnsent(100);
+            if (batch.isEmpty()) break;
+
+            Map<Boolean, Integer> results = processBatch(batch);
+            totalProcessed += results.getOrDefault(true, 0);
+            totalFailed += results.getOrDefault(false, 0);
+        }
+
+        // 매트릭 기록
+        metrics.recordProcessed(totalProcessed);
+        metrics.recordFailed(totalFailed);
+
+        log.info("Dispatch complete: processed={}, failed={}", totalProcessed, totalFailed);
+    }
+
+    private Map<Boolean, Integer> processBatch(List<Outbox> batch) {
+        Map<Long, CompletableFuture<SendResult<String, String>>> futures = new HashMap<>();
+
+        // Kafka로 비동기 전송
+        for (Outbox msg : batch) {
             try {
-                CompletableFuture<SendResult<String, String>> fut =
-                        kafka.send(ob.getTopic(), ob.getPayload());
-
-                SendResult<String, String> res = fut.get(timeoutSeconds, TimeUnit.SECONDS);
-                RecordMetadata m = res.getRecordMetadata();
-                log.debug("[Outbox] sent to Kafka {}-{} offset {}", m.topic(), m.partition(), m.offset());
-
-                // 성공한 메시지 ID 추가
-                successIds.add(ob.getId());
+                CompletableFuture<SendResult<String, String>> future = kafka.send(
+                        msg.getTopic(),
+                        String.valueOf(msg.getId()), // 파티션 키
+                        msg.getPayload()
+                );
+                futures.put(msg.getId(), future);
             } catch (Exception e) {
-                log.error("[Outbox] Kafka send fail id={}: {}", ob.getId(), e.getMessage());
-                // 실패한 메시지는 다음 실행 시 재처리
+                log.error("Failed to send message {}: {}", msg.getId(), e.getMessage());
+                futures.put(msg.getId(), CompletableFuture.failedFuture(e));
             }
         }
 
-        // 성공한 메시지만 상태 업데이트 (별도 트랜잭션)
+        // 결과 수집
+        List<Long> successIds = new ArrayList<>();
+        List<Long> failedIds = new ArrayList<>();
+
+        CompletableFuture.allOf(futures.values().toArray(new CompletableFuture[0])).join();
+
+        futures.forEach((id, future) -> {
+            try {
+                future.get(1, TimeUnit.SECONDS);
+                successIds.add(id);
+            } catch (Exception e) {
+                failedIds.add(id);
+                log.warn("Message: {} failed: {}", id, e.getMessage());
+            }
+        });
+
+        // DB 업데이트
         if (!successIds.isEmpty()) {
-            updateSentStatus(successIds);
+            updateSuccess(successIds);
         }
+        if (!failedIds.isEmpty()) {
+            updateFailed(failedIds);
+        }
+
+        Map<Boolean, Integer> results = new HashMap<>();
+        results.put(true, successIds.size());
+        results.put(false, failedIds.size());
+        return results;
     }
 
-    /**
-     * 성공한 메시지의 상태를 업데이트 (DB 트랜잭션)
-     */
     @Transactional
-    public void updateSentStatus(List<Long> ids) {
-        try {
-            repo.markSent(ids, Instant.now());
-            log.debug("[Outbox] marked {} messages as sent", ids.size());
-        } catch (Exception e) {
-            log.error("[Outbox] Failed to update message status: {}", e.getMessage(), e);
-        }
+    protected void updateSuccess(List<Long> ids) {
+        repo.markSent(ids, Instant.now());
+    }
+
+    @Transactional
+    protected void updateFailed(List<Long> ids) {
+        repo.markFailed(ids, "Kafka send failed", Instant.now());
     }
 }
