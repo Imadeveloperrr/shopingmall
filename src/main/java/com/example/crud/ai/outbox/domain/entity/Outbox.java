@@ -7,7 +7,11 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.Instant;
 
 @Entity
-@Table(name = "outbox", indexes = @Index(name = "idx_outbox_status", columnList = "sent"))
+@Table(name = "outbox",
+        indexes = {
+            @Index(name = "idx_outbox_status", columnList = "sent"),
+            @Index(name = "idx_outbox_created", columnList = "createdAt")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,9 +37,19 @@ public class Outbox {
     @Column
     private Instant sentAt;        // null = 미전송
 
+    @Column
+    private Instant lastFailedAt; // 마지막 실패날짜
+
     @Column(nullable = false)
     @Builder.Default
     private boolean sent = false;  // 전송 여부
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer retryCount = 0;// 재시도 횟수 증가
+
+    @Column
+    private String errorMessage; // 에러 베시지 저장
 
     /*── 정적 팩토리 ──*/
     public static Outbox of(String topic, String payload, Instant now) {
@@ -47,8 +61,4 @@ public class Outbox {
                 .build();
     }
 
-    public void markSent(Instant ts) {
-        this.sent = true;
-        this.sentAt = ts;
-    }
 }

@@ -5,7 +5,7 @@ import com.example.crud.ai.conversation.domain.entity.ConversationMessage;
 import com.example.crud.ai.conversation.domain.event.MsgCreatedPayload;
 import com.example.crud.ai.outbox.domain.entity.Outbox;
 import com.example.crud.ai.conversation.domain.repository.ConversationRepository;
-import com.example.crud.ai.conversation.infrastructure.persistence.OutboxRepository;
+import com.example.crud.ai.outbox.domain.repository.OutboxRepository;
 import com.example.crud.common.utility.Json;
 import com.example.crud.enums.MessageType;
 import lombok.RequiredArgsConstructor;

@@ -5,12 +5,16 @@ import com.example.crud.entity.Product;
 import com.example.crud.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * 상품 임베딩 생성 및 관리 서비스
@@ -24,9 +28,12 @@ public class ProductEmbeddingService {
 
     private final EmbeddingClient embeddingClient;
     private final ProductRepository productRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    private static final String BATCH_QUEUE_KEY = "embedding:batch:queue";
 
     /**
-     * 단일 상품의 임베딩 생성 및 저장
+     * 비동기 임베딩 생성 (개선된 버전)
      */
     @Transactional
     public void createAndSaveEmbedding(Product product) {
@@ -56,7 +63,70 @@ public class ProductEmbeddingService {
     @Async
     @Transactional
     public void createAndSaveEmbeddingAsync(Long productId) {
-        productRepository.findById(productId).ifPresent(this::createAndSaveEmbedding);
+        try {
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+
+            // 이미 임베딩 있으면 스킵
+            if (product.getDescriptionVector() != null) {
+                return;
+            }
+
+            // 배치 큐 추가
+            redisTemplate.opsForList().rightPush(BATCH_QUEUE_KEY, productId);
+
+            // 큐 크기 확인 후 배치 처리
+            Long queueSize = redisTemplate.opsForList().size(BATCH_QUEUE_KEY);
+            if (queueSize != null && queueSize >= 10) {
+                processBatchEmbeddings();
+            }
+        } catch (Exception e) {
+            log.error("Failed Embedding created: productId={}", productId, e);
+        }
+    }
+
+    /**
+     * 배치로 임베딩 처리
+     */
+    @Scheduled(fixedDelay = 30000)
+    public void processBatchEmbeddings() {
+        try {
+            List<Object> productIds = redisTemplate.opsForList().range(BATCH_QUEUE_KEY, 0, 49); // Max 50
+
+            if (productIds == null || productIds.isEmpty()) {
+                return;
+            }
+
+            // 상품 정보 조회
+            List<Product> products = productRepository.findAllById(
+                    productIds.stream()
+                            .map(id -> Long.parseLong(id.toString()))
+                            .collect(Collectors.toList())
+            );
+
+            // 텍스트 추출
+            List<String> texts = products.stream()
+                    .map(this::buildEmbeddingText)
+                    .collect(Collectors.toList());
+
+            // 배치 임베딩 생성
+            List<float[]> embeddings = embeddingClient.batchEmbed(texts)
+                    .block(Duration.ofSeconds(10));
+
+            if (embeddings != null && embeddings.size() == products.size()) {
+                // 임베딩 저장
+                for (int i = 0; i < products.size(); i++) {
+                    products.get(i).setDescriptionVector(embeddings.get(i));
+                }
+                productRepository.saveAll(products);
+
+                // 처리된 항목 제거
+                redisTemplate.opsForList().trim(BATCH_QUEUE_KEY, productIds.size(), -1);
+            }
+
+        } catch (Exception e) {
+            log.error("배치 임베딩 처리 실패", e);
+        }
     }
 
     /**
