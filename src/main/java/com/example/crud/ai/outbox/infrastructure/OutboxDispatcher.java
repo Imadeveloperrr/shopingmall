@@ -46,6 +46,7 @@ public class OutboxDispatcher {
 
         // 분산 락 획득
         Boolean lockAcquired = redisTemplate.opsForValue().setIfAbsent(OUTBOX_LOCK_KEY, "locked", Duration.ofMinutes(1));
+        // true 락 획득 성공, false 락 획득 실패
 
         if (!Boolean.TRUE.equals(lockAcquired)) {
             isRunning.set(false);
@@ -91,7 +92,8 @@ public class OutboxDispatcher {
 
     private Map<Boolean, Integer> processBatch(List<Outbox> batch) {
         Map<Long, CompletableFuture<SendResult<String, String>>> futures = new HashMap<>();
-
+        // CompletableFuture : 비동기 작업의 결과를 나타내는 객체
+        // SendResult : Kafka 전송 결과 정보. ( 어느 파티션에 저장 되었는지 등 )
         // Kafka로 비동기 전송
         for (Outbox msg : batch) {
             try {
@@ -111,6 +113,15 @@ public class OutboxDispatcher {
         List<Long> successIds = new ArrayList<>();
         List<Long> failedIds = new ArrayList<>();
 
+        // allOf : 메시지가 다 도착할때까지 대기, join : 모든 메시지가 도착할때가지 스레드 멈춤.
+        /**
+         * allOf : 메시지가 다 도착할때가지 대기
+         * join : 기다리는 행동. 스레드 멈춤
+         * allOf 메서드는 배열울 요구하기 때문에 toArray로 Collection을 배열로 변환하는 과정.
+         * futures.values() : Map에서 모든 CompletableFuture 객체들을 꺼내는 과정
+         *
+         * 즉 모든 전송이 완료될떄까지 대기
+         */
         CompletableFuture.allOf(futures.values().toArray(new CompletableFuture[0])).join();
 
         futures.forEach((id, future) -> {
