@@ -3,17 +3,11 @@ package com.example.crud.ai.recommendation.infrastructure.event;
 import com.example.crud.ai.conversation.domain.entity.Conversation;
 import com.example.crud.ai.conversation.domain.event.MsgCreatedPayload;
 import com.example.crud.ai.conversation.domain.repository.ConversationRepository;
-import com.example.crud.ai.embedding.domain.repository.ProductVectorRepository;
-import com.example.crud.ai.es.service.ConversationSearchService;
-import com.example.crud.ai.recommendation.application.EnhancedRecommendationService;
-import com.example.crud.ai.recommendation.domain.dto.ProductMatch;
+import com.example.crud.ai.recommendation.application.IntegratedRecommendationService;
 import com.example.crud.ai.recommendation.infrastructure.RecommendationCacheService;
 import com.example.crud.common.utility.Json;
-import com.example.crud.data.product.dto.ProductOptionDto;
 import com.example.crud.data.product.dto.ProductResponseDto;
-import com.example.crud.entity.Product;
-import com.example.crud.entity.ProductOption;
-import com.example.crud.repository.ProductRepository;
+import com.example.crud.enums.MessageType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -22,78 +16,107 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
-import java.text.NumberFormat;
-import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
- * 이벤트 기반 추천 처리기
- * - 실시간 추천 업데이트
- * - 사용자 행동 추적
- * - A/B 테스트 지원
+ * 추천 관련 이벤트 처리
+ * - 메시지 생성 이벤트
+ * - 상품 조회 이벤트
+ * - 구매 이벤트
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty(name = "kafka.consumers.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(
+        value = "kafka.enabled",
+        havingValue = "true",
+        matchIfMissing = true
+)
 public class RecommendationEventProcessor {
 
-    private final EnhancedRecommendationService recommendationService;
+    private final IntegratedRecommendationService recommendationService; // 변경됨: 통합 서비스 사용
     private final RecommendationCacheService cacheService;
-    private final ConversationSearchService searchService;
-    private final KafkaTemplate<String, String> kafkaTemplate;
     private final ConversationRepository conversationRepository;
-    private final ProductRepository productRepository;
-    private final ProductVectorRepository productVectorRepository;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+
+    private static final String USER_INTERACTION_KEY = "user:interaction:";
+    private static final String PRODUCT_VIEW_KEY = "product:views:";
+    private static final String TRENDING_KEY = "recommendation:trending:products";
+    private static final String COLLABORATIVE_KEY = "recommendation:collaborative:";
 
     /**
      * 메시지 생성 이벤트 처리
-     * - 실시간 추천 업데이트
-     * - 트렌드 반영
+     * - 사용자 메시지 분석
+     * - 비동기 추천 생성
+     * - 선호도 업데이트
      */
-    @KafkaListener(topics = "conv-msg-created", groupId = "recommendation-processor")
-    public void processMessageEvent(String json) {
+    @KafkaListener(
+            topics = "conversation-messages",
+            groupId = "recommendation-processor",
+            containerFactory = "kafkaListenerContainerFactory"
+    )
+    public void processMessageCreated(String message) {
         try {
-            MsgCreatedPayload payload = Json.decode(json, MsgCreatedPayload.class);
+            MsgCreatedPayload payload = Json.decode(message, MsgCreatedPayload.class);
 
-            // 비동기로 추천 업데이트
-            updateRecommendationsAsync(payload);
+            if (!MessageType.USER.name().equals(payload.type().name())) {
+                return; // 사용자 메시지만 처리
+            }
 
-            // 트렌딩 키워드 업데이트
-            updateTrendingKeywords(payload.content());
+            log.debug("메시지 이벤트 처리: convId={}, content={}",
+                    payload.conversationId(), payload.content());
 
-            // 실시간 분석 이벤트 발행
-            publishAnalyticsEvent(payload);
+            // 대화 정보 조회
+            Conversation conversation = conversationRepository
+                    .findById(payload.conversationId())
+                    .orElse(null);
+
+            if (conversation != null && conversation.getMember() != null) {
+                Long userId = conversation.getMember().getNumber();
+
+                // 비동기로 추천 생성 (캐시 워밍)
+                generateAsyncRecommendations(userId, payload.content());
+
+                // 사용자 상호작용 기록
+                recordUserInteraction(userId, payload.content());
+            }
 
         } catch (Exception e) {
-            log.error("추천 이벤트 처리 실패", e);
+            log.error("메시지 이벤트 처리 실패", e);
         }
     }
 
     /**
      * 상품 조회 이벤트 처리
+     * - 조회수 증가
+     * - 트렌드 점수 업데이트
+     * - 협업 필터링 데이터 수집
      */
-    @KafkaListener(topics = "product-viewed", groupId = "recommendation-processor")
-    public void processProductViewEvent(String json) {
+    @KafkaListener(
+            topics = "product-views",
+            groupId = "recommendation-processor"
+    )
+    public void processProductView(String message) {
         try {
-            Map<String, Object> event = Json.decode(json, Map.class);
-            Long productId = ((Number) event.get("productId")).longValue();
-            Long userId = ((Number) event.get("userId")).longValue();
+            Map<String, Object> event = Json.decode(message, Map.class);
+            Long userId = Long.valueOf(event.get("userId").toString());
+            Long productId = Long.valueOf(event.get("productId").toString());
 
-            // 조회 기반 트렌딩 점수 업데이트
-            cacheService.updateTrendingProducts(productId, 1.0);
+            // 1. 조회수 증가
+            incrementProductViews(productId);
 
-            // 유사 상품 추천 생성 및 캐싱
-            generateAndCacheSimilarProducts(productId);
+            // 2. 트렌드 점수 업데이트
+            updateTrendingScore(productId);
 
-            // 사용자 행동 기록
-            recordUserBehavior(userId, "view", productId);
+            // 3. 협업 필터링 데이터 수집
+            if (userId != null) {
+                collectCollaborativeData(userId, productId, "view");
+            }
+
+            log.debug("상품 조회 처리 완료: userId={}, productId={}", userId, productId);
 
         } catch (Exception e) {
             log.error("상품 조회 이벤트 처리 실패", e);
@@ -102,24 +125,31 @@ public class RecommendationEventProcessor {
 
     /**
      * 구매 이벤트 처리
+     * - 구매 데이터 기반 추천 업데이트
+     * - 협업 필터링 강화
      */
-    @KafkaListener(topics = "order-completed", groupId = "recommendation-processor")
-    public void processOrderEvent(String json) {
+    @KafkaListener(
+            topics = "order-completed",
+            groupId = "recommendation-processor"
+    )
+    public void processPurchase(String message) {
         try {
-            Map<String, Object> event = Json.decode(json, Map.class);
-            Long userId = ((Number) event.get("userId")).longValue();
+            Map<String, Object> event = Json.decode(message, Map.class);
+            Long userId = Long.valueOf(event.get("userId").toString());
             List<Long> productIds = (List<Long>) event.get("productIds");
 
-            // 구매 기반 트렌딩 점수 대폭 증가
-            productIds.forEach(pid ->
-                    cacheService.updateTrendingProducts(pid, 10.0)
-            );
+            for (Long productId : productIds) {
+                // 1. 구매 기반 협업 필터링 데이터
+                collectCollaborativeData(userId, productId, "purchase");
 
-            // 사용자 추천 재계산 스케줄링
-            scheduleRecommendationUpdate(userId);
+                // 2. 구매 트렌드 반영
+                updateTrendingScore(productId, 5.0); // 구매는 더 높은 가중치
+            }
 
-            // 구매 패턴 분석
-            analyzeAndStorePurchasePattern(userId, productIds);
+            // 3. 구매 후 추천 갱신
+            refreshUserRecommendations(userId);
+
+            log.info("구매 이벤트 처리 완료: userId={}, products={}", userId, productIds);
 
         } catch (Exception e) {
             log.error("구매 이벤트 처리 실패", e);
@@ -127,468 +157,200 @@ public class RecommendationEventProcessor {
     }
 
     /**
-     * 비동기 추천 업데이트
+     * 비동기 추천 생성 (캐시 워밍)
+     * IntegratedRecommendationService 사용
      */
-    private void updateRecommendationsAsync(MsgCreatedPayload payload) {
-        // 실제로는 @Async 메서드나 별도 스레드풀 사용
-        new Thread(() -> {
-            try {
-                // 컨텍스트 구축
-                String context = searchService.buildRecommendationContext(
-                        payload.conversationId(), 10
+    private void generateAsyncRecommendations(Long userId, String message) {
+        try {
+            // 통합 추천 서비스 사용
+            List<ProductResponseDto> recommendations = recommendationService.recommend(userId, message);
+
+            // 캐시 저장은 서비스 내부에서 처리됨
+            log.debug("비동기 추천 생성 완료: userId={}, count={}",
+                    userId, recommendations.size());
+
+            // 추천 품질 메트릭 수집
+            updateRecommendationMetrics(userId, recommendations);
+
+        } catch (Exception e) {
+            log.warn("비동기 추천 생성 실패: userId={}", userId, e);
+        }
+    }
+
+    /**
+     * 사용자 상호작용 기록
+     */
+    private void recordUserInteraction(Long userId, String content) {
+        try {
+            String key = USER_INTERACTION_KEY + userId;
+            Map<String, Object> interaction = new HashMap<>();
+            interaction.put("content", content);
+            interaction.put("timestamp", System.currentTimeMillis());
+
+            // 리스트에 추가 (최근 100개만 유지)
+            redisTemplate.opsForList().leftPush(key, Json.encode(interaction));
+            redisTemplate.opsForList().trim(key, 0, 99);
+            redisTemplate.expire(key, 30, TimeUnit.DAYS);
+
+        } catch (Exception e) {
+            log.debug("상호작용 기록 실패: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 상품 조회수 증가
+     */
+    private void incrementProductViews(Long productId) {
+        try {
+            String key = PRODUCT_VIEW_KEY + LocalDateTime.now().toLocalDate();
+            redisTemplate.opsForHash().increment(key, productId.toString(), 1);
+            redisTemplate.expire(key, 7, TimeUnit.DAYS);
+
+        } catch (Exception e) {
+            log.debug("조회수 증가 실패: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 트렌드 점수 업데이트
+     */
+    private void updateTrendingScore(Long productId) {
+        updateTrendingScore(productId, 1.0);
+    }
+
+    private void updateTrendingScore(Long productId, double score) {
+        try {
+            // 시간 가중치 적용 (최근일수록 높은 점수)
+            double timeWeight = 1.0 / (1.0 + (System.currentTimeMillis() / (1000 * 60 * 60 * 24)));
+            double weightedScore = score * timeWeight;
+
+            redisTemplate.opsForZSet().incrementScore(TRENDING_KEY, productId.toString(), weightedScore);
+
+            // 상위 1000개만 유지
+            Long size = redisTemplate.opsForZSet().size(TRENDING_KEY);
+            if (size != null && size > 1000) {
+                redisTemplate.opsForZSet().removeRange(TRENDING_KEY, 0, size - 1001);
+            }
+
+        } catch (Exception e) {
+            log.debug("트렌드 점수 업데이트 실패: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 협업 필터링 데이터 수집
+     */
+    private void collectCollaborativeData(Long userId, Long productId, String action) {
+        try {
+            // 사용자별 상품 점수
+            String userKey = COLLABORATIVE_KEY + userId;
+            double score = "purchase".equals(action) ? 5.0 : 1.0;
+
+            redisTemplate.opsForHash().increment(userKey, productId.toString(), score);
+            redisTemplate.expire(userKey, 90, TimeUnit.DAYS);
+
+            // 상품별 사용자 점수 (역인덱스)
+            String productKey = COLLABORATIVE_KEY + "product:" + productId;
+            redisTemplate.opsForHash().increment(productKey, userId.toString(), score);
+            redisTemplate.expire(productKey, 90, TimeUnit.DAYS);
+
+            // 유사 사용자 찾기 및 추천 업데이트 (비동기)
+            updateSimilarUserRecommendations(userId, productId);
+
+        } catch (Exception e) {
+            log.debug("협업 필터링 데이터 수집 실패: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 유사 사용자 기반 추천 업데이트
+     */
+    private void updateSimilarUserRecommendations(Long userId, Long productId) {
+        try {
+            String productKey = COLLABORATIVE_KEY + "product:" + productId;
+            Map<Object, Object> userScores = redisTemplate.opsForHash().entries(productKey);
+
+            // 같은 상품을 본/구매한 다른 사용자들 찾기
+            for (Map.Entry<Object, Object> entry : userScores.entrySet()) {
+                Long otherUserId = Long.parseLong(entry.getKey().toString());
+
+                if (!otherUserId.equals(userId)) {
+                    // 다른 사용자가 본 상품들을 현재 사용자에게 추천
+                    copySimilarUserProducts(userId, otherUserId);
+                }
+            }
+
+        } catch (Exception e) {
+            log.debug("유사 사용자 추천 업데이트 실패: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 유사 사용자의 상품 복사
+     */
+    private void copySimilarUserProducts(Long targetUserId, Long sourceUserId) {
+        try {
+            String sourceKey = COLLABORATIVE_KEY + sourceUserId;
+            String targetKey = COLLABORATIVE_KEY + targetUserId;
+
+            Map<Object, Object> sourceProducts = redisTemplate.opsForHash().entries(sourceKey);
+
+            for (Map.Entry<Object, Object> entry : sourceProducts.entrySet()) {
+                // 낮은 가중치로 추가 (간접 추천)
+                redisTemplate.opsForHash().increment(
+                        targetKey,
+                        entry.getKey().toString(),
+                        Double.parseDouble(entry.getValue().toString()) * 0.1
                 );
-
-                // 새로운 추천 생성
-                List<ProductResponseDto> newRecommendations =
-                        recommendationService.recommendForUser(
-                                getUserIdFromConversation(payload.conversationId()),
-                                context
-                        );
-
-                // 추천 품질 평가
-                double quality = evaluateRecommendationQuality(newRecommendations);
-
-                if (quality > 0.7) { // 품질 임계값
-                    // 캐시 업데이트
-                    cacheService.cacheUserRecommendations(
-                            getUserIdFromConversation(payload.conversationId()),
-                            newRecommendations
-                    );
-                }
-
-            } catch (Exception e) {
-                log.error("비동기 추천 업데이트 실패", e);
-            }
-        }).start();
-    }
-
-    /**
-     * 실시간 분석 이벤트 발행
-     */
-    private void publishAnalyticsEvent(MsgCreatedPayload payload) {
-        Map<String, Object> analyticsEvent = new HashMap<>();
-        analyticsEvent.put("eventType", "message_created");
-        analyticsEvent.put("conversationId", payload.conversationId());
-        analyticsEvent.put("messageType", payload.type());
-        analyticsEvent.put("timestamp", System.currentTimeMillis());
-
-        // 키워드 추출
-        List<String> keywords = extractKeywords(payload.content());
-        analyticsEvent.put("keywords", keywords);
-
-        kafkaTemplate.send("analytics-events", Json.encode(analyticsEvent));
-    }
-
-    /**
-     * 사용자 행동 기록
-     */
-    private void recordUserBehavior(Long userId, String action, Long productId) {
-        Map<String, Object> behavior = new HashMap<>();
-        behavior.put("userId", userId);
-        behavior.put("action", action);
-        behavior.put("productId", productId);
-        behavior.put("timestamp", System.currentTimeMillis());
-
-        // Redis에 저장 (시계열 데이터)
-        String key = String.format("behavior:%d:%s", userId, action);
-        // redisTemplate.opsForList().leftPush(key, Json.encode(behavior));
-
-        // 행동 기반 추천 이벤트
-        kafkaTemplate.send("user-behavior", Json.encode(behavior));
-    }
-
-    /**
-     * 추천 품질 평가
-     */
-    private double evaluateRecommendationQuality(List<ProductResponseDto> recommendations) {
-        if (recommendations.isEmpty()) return 0.0;
-
-        // 다양성 점수
-        double diversityScore = calculateDiversityScore(recommendations);
-
-        // 관련성 점수 (평균 relevance)
-        double relevanceScore = recommendations.stream()
-                .mapToDouble(ProductResponseDto::getRelevance)
-                .average()
-                .orElse(0.0);
-
-        // 가격 분포 점수
-        double priceDistributionScore = calculatePriceDistributionScore(recommendations);
-
-        return (diversityScore * 0.3 + relevanceScore * 0.5 + priceDistributionScore * 0.2);
-    }
-
-    // === 헬퍼 메서드들 ===
-
-    private void updateTrendingKeywords(String content) {
-        try {
-            // 키워드 추출
-            List<String> keywords = extractKeywords(content);
-
-            // Redis에 트렌딩 키워드 업데이트
-            String trendingKey = "trending:keywords:" + LocalDate.now();
-
-            for (String keyword : keywords) {
-                redisTemplate.opsForZSet().incrementScore(trendingKey, keyword, 1.0);
-            }
-
-            // 24시간 후 만료
-            redisTemplate.expire(trendingKey, Duration.ofDays(1));
-
-            // 상위 100개만 유지
-            Long size = redisTemplate.opsForZSet().size(trendingKey);
-            if (size != null && size > 100) {
-                redisTemplate.opsForZSet().removeRange(trendingKey, 0, size - 101);
             }
 
         } catch (Exception e) {
-            log.error("트렌딩 키워드 업데이트 실패", e);
+            log.debug("유사 사용자 상품 복사 실패: {}", e.getMessage());
         }
     }
 
-    private void generateAndCacheSimilarProducts(Long productId) {
+    /**
+     * 사용자 추천 갱신
+     */
+    private void refreshUserRecommendations(Long userId) {
         try {
-            // 상품 정보 조회
-            Product product = productRepository.findById(productId).orElse(null);
-            if (product == null || product.getDescriptionVector() == null) {
-                return;
-            }
+            // 캐시 무효화
+            cacheService.invalidateUserCache(userId);
 
-            // 유사 상품 검색
-            List<ProductMatch> similarMatches = productVectorRepository
-                    .findTopNByCategory(product.getDescriptionVector(),
-                            product.getCategory().name(),
-                            20);
-
-            // 자기 자신 제외
-            List<ProductResponseDto> similarProducts = similarMatches.stream()
-                    .filter(match -> !match.id().equals(productId))
-                    .limit(10)
-                    .map(match -> {
-                        Product p = productRepository.findById(match.id()).orElse(null);
-                        if (p != null) {
-                            ProductResponseDto dto = mapProductToDto(p);
-                            dto.setRelevance(match.score());
-                            return dto;
-                        }
-                        return null;
-                    })
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-
-            // 캐싱
-            cacheService.cacheSimilarProducts(productId, similarProducts);
-
-        } catch (Exception e) {
-            log.error("유사 상품 생성 및 캐싱 실패: productId={}", productId, e);
-        }
-    }
-
-    private void scheduleRecommendationUpdate(Long userId) {
-        try {
-            // 추천 재계산 작업을 지연 실행 (5분 후)
-            String jobKey = "rec:update:job:" + userId;
-
-            // 이미 스케줄된 작업이 있는지 확인
-            Boolean exists = redisTemplate.hasKey(jobKey);
-            if (Boolean.TRUE.equals(exists)) {
-                return; // 이미 예약됨
-            }
-
-            // 작업 예약
-            Map<String, Object> job = new HashMap<>();
-            job.put("userId", userId);
-            job.put("scheduledAt", System.currentTimeMillis());
-            job.put("executeAt", System.currentTimeMillis() + 300000); // 5분 후
-
-            redisTemplate.opsForValue().set(jobKey, job, Duration.ofMinutes(10));
-
-            // 별도 스레드에서 실행
-            CompletableFuture.delayedExecutor(5, TimeUnit.MINUTES).execute(() -> {
-                try {
-                    // 사용자 추천 재계산
-                    List<ProductResponseDto> newRecommendations =
-                            recommendationService.recommendForUser(userId, "");
-
-                    // 캐시 업데이트
-                    cacheService.cacheUserRecommendations(userId, newRecommendations);
-
-                    // 작업 완료 후 키 삭제
-                    redisTemplate.delete(jobKey);
-
-                } catch (Exception e) {
-                    log.error("추천 업데이트 실패: userId={}", userId, e);
-                }
-            });
-
-        } catch (Exception e) {
-            log.error("추천 업데이트 스케줄링 실패: userId={}", userId, e);
-        }
-    }
-
-    private void analyzeAndStorePurchasePattern(Long userId, List<Long> productIds) {
-        try {
-            // 구매한 상품들의 공통 특성 분석
-            List<Product> products = productRepository.findAllById(productIds);
-
-            Map<String, Object> pattern = new HashMap<>();
-
-            // 1. 카테고리 분포
-            Map<String, Long> categoryCount = products.stream()
-                    .collect(Collectors.groupingBy(
-                            p -> p.getCategory().getGroupName(),
-                            Collectors.counting()
-                    ));
-            pattern.put("categories", categoryCount);
-
-            // 2. 가격대 분석
-            IntSummaryStatistics priceStats = products.stream()
-                    .mapToInt(Product::getPrice)
-                    .summaryStatistics();
-            pattern.put("avgPrice", priceStats.getAverage());
-            pattern.put("minPrice", priceStats.getMin());
-            pattern.put("maxPrice", priceStats.getMax());
-
-            // 3. 브랜드 선호도
-            Map<String, Long> brandCount = products.stream()
-                    .collect(Collectors.groupingBy(
-                            Product::getBrand,
-                            Collectors.counting()
-                    ));
-            pattern.put("brands", brandCount);
-
-            // 4. 색상 선호도
-            Map<String, Long> colorCount = products.stream()
-                    .flatMap(p -> p.getProductOptions().stream())
-                    .collect(Collectors.groupingBy(
-                            ProductOption::getColor,
-                            Collectors.counting()
-                    ));
-            pattern.put("colors", colorCount);
-
-            // 5. 구매 시간 패턴
-            pattern.put("purchaseTime", LocalDateTime.now());
-            pattern.put("dayOfWeek", LocalDate.now().getDayOfWeek().name());
-
-            // Redis에 저장 (시계열 데이터)
-            String patternKey = "purchase:pattern:" + userId + ":" + System.currentTimeMillis();
-            redisTemplate.opsForValue().set(patternKey, pattern, Duration.ofDays(90));
-
-            // 사용자 구매 이력 업데이트
-            String historyKey = "user:purchased:" + userId;
-            for (Long productId : productIds) {
-                redisTemplate.opsForList().leftPush(historyKey, productId.toString());
-            }
-            redisTemplate.expire(historyKey, Duration.ofDays(365));
-
-            // 구매 패턴 이벤트 발행
+            // 새로운 추천 생성 트리거
             Map<String, Object> event = new HashMap<>();
             event.put("userId", userId);
-            event.put("pattern", pattern);
+            event.put("action", "refresh");
             event.put("timestamp", System.currentTimeMillis());
 
-            kafkaTemplate.send("purchase-pattern-analyzed", Json.encode(event));
+            kafkaTemplate.send("recommendation-refresh", Json.encode(event));
 
         } catch (Exception e) {
-            log.error("구매 패턴 분석 실패: userId={}", userId, e);
+            log.warn("추천 갱신 실패: userId={}", userId, e);
         }
     }
 
-    private Long getUserIdFromConversation(Long conversationId) {
+    /**
+     * 추천 메트릭 업데이트
+     */
+    private void updateRecommendationMetrics(Long userId, List<ProductResponseDto> recommendations) {
         try {
-            // Redis 캐시 확인
-            String cacheKey = "conv:user:" + conversationId;
-            Object cached = redisTemplate.opsForValue().get(cacheKey);
+            String metricsKey = "metrics:recommendation:" + LocalDateTime.now().toLocalDate();
 
-            if (cached != null) {
-                return Long.parseLong(cached.toString());
-            }
+            // 일별 추천 생성 횟수
+            redisTemplate.opsForHash().increment(metricsKey, "total_generated", 1);
 
-            // DB 조회
-            Conversation conversation = conversationRepository.findById(conversationId)
-                    .orElse(null);
+            // 사용자별 추천 횟수
+            redisTemplate.opsForHash().increment(metricsKey, "user:" + userId, 1);
 
-            if (conversation != null && conversation.getMember() != null) {
-                Long userId = conversation.getMember().getNumber();
+            // 평균 추천 개수
+            redisTemplate.opsForHash().put(metricsKey, "avg_count:" + userId, recommendations.size());
 
-                // 캐시 저장
-                redisTemplate.opsForValue().set(cacheKey, userId.toString(),
-                        Duration.ofHours(1));
-
-                return userId;
-            }
+            // TTL 설정
+            redisTemplate.expire(metricsKey, 30, TimeUnit.DAYS);
 
         } catch (Exception e) {
-            log.error("대화에서 사용자 ID 조회 실패: conversationId={}", conversationId, e);
+            log.debug("메트릭 업데이트 실패: {}", e.getMessage());
         }
-
-        return null;
-    }
-
-    private List<String> extractKeywords(String content) {
-        // 형태소 분석 기반 키워드 추출
-        // 실제로는 KoNLPy 등의 형태소 분석기 사용
-
-        List<String> keywords = new ArrayList<>();
-
-        try {
-            // 간단한 키워드 추출 (공백 기준 분리 + 필터링)
-            String cleanContent = content.toLowerCase()
-                    .replaceAll("[^가-힣a-z0-9\\s]", "");
-
-            String[] words = cleanContent.split("\\s+");
-
-            // 상품 관련 키워드 사전
-            Set<String> productKeywords = Set.of(
-                    // 카테고리
-                    "상의", "하의", "아우터", "원피스", "가방", "신발", "악세서리",
-                    // 스타일
-                    "캐주얼", "포멀", "스포티", "빈티지", "모던", "클래식", "미니멀",
-                    // 속성
-                    "편안한", "따뜻한", "시원한", "가벼운", "부드러운", "세련된",
-                    // 색상
-                    "검정", "흰색", "회색", "네이비", "베이지", "카키", "데님",
-                    // 상황
-                    "데일리", "출근", "주말", "여행", "운동", "데이트", "모임"
-            );
-
-            for (String word : words) {
-                if (word.length() > 1) {
-                    // 사전에 있는 키워드
-                    if (productKeywords.contains(word)) {
-                        keywords.add(word);
-                    }
-                    // 브랜드명이나 특정 단어 패턴
-                    else if (word.matches(".*[가-힣]+(룩|핏|스타일)$")) {
-                        keywords.add(word);
-                    }
-                }
-            }
-
-        } catch (Exception e) {
-            log.error("키워드 추출 실패", e);
-        }
-
-        return keywords.stream()
-                .distinct()
-                .limit(10)
-                .collect(Collectors.toList());
-    }
-
-    private double calculateDiversityScore(List<ProductResponseDto> products) {
-        if (products.size() < 2) return 0.0;
-
-        try {
-            // 1. 카테고리 다양성
-            long uniqueCategories = products.stream()
-                    .map(ProductResponseDto::getCategory)  // String 타입이므로 직접 사용
-                    .distinct()
-                    .count();
-            double categoryDiversity = (double) uniqueCategories / products.size();
-
-            // 2. 가격 분포 다양성
-            List<Integer> prices = products.stream()
-                    .map(p -> parsePrice(p.getPrice()))  // String을 Integer로 변환
-                    .sorted()
-                    .collect(Collectors.toList());
-
-            double priceRange = prices.get(prices.size() - 1) - prices.get(0);
-            double avgPrice = prices.stream().mapToInt(Integer::intValue).average().orElse(0);
-            double priceDiversity = priceRange / (avgPrice + 1);
-
-            // 3. 브랜드 다양성
-            long uniqueBrands = products.stream()
-                    .map(ProductResponseDto::getBrand)
-                    .distinct()
-                    .count();
-            double brandDiversity = (double) uniqueBrands / products.size();
-
-            // 가중 평균
-            return (categoryDiversity * 0.4 +
-                    Math.min(1.0, priceDiversity * 0.3) +
-                    brandDiversity * 0.3);
-
-        } catch (Exception e) {
-            log.error("다양성 점수 계산 실패", e);
-            return 0.5;
-        }
-    }
-
-    private double calculatePriceDistributionScore(List<ProductResponseDto> products) {
-        if (products.isEmpty()) return 0.0;
-
-        try {
-            // 가격 통계
-            IntSummaryStatistics stats = products.stream()
-                    .mapToInt(p -> parsePrice(p.getPrice()))  // String을 int로 변환
-                    .summaryStatistics();
-
-            double avg = stats.getAverage();
-            double min = stats.getMin();
-            double max = stats.getMax();
-
-            // 표준편차 계산
-            double variance = products.stream()
-                    .mapToDouble(p -> Math.pow(parsePrice(p.getPrice()) - avg, 2))
-                    .average()
-                    .orElse(0.0);
-            double stdDev = Math.sqrt(variance);
-
-            // 변동계수 (CV)
-            double cv = stdDev / avg;
-
-            // CV가 0.3~0.5 사이일 때 최적 (적당한 가격 분포)
-            if (cv >= 0.3 && cv <= 0.5) {
-                return 1.0;
-            } else if (cv < 0.3) {
-                // 너무 균일함
-                return 0.7;
-            } else {
-                // 너무 산발적
-                return Math.max(0.5, 1.0 - (cv - 0.5));
-            }
-
-        } catch (Exception e) {
-            log.error("가격 분포 점수 계산 실패", e);
-            return 0.5;
-        }
-    }
-
-    // 가격 문자열을 정수로 변환하는 헬퍼 메서드 추가
-    private int parsePrice(String priceStr) {
-        // "1,000원" -> 1000
-        return Integer.parseInt(priceStr.replaceAll("[^0-9]", ""));
-    }
-
-    private ProductResponseDto mapProductToDto(Product product) {
-        ProductResponseDto dto = new ProductResponseDto();
-        dto.setNumber(product.getNumber());
-        dto.setName(product.getName());
-        dto.setBrand(product.getBrand());
-
-        // price는 String 타입으로 변환
-        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.KOREA);
-        dto.setPrice(formatter.format(product.getPrice()) + "원");
-
-        dto.setImageUrl(product.getImageUrl());
-        dto.setIntro(product.getIntro());
-        dto.setDescription(product.getDescription());
-        dto.setCategory(product.getCategory().name());
-        dto.setSubCategory(product.getSubCategory());
-
-        // 옵션 정보는 필요 시 추가
-        if (product.getProductOptions() != null && !product.getProductOptions().isEmpty()) {
-            List<ProductOptionDto> optionDtos = product.getProductOptions().stream()
-                    .map(option -> ProductOptionDto.builder()
-                            .id(option.getId())
-                            .color(option.getColor())
-                            .size(option.getSize())
-                            .stock(option.getStock())
-                            .build())
-                    .collect(Collectors.toList());
-            dto.setProductOptions(optionDtos);
-        }
-
-        return dto;
     }
 }
