@@ -7,6 +7,7 @@ import com.example.crud.ai.recommendation.application.IntegratedRecommendationSe
 import com.example.crud.ai.recommendation.infrastructure.RecommendationCacheService;
 import com.example.crud.common.utility.Json;
 import com.example.crud.data.product.dto.ProductResponseDto;
+import com.example.crud.entity.Member;
 import com.example.crud.enums.MessageType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,109 +15,124 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 추천 관련 이벤트 처리
- * - 메시지 생성 이벤트
- * - 상품 조회 이벤트
- * - 구매 이벤트
+ * 통합 추천 이벤트 프로세서
+ * - 메시지 이벤트 처리
+ * - 상품 조회/구매 이벤트 처리
+ * - 협업 필터링 데이터 수집
+ * - 실시간 트렌드 업데이트
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty(
-        value = "kafka.enabled",
-        havingValue = "true",
-        matchIfMissing = true
-)
+@ConditionalOnProperty(value = "kafka.consumers.enabled", havingValue = "true", matchIfMissing = true)
 public class RecommendationEventProcessor {
 
-    private final IntegratedRecommendationService recommendationService; // 변경됨: 통합 서비스 사용
-    private final RecommendationCacheService cacheService;
     private final ConversationRepository conversationRepository;
+    private final IntegratedRecommendationService recommendationService;
+    private final RecommendationCacheService cacheService;
     private final RedisTemplate<String, Object> redisTemplate;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    private static final String USER_INTERACTION_KEY = "user:interaction:";
-    private static final String PRODUCT_VIEW_KEY = "product:views:";
+    // Redis Keys
     private static final String TRENDING_KEY = "recommendation:trending:products";
     private static final String COLLABORATIVE_KEY = "recommendation:collaborative:";
+    private static final String USER_EVENT_KEY = "user:events:";
+    private static final String DAILY_STATS_KEY = "stats:daily:";
 
     /**
      * 메시지 생성 이벤트 처리
-     * - 사용자 메시지 분석
-     * - 비동기 추천 생성
-     * - 선호도 업데이트
+     * - 사용자 메시지에 대한 자동 추천
      */
     @KafkaListener(
-            topics = "conversation-messages",
+            topics = "conversation.message.created",
             groupId = "recommendation-processor",
             containerFactory = "kafkaListenerContainerFactory"
     )
-    public void processMessageCreated(String message) {
+    public void handleMessageCreated(String payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
-            MsgCreatedPayload payload = Json.decode(message, MsgCreatedPayload.class);
+            MsgCreatedPayload event = Json.decode(payload, MsgCreatedPayload.class);
 
-            if (!MessageType.USER.name().equals(payload.type().name())) {
-                return; // 사용자 메시지만 처리
+            // 사용자 메시지만 처리
+            if (event.type() != MessageType.USER) {
+                return;
             }
 
-            log.debug("메시지 이벤트 처리: convId={}, content={}",
-                    payload.conversationId(), payload.content());
+            log.debug("메시지 이벤트 처리: conversationId={}, message={}",
+                    event.conversationId(), event.content());
 
             // 대화 정보 조회
-            Conversation conversation = conversationRepository
-                    .findById(payload.conversationId())
+            Conversation conversation = conversationRepository.findById(event.conversationId())
                     .orElse(null);
 
-            if (conversation != null && conversation.getMember() != null) {
-                Long userId = conversation.getMember().getNumber();
-
-                // 비동기로 추천 생성 (캐시 워밍)
-                generateAsyncRecommendations(userId, payload.content());
-
-                // 사용자 상호작용 기록
-                recordUserInteraction(userId, payload.content());
+            if (conversation == null) {
+                log.warn("대화를 찾을 수 없음: conversationId={}", event.conversationId());
+                return;
             }
 
+            Member member = conversation.getMember();
+            if (member == null) {
+                return;
+            }
+
+            // 비동기로 추천 생성
+            CompletableFuture.runAsync(() -> {
+                try {
+                    List<ProductResponseDto> recommendations = recommendationService
+                            .recommend(member.getNumber(), event.content());
+
+                    if (!recommendations.isEmpty()) {
+                        // 추천 결과 이벤트 발행
+                        publishRecommendationReadyEvent(
+                                event.conversationId(),
+                                member.getNumber(),
+                                recommendations
+                        );
+                    }
+                } catch (Exception e) {
+                    log.error("추천 생성 실패: conversationId={}", event.conversationId(), e);
+                }
+            });
+
         } catch (Exception e) {
-            log.error("메시지 이벤트 처리 실패", e);
+            log.error("메시지 이벤트 처리 실패: topic={}, error={}", topic, e.getMessage(), e);
         }
     }
 
     /**
      * 상품 조회 이벤트 처리
-     * - 조회수 증가
-     * - 트렌드 점수 업데이트
+     * - 트렌드 업데이트
      * - 협업 필터링 데이터 수집
      */
     @KafkaListener(
-            topics = "product-views",
+            topics = {"product.viewed", "product.detail.viewed"},
             groupId = "recommendation-processor"
     )
-    public void processProductView(String message) {
+    public void handleProductViewed(String payload) {
         try {
-            Map<String, Object> event = Json.decode(message, Map.class);
-            Long userId = Long.valueOf(event.get("userId").toString());
-            Long productId = Long.valueOf(event.get("productId").toString());
+            Map<String, Object> event = Json.decode(payload, Map.class);
+            Long userId = ((Number) event.get("userId")).longValue();
+            Long productId = ((Number) event.get("productId")).longValue();
 
-            // 1. 조회수 증가
-            incrementProductViews(productId);
+            // 트렌드 업데이트
+            updateTrendingScore(productId, 1.0);
 
-            // 2. 트렌드 점수 업데이트
-            updateTrendingScore(productId);
+            // 협업 필터링 데이터 수집
+            collectCollaborativeData(userId, productId, "view", 1.0);
 
-            // 3. 협업 필터링 데이터 수집
-            if (userId != null) {
-                collectCollaborativeData(userId, productId, "view");
-            }
-
-            log.debug("상품 조회 처리 완료: userId={}, productId={}", userId, productId);
+            // 사용자 이벤트 기록
+            recordUserEvent(userId, "view", productId);
 
         } catch (Exception e) {
             log.error("상품 조회 이벤트 처리 실패", e);
@@ -124,141 +140,133 @@ public class RecommendationEventProcessor {
     }
 
     /**
-     * 구매 이벤트 처리
-     * - 구매 데이터 기반 추천 업데이트
-     * - 협업 필터링 강화
+     * 상품 구매 이벤트 처리
+     * - 높은 가중치로 협업 필터링 데이터 업데이트
      */
     @KafkaListener(
-            topics = "order-completed",
+            topics = "order.completed",
             groupId = "recommendation-processor"
     )
-    public void processPurchase(String message) {
+    public void handleOrderCompleted(String payload) {
         try {
-            Map<String, Object> event = Json.decode(message, Map.class);
-            Long userId = Long.valueOf(event.get("userId").toString());
-            List<Long> productIds = (List<Long>) event.get("productIds");
+            Map<String, Object> event = Json.decode(payload, Map.class);
+            Long userId = ((Number) event.get("userId")).longValue();
+            List<Map<String, Object>> items = (List<Map<String, Object>>) event.get("items");
 
-            for (Long productId : productIds) {
-                // 1. 구매 기반 협업 필터링 데이터
-                collectCollaborativeData(userId, productId, "purchase");
+            for (Map<String, Object> item : items) {
+                Long productId = ((Number) item.get("productId")).longValue();
+                Integer quantity = ((Number) item.getOrDefault("quantity", 1)).intValue();
 
-                // 2. 구매 트렌드 반영
-                updateTrendingScore(productId, 5.0); // 구매는 더 높은 가중치
+                // 구매는 높은 가중치
+                updateTrendingScore(productId, 5.0 * quantity);
+                collectCollaborativeData(userId, productId, "purchase", 5.0);
+                recordUserEvent(userId, "purchase", productId);
             }
 
-            // 3. 구매 후 추천 갱신
-            refreshUserRecommendations(userId);
-
-            log.info("구매 이벤트 처리 완료: userId={}, products={}", userId, productIds);
+            // 사용자 추천 캐시 무효화 (구매 후 새로운 추천 필요)
+            cacheService.invalidateUserCache(userId);
 
         } catch (Exception e) {
-            log.error("구매 이벤트 처리 실패", e);
+            log.error("주문 완료 이벤트 처리 실패", e);
         }
     }
 
     /**
-     * 비동기 추천 생성 (캐시 워밍)
-     * IntegratedRecommendationService 사용
+     * 상품 좋아요 이벤트 처리
      */
-    private void generateAsyncRecommendations(Long userId, String message) {
+    @KafkaListener(
+            topics = "product.liked",
+            groupId = "recommendation-processor"
+    )
+    public void handleProductLiked(String payload) {
         try {
-            // 통합 추천 서비스 사용
-            List<ProductResponseDto> recommendations = recommendationService.recommend(userId, message);
+            Map<String, Object> event = Json.decode(payload, Map.class);
+            Long userId = ((Number) event.get("userId")).longValue();
+            Long productId = ((Number) event.get("productId")).longValue();
+            Boolean liked = (Boolean) event.get("liked");
 
-            // 캐시 저장은 서비스 내부에서 처리됨
-            log.debug("비동기 추천 생성 완료: userId={}, count={}",
-                    userId, recommendations.size());
-
-            // 추천 품질 메트릭 수집
-            updateRecommendationMetrics(userId, recommendations);
+            double score = liked ? 3.0 : -3.0;
+            updateTrendingScore(productId, score);
+            collectCollaborativeData(userId, productId, "like", score);
 
         } catch (Exception e) {
-            log.warn("비동기 추천 생성 실패: userId={}", userId, e);
+            log.error("좋아요 이벤트 처리 실패", e);
         }
     }
 
     /**
-     * 사용자 상호작용 기록
+     * 검색 이벤트 처리
+     * - 검색어 기반 트렌드 분석
      */
-    private void recordUserInteraction(Long userId, String content) {
+    @KafkaListener(
+            topics = "search.performed",
+            groupId = "recommendation-processor"
+    )
+    public void handleSearchPerformed(String payload) {
         try {
-            String key = USER_INTERACTION_KEY + userId;
-            Map<String, Object> interaction = new HashMap<>();
-            interaction.put("content", content);
-            interaction.put("timestamp", System.currentTimeMillis());
+            Map<String, Object> event = Json.decode(payload, Map.class);
+            String query = (String) event.get("query");
+            List<Long> resultIds = (List<Long>) event.get("resultIds");
 
-            // 리스트에 추가 (최근 100개만 유지)
-            redisTemplate.opsForList().leftPush(key, Json.encode(interaction));
-            redisTemplate.opsForList().trim(key, 0, 99);
-            redisTemplate.expire(key, 30, TimeUnit.DAYS);
+            // 검색 결과 상품들의 트렌드 점수 약간 증가
+            if (resultIds != null) {
+                for (Long productId : resultIds) {
+                    updateTrendingScore(productId, 0.1);
+                }
+            }
+
+            // 검색어 트렌드 업데이트
+            updateSearchTrend(query);
 
         } catch (Exception e) {
-            log.debug("상호작용 기록 실패: {}", e.getMessage());
-        }
-    }
-
-    /**
-     * 상품 조회수 증가
-     */
-    private void incrementProductViews(Long productId) {
-        try {
-            String key = PRODUCT_VIEW_KEY + LocalDateTime.now().toLocalDate();
-            redisTemplate.opsForHash().increment(key, productId.toString(), 1);
-            redisTemplate.expire(key, 7, TimeUnit.DAYS);
-
-        } catch (Exception e) {
-            log.debug("조회수 증가 실패: {}", e.getMessage());
+            log.error("검색 이벤트 처리 실패", e);
         }
     }
 
     /**
      * 트렌드 점수 업데이트
      */
-    private void updateTrendingScore(Long productId) {
-        updateTrendingScore(productId, 1.0);
-    }
-
     private void updateTrendingScore(Long productId, double score) {
         try {
             // 시간 가중치 적용 (최근일수록 높은 점수)
-            double timeWeight = 1.0 / (1.0 + (System.currentTimeMillis() / (1000 * 60 * 60 * 24)));
+            double timeWeight = 1.0;
             double weightedScore = score * timeWeight;
 
             redisTemplate.opsForZSet().incrementScore(TRENDING_KEY, productId.toString(), weightedScore);
 
-            // 상위 1000개만 유지
-            Long size = redisTemplate.opsForZSet().size(TRENDING_KEY);
-            if (size != null && size > 1000) {
-                redisTemplate.opsForZSet().removeRange(TRENDING_KEY, 0, size - 1001);
-            }
+            // TTL 설정 (30일)
+            redisTemplate.expire(TRENDING_KEY, Duration.ofDays(30));
+
+            // 일별 트렌드도 업데이트
+            String dailyKey = TRENDING_KEY + ":" + LocalDate.now();
+            redisTemplate.opsForZSet().incrementScore(dailyKey, productId.toString(), score);
+            redisTemplate.expire(dailyKey, Duration.ofDays(7));
 
         } catch (Exception e) {
-            log.debug("트렌드 점수 업데이트 실패: {}", e.getMessage());
+            log.debug("트렌드 업데이트 실패: productId={}", productId, e);
         }
     }
 
     /**
      * 협업 필터링 데이터 수집
      */
-    private void collectCollaborativeData(Long userId, Long productId, String action) {
+    private void collectCollaborativeData(Long userId, Long productId, String action, double score) {
         try {
             // 사용자별 상품 점수
-            String userKey = COLLABORATIVE_KEY + userId;
-            double score = "purchase".equals(action) ? 5.0 : 1.0;
-
+            String userKey = COLLABORATIVE_KEY + "user:" + userId;
             redisTemplate.opsForHash().increment(userKey, productId.toString(), score);
-            redisTemplate.expire(userKey, 90, TimeUnit.DAYS);
+            redisTemplate.expire(userKey, Duration.ofDays(90));
 
             // 상품별 사용자 점수 (역인덱스)
             String productKey = COLLABORATIVE_KEY + "product:" + productId;
             redisTemplate.opsForHash().increment(productKey, userId.toString(), score);
-            redisTemplate.expire(productKey, 90, TimeUnit.DAYS);
+            redisTemplate.expire(productKey, Duration.ofDays(90));
 
-            // 유사 사용자 찾기 및 추천 업데이트 (비동기)
-            updateSimilarUserRecommendations(userId, productId);
+            // 비동기로 유사 사용자 추천 업데이트
+            CompletableFuture.runAsync(() -> updateSimilarUserRecommendations(userId, productId));
 
         } catch (Exception e) {
-            log.debug("협업 필터링 데이터 수집 실패: {}", e.getMessage());
+            log.debug("협업 필터링 데이터 수집 실패", e);
         }
     }
 
@@ -270,87 +278,121 @@ public class RecommendationEventProcessor {
             String productKey = COLLABORATIVE_KEY + "product:" + productId;
             Map<Object, Object> userScores = redisTemplate.opsForHash().entries(productKey);
 
-            // 같은 상품을 본/구매한 다른 사용자들 찾기
+            // 같은 상품에 관심을 보인 사용자들 찾기
+            List<Long> similarUsers = new ArrayList<>();
             for (Map.Entry<Object, Object> entry : userScores.entrySet()) {
                 Long otherUserId = Long.parseLong(entry.getKey().toString());
-
-                if (!otherUserId.equals(userId)) {
-                    // 다른 사용자가 본 상품들을 현재 사용자에게 추천
-                    copySimilarUserProducts(userId, otherUserId);
+                if (!otherUserId.equals(userId) && Double.parseDouble(entry.getValue().toString()) > 3.0) {
+                    similarUsers.add(otherUserId);
                 }
             }
 
+            // 유사 사용자들의 다른 관심 상품을 현재 사용자에게 추천
+            for (Long similarUserId : similarUsers) {
+                transferSimilarUserInterests(userId, similarUserId);
+            }
+
         } catch (Exception e) {
-            log.debug("유사 사용자 추천 업데이트 실패: {}", e.getMessage());
+            log.debug("유사 사용자 추천 업데이트 실패", e);
         }
     }
 
     /**
-     * 유사 사용자의 상품 복사
+     * 유사 사용자의 관심사 전달
      */
-    private void copySimilarUserProducts(Long targetUserId, Long sourceUserId) {
+    private void transferSimilarUserInterests(Long targetUserId, Long sourceUserId) {
         try {
-            String sourceKey = COLLABORATIVE_KEY + sourceUserId;
-            String targetKey = COLLABORATIVE_KEY + targetUserId;
+            String sourceKey = COLLABORATIVE_KEY + "user:" + sourceUserId;
+            String targetKey = COLLABORATIVE_KEY + "user:" + targetUserId;
 
             Map<Object, Object> sourceProducts = redisTemplate.opsForHash().entries(sourceKey);
 
             for (Map.Entry<Object, Object> entry : sourceProducts.entrySet()) {
+                String productId = entry.getKey().toString();
+                double score = Double.parseDouble(entry.getValue().toString());
+
                 // 낮은 가중치로 추가 (간접 추천)
-                redisTemplate.opsForHash().increment(
-                        targetKey,
-                        entry.getKey().toString(),
-                        Double.parseDouble(entry.getValue().toString()) * 0.1
-                );
+                if (score > 3.0) {
+                    redisTemplate.opsForHash().increment(targetKey, productId, score * 0.1);
+                }
             }
 
         } catch (Exception e) {
-            log.debug("유사 사용자 상품 복사 실패: {}", e.getMessage());
+            log.debug("관심사 전달 실패", e);
         }
     }
 
     /**
-     * 사용자 추천 갱신
+     * 사용자 이벤트 기록
      */
-    private void refreshUserRecommendations(Long userId) {
+    private void recordUserEvent(Long userId, String eventType, Long productId) {
         try {
-            // 캐시 무효화
-            cacheService.invalidateUserCache(userId);
+            String key = USER_EVENT_KEY + userId;
+            Map<String, Object> eventData = Map.of(
+                    "type", eventType,
+                    "productId", productId,
+                    "timestamp", System.currentTimeMillis()
+            );
 
-            // 새로운 추천 생성 트리거
-            Map<String, Object> event = new HashMap<>();
-            event.put("userId", userId);
-            event.put("action", "refresh");
-            event.put("timestamp", System.currentTimeMillis());
+            redisTemplate.opsForList().leftPush(key, Json.encode(eventData));
+            redisTemplate.opsForList().trim(key, 0, 99); // 최근 100개만 유지
+            redisTemplate.expire(key, Duration.ofDays(30));
 
-            kafkaTemplate.send("recommendation-refresh", Json.encode(event));
+            // 일별 통계 업데이트
+            updateDailyStats(eventType);
 
         } catch (Exception e) {
-            log.warn("추천 갱신 실패: userId={}", userId, e);
+            log.debug("사용자 이벤트 기록 실패", e);
         }
     }
 
     /**
-     * 추천 메트릭 업데이트
+     * 검색어 트렌드 업데이트
      */
-    private void updateRecommendationMetrics(Long userId, List<ProductResponseDto> recommendations) {
+    private void updateSearchTrend(String query) {
         try {
-            String metricsKey = "metrics:recommendation:" + LocalDateTime.now().toLocalDate();
+            String key = "search:trends:" + LocalDate.now();
+            redisTemplate.opsForZSet().incrementScore(key, query.toLowerCase(), 1.0);
+            redisTemplate.expire(key, Duration.ofDays(7));
+        } catch (Exception e) {
+            log.debug("검색 트렌드 업데이트 실패", e);
+        }
+    }
 
-            // 일별 추천 생성 횟수
-            redisTemplate.opsForHash().increment(metricsKey, "total_generated", 1);
+    /**
+     * 일별 통계 업데이트
+     */
+    private void updateDailyStats(String eventType) {
+        try {
+            String key = DAILY_STATS_KEY + LocalDate.now();
+            redisTemplate.opsForHash().increment(key, eventType, 1);
+            redisTemplate.expire(key, Duration.ofDays(30));
+        } catch (Exception e) {
+            log.debug("통계 업데이트 실패", e);
+        }
+    }
 
-            // 사용자별 추천 횟수
-            redisTemplate.opsForHash().increment(metricsKey, "user:" + userId, 1);
+    /**
+     * 추천 준비 완료 이벤트 발행
+     */
+    private void publishRecommendationReadyEvent(Long conversationId, Long userId,
+                                                 List<ProductResponseDto> recommendations) {
+        try {
+            Map<String, Object> event = Map.of(
+                    "conversationId", conversationId,
+                    "userId", userId,
+                    "productIds", recommendations.stream()
+                            .map(ProductResponseDto::getNumber)
+                            .limit(10)
+                            .toList(),
+                    "timestamp", LocalDateTime.now().toString()
+            );
 
-            // 평균 추천 개수
-            redisTemplate.opsForHash().put(metricsKey, "avg_count:" + userId, recommendations.size());
-
-            // TTL 설정
-            redisTemplate.expire(metricsKey, 30, TimeUnit.DAYS);
+            kafkaTemplate.send("recommendation.ready", Json.encode(event));
+            log.debug("추천 준비 완료 이벤트 발행: conversationId={}", conversationId);
 
         } catch (Exception e) {
-            log.debug("메트릭 업데이트 실패: {}", e.getMessage());
+            log.error("추천 이벤트 발행 실패", e);
         }
     }
 }

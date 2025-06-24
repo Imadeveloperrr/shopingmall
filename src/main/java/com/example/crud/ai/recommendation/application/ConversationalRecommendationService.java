@@ -4,7 +4,6 @@ import com.example.crud.ai.config.ChatGptProperties;
 import com.example.crud.ai.conversation.domain.entity.Conversation;
 import com.example.crud.ai.conversation.domain.entity.UserPreference;
 import com.example.crud.ai.conversation.domain.repository.ConversationRepository;
-import com.example.crud.ai.embedding.infrastructure.ChatGptServiceLite;
 import com.example.crud.ai.conversation.application.command.ConversationCommandService;
 import com.example.crud.ai.conversation.application.query.ConversationQueryService;
 import com.example.crud.ai.conversation.domain.repository.UserPreferenceRepository;
@@ -18,106 +17,129 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
- * 대화형 상품 추천 서비스
+ * 대화형 상품 추천 서비스 (개선된 버전)
  *
- * IntegratedRecommendationService를 사용하여
+ * IntegratedRecommendationService를 활용하여
  * 대화 컨텍스트 기반의 추천을 제공합니다.
+ *
+ * 주요 개선사항:
+ * - 중복 코드 제거
+ * - ChatGPT 의존성 제거 (필요시 별도 서비스로 분리)
+ * - 더 나은 컨텍스트 활용
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class ConversationalRecommendationService {
 
     private final ConversationCommandService cmdSvc;
     private final ConversationQueryService qrySvc;
     private final ConversationRepository convRepo;
-    private final ChatGptServiceLite gptSvc;
-    private final IntegratedRecommendationService recommendationService; // 통합 서비스 사용
+    private final IntegratedRecommendationService recommendationService;
     private final UserPreferenceRepository prefRepo;
-    private final ChatGptProperties prop;
+
+    // 의도 분석 키워드
+    private static final Map<String, List<String>> INTENT_KEYWORDS = Map.of(
+            "search", List.of("찾", "검색", "보여", "알려", "추천"),
+            "compare", List.of("비교", "차이", "어떤게", "뭐가"),
+            "similar", List.of("비슷", "유사", "같은", "이런"),
+            "price", List.of("가격", "얼마", "비싼", "저렴", "할인"),
+            "purchase", List.of("구매", "살", "주문", "결제")
+    );
 
     /**
      * 사용자 메시지 처리 및 추천 생성
-     *
-     * @param convId 대화 ID
-     * @param userMsg 사용자 메시지
-     * @return 추천 응답 (AI 메시지 + 상품 목록)
      */
     @Transactional
     public RecommendationResponseDto processUserMessage(Long convId, String userMsg) {
         log.info("대화 메시지 처리 시작: convId={}, message={}", convId, userMsg);
 
-        // 1. 사용자 메시지 저장
-        cmdSvc.addMessage(convId, MessageType.USER, userMsg);
+        try {
+            // 1. 대화 정보 조회
+            Conversation conversation = convRepo.findById(convId)
+                    .orElseThrow(() -> new IllegalArgumentException("대화를 찾을 수 없습니다: " + convId));
 
-        // 2. 대화 정보 조회
-        Conversation conversation = convRepo.findById(convId)
-                .orElseThrow(() -> new IllegalArgumentException("대화를 찾을 수 없습니다: " + convId));
-        Member member = conversation.getMember();
+            Member member = conversation.getMember();
+            if (member == null) {
+                throw new IllegalStateException("회원 정보가 없습니다");
+            }
 
-        // 3. 대화 컨텍스트 구축 (최근 10개 메시지)
-        List<MessageDto> recentMessages = qrySvc.fetchMessages(convId, null, 0, 10).getContent();
-        List<String> context = recentMessages.stream()
-                .map(MessageDto::getContent)
-                .collect(Collectors.toList());
+            // 2. 사용자 메시지 저장
+            cmdSvc.addMessage(convId, MessageType.USER, userMsg);
 
-        // 4. ChatGPT로 의도 분석
-        Map<String, Object> intent = analyzeUserIntent(userMsg, context);
+            // 3. 대화 컨텍스트 구축
+            List<String> context = buildConversationContext(convId);
 
-        // 5. 사용자 선호도 업데이트
-        updateUserPreference(member, intent);
+            // 4. 의도 분석 (간단한 규칙 기반)
+            Map<String, Object> intent = analyzeIntent(userMsg, context);
 
-        // 6. 통합 추천 서비스로 추천 생성
-        List<ProductResponseDto> recommendations = recommendationService
-                .recommendWithContext(member.getNumber(), userMsg, context);
+            // 5. 사용자 선호도 업데이트 (비동기)
+            CompletableFuture.runAsync(() -> updateUserPreference(member, intent));
 
-        // 7. AI 응답 생성
-        String assistantResponse = generateAssistantResponse(intent, recommendations, userMsg);
+            // 6. 추천 생성
+            List<ProductResponseDto> recommendations = recommendationService
+                    .recommendWithContext(member.getNumber(), userMsg, context);
 
-        // 8. AI 응답 저장
-        cmdSvc.addMessage(convId, MessageType.ASSISTANT, assistantResponse);
+            // 7. AI 응답 생성
+            String assistantResponse = generateResponse(intent, recommendations, userMsg);
 
-        // 9. 응답 DTO 생성 (실제 DTO 구조에 맞게)
-        return RecommendationResponseDto.builder()
-                .systemResponse(assistantResponse)
-                .recommendedProducts(recommendations)
-                .build();
+            // 8. AI 응답 저장
+            cmdSvc.addMessage(convId, MessageType.ASSISTANT, assistantResponse);
+
+            return RecommendationResponseDto.builder()
+                    .systemResponse(assistantResponse)
+                    .recommendedProducts(recommendations)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("메시지 처리 실패: convId={}", convId, e);
+
+            // 에러 응답
+            return RecommendationResponseDto.builder()
+                    .systemResponse("죄송합니다. 추천을 생성하는 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.")
+                    .recommendedProducts(new ArrayList<>())
+                    .build();
+        }
     }
 
     /**
-     * 특정 상품에 대한 추천
+     * 특정 상품에 대한 유사 상품 추천
      */
     @Transactional
     public RecommendationResponseDto recommendSimilarProducts(Long convId, Long productId) {
         log.info("유사 상품 추천: convId={}, productId={}", convId, productId);
 
-        // 대화 확인
-        Conversation conversation = convRepo.findById(convId)
-                .orElseThrow(() -> new IllegalArgumentException("대화를 찾을 수 없습니다: " + convId));
+        try {
+            // 대화 확인
+            Conversation conversation = convRepo.findById(convId)
+                    .orElseThrow(() -> new IllegalArgumentException("대화를 찾을 수 없습니다: " + convId));
 
-        // 상품 정보로 추천 메시지 생성
-        String message = String.format("상품 ID %d와 비슷한 상품 추천", productId);
+            // 유사 상품 추천 메시지 생성
+            String message = String.format("상품 ID %d와 비슷한 상품을 추천해주세요", productId);
 
-        // IntegratedRecommendationService 사용
-        List<ProductResponseDto> recommendations = recommendationService
-                .recommend(conversation.getMember().getNumber(), message);
+            // 추천 생성
+            List<ProductResponseDto> recommendations = recommendationService
+                    .recommend(conversation.getMember().getNumber(), message);
 
-        String assistantResponse = String.format(
-                "선택하신 상품과 비슷한 %d개의 상품을 찾았습니다. " +
-                        "스타일, 가격대, 브랜드를 고려하여 추천드립니다.",
-                recommendations.size()
-        );
+            // 응답 생성
+            String response = generateSimilarProductResponse(recommendations, productId);
 
-        return RecommendationResponseDto.builder()
-                .systemResponse(assistantResponse)
-                .recommendedProducts(recommendations)
-                .build();
+            return RecommendationResponseDto.builder()
+                    .systemResponse(response)
+                    .recommendedProducts(recommendations)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("유사 상품 추천 실패", e);
+            return createErrorResponse("유사 상품을 찾는 중 문제가 발생했습니다.");
+        }
     }
 
     /**
@@ -127,112 +149,168 @@ public class ConversationalRecommendationService {
     public RecommendationResponseDto recommendByCategory(Long convId, String category) {
         log.info("카테고리 추천: convId={}, category={}", convId, category);
 
-        // 대화 확인
-        Conversation conversation = convRepo.findById(convId)
-                .orElseThrow(() -> new IllegalArgumentException("대화를 찾을 수 없습니다: " + convId));
+        try {
+            // 대화 확인
+            Conversation conversation = convRepo.findById(convId)
+                    .orElseThrow(() -> new IllegalArgumentException("대화를 찾을 수 없습니다: " + convId));
 
-        // IntegratedRecommendationService의 카테고리 추천 사용
-        List<ProductResponseDto> recommendations = recommendationService
-                .recommendByCategory(category, 20);
+            // 카테고리 추천
+            List<ProductResponseDto> recommendations = recommendationService
+                    .recommendByCategory(category, 20);
 
-        String assistantResponse = String.format(
-                "%s 카테고리에서 인기 있는 상품 %d개를 추천드립니다.",
-                category, recommendations.size()
+            // 응답 생성
+            String response = generateCategoryResponse(category, recommendations);
+
+            return RecommendationResponseDto.builder()
+                    .systemResponse(response)
+                    .recommendedProducts(recommendations)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("카테고리 추천 실패", e);
+            return createErrorResponse("카테고리별 추천을 가져오는 중 문제가 발생했습니다.");
+        }
+    }
+
+    /**
+     * 대화 컨텍스트 구축
+     */
+    private List<String> buildConversationContext(Long convId) {
+        try {
+            // 최근 10개 메시지 조회
+            List<MessageDto> recentMessages = qrySvc.fetchMessages(convId, null, 0, 10)
+                    .getContent();
+
+            return recentMessages.stream()
+                    .filter(msg -> "USER".equals(msg.getRole())) // role은 String
+                    .map(MessageDto::getContent)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("대화 컨텍스트 구축 실패", e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 의도 분석 (규칙 기반)
+     */
+    private Map<String, Object> analyzeIntent(String message, List<String> context) {
+        Map<String, Object> intent = new HashMap<>();
+        String lowerMessage = message.toLowerCase();
+
+        // 의도 타입 결정
+        String intentType = "browse"; // 기본값
+        int maxScore = 0;
+
+        for (Map.Entry<String, List<String>> entry : INTENT_KEYWORDS.entrySet()) {
+            int score = 0;
+            for (String keyword : entry.getValue()) {
+                if (lowerMessage.contains(keyword)) {
+                    score++;
+                }
+            }
+            if (score > maxScore) {
+                maxScore = score;
+                intentType = entry.getKey();
+            }
+        }
+
+        intent.put("intent", intentType);
+        intent.put("message", message);
+
+        // 키워드 추출
+        List<String> keywords = extractKeywords(message);
+        intent.put("keywords", keywords);
+
+        // 가격 범위 추출
+        extractPriceRange(message, intent);
+
+        // 카테고리 추출
+        extractCategories(message, intent);
+
+        return intent;
+    }
+
+    /**
+     * 키워드 추출
+     */
+    private List<String> extractKeywords(String message) {
+        // 간단한 키워드 추출 (실제로는 더 복잡한 NLP 필요)
+        List<String> keywords = new ArrayList<>();
+
+        String[] words = message.split("\\s+");
+        for (String word : words) {
+            if (word.length() > 2 && !isStopWord(word)) {
+                keywords.add(word);
+            }
+        }
+
+        return keywords;
+    }
+
+    /**
+     * 불용어 확인
+     */
+    private boolean isStopWord(String word) {
+        Set<String> stopWords = Set.of(
+                "그", "이", "저", "것", "수", "등", "및", "의", "를", "을", "은", "는",
+                "가", "이", "에", "에서", "으로", "와", "과", "한", "하는", "있는"
+        );
+        return stopWords.contains(word);
+    }
+
+    /**
+     * 가격 범위 추출
+     */
+    private void extractPriceRange(String message, Map<String, Object> intent) {
+        // 숫자와 "만원", "원" 패턴 찾기
+        String pattern = "(\\d+)(만)?\\s*원";
+        java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
+        java.util.regex.Matcher m = p.matcher(message);
+
+        List<Integer> prices = new ArrayList<>();
+        while (m.find()) {
+            int price = Integer.parseInt(m.group(1));
+            if (m.group(2) != null) { // "만원"
+                price *= 10000;
+            }
+            prices.add(price);
+        }
+
+        if (!prices.isEmpty()) {
+            Collections.sort(prices);
+            intent.put("minPrice", prices.get(0));
+            intent.put("maxPrice", prices.get(prices.size() - 1));
+        }
+    }
+
+    /**
+     * 카테고리 추출
+     */
+    private void extractCategories(String message, Map<String, Object> intent) {
+        List<String> categories = new ArrayList<>();
+
+        // 카테고리 키워드 매핑
+        Map<String, List<String>> categoryKeywords = Map.of(
+                "의류", List.of("옷", "의류", "티셔츠", "셔츠", "바지", "청바지"),
+                "신발", List.of("신발", "운동화", "구두", "스니커즈"),
+                "가방", List.of("가방", "백팩", "크로스백", "토트백"),
+                "액세서리", List.of("액세서리", "시계", "지갑", "벨트")
         );
 
-        return RecommendationResponseDto.builder()
-                .systemResponse(assistantResponse)
-                .recommendedProducts(recommendations)
-                .build();
-    }
-
-    /**
-     * ChatGPT를 사용한 의도 분석
-     */
-    private Map<String, Object> analyzeUserIntent(String userMessage, List<String> context) {
-        try {
-            String prompt = buildIntentAnalysisPrompt(userMessage, context);
-
-            // ChatPayload 생성 - 실제 구조에 맞게
-            List<ChatMessage> messages = new ArrayList<>();
-            messages.add(new ChatMessage("system", "당신은 쇼핑 도우미입니다. 사용자의 의도를 분석하고 JSON 형식으로 응답해주세요."));
-            messages.add(new ChatMessage("user", prompt));
-
-            // ChatGptServiceLite의 completion 메서드 사용
-            String response = gptSvc.completion(messages, prompt)
-                    .block(Duration.ofSeconds(5));
-
-            return parseIntentResponse(response);
-
-        } catch (Exception e) {
-            log.error("의도 분석 실패", e);
-            return getDefaultIntent();
-        }
-    }
-
-    /**
-     * 의도 분석 프롬프트 생성
-     */
-    private String buildIntentAnalysisPrompt(String userMessage, List<String> context) {
-        StringBuilder prompt = new StringBuilder();
-
-        prompt.append("다음 대화 컨텍스트와 사용자 메시지를 분석하여 의도를 파악해주세요.\n\n");
-
-        if (!context.isEmpty()) {
-            prompt.append("이전 대화:\n");
-            context.stream()
-                    .limit(5)
-                    .forEach(msg -> prompt.append("- ").append(msg).append("\n"));
-            prompt.append("\n");
-        }
-
-        prompt.append("현재 메시지: ").append(userMessage).append("\n\n");
-
-        prompt.append("다음 JSON 형식으로 응답해주세요:\n");
-        prompt.append("{\n");
-        prompt.append("  \"intent\": \"browse|search|compare|purchase\",\n");
-        prompt.append("  \"categories\": [\"카테고리1\", \"카테고리2\"],\n");
-        prompt.append("  \"brands\": [\"브랜드1\"],\n");
-        prompt.append("  \"priceRange\": {\"min\": 0, \"max\": 100000},\n");
-        prompt.append("  \"keywords\": [\"키워드1\", \"키워드2\"],\n");
-        prompt.append("  \"sentiment\": \"positive|neutral|negative\"\n");
-        prompt.append("}");
-
-        return prompt.toString();
-    }
-
-    /**
-     * ChatGPT 응답 파싱
-     */
-    private Map<String, Object> parseIntentResponse(String response) {
-        try {
-            // JSON 부분만 추출
-            int startIdx = response.indexOf("{");
-            int endIdx = response.lastIndexOf("}") + 1;
-
-            if (startIdx >= 0 && endIdx > startIdx) {
-                String jsonStr = response.substring(startIdx, endIdx);
-                return Json.decode(jsonStr, Map.class);
+        String lowerMessage = message.toLowerCase();
+        for (Map.Entry<String, List<String>> entry : categoryKeywords.entrySet()) {
+            for (String keyword : entry.getValue()) {
+                if (lowerMessage.contains(keyword)) {
+                    categories.add(entry.getKey());
+                    break;
+                }
             }
-        } catch (Exception e) {
-            log.warn("의도 파싱 실패: {}", e.getMessage());
         }
 
-        return getDefaultIntent();
-    }
-
-    /**
-     * 기본 의도 반환
-     */
-    private Map<String, Object> getDefaultIntent() {
-        Map<String, Object> intent = new HashMap<>();
-        intent.put("intent", "browse");
-        intent.put("categories", new ArrayList<>());
-        intent.put("brands", new ArrayList<>());
-        intent.put("priceRange", Map.of("min", 0, "max", 1000000));
-        intent.put("keywords", new ArrayList<>());
-        intent.put("sentiment", "neutral");
-        return intent;
+        if (!categories.isEmpty()) {
+            intent.put("categories", categories);
+        }
     }
 
     /**
@@ -240,161 +318,170 @@ public class ConversationalRecommendationService {
      */
     private void updateUserPreference(Member member, Map<String, Object> intent) {
         try {
-            // UserPreferenceRepository의 실제 메서드 사용
             UserPreference preference = prefRepo.findByMember_Number(member.getNumber())
-                    .orElseGet(() -> {
-                        UserPreference newPref = new UserPreference();
-                        newPref.setMember(member);
-                        newPref.setPreferences("{}");
-                        newPref.setLastUpdated(LocalDateTime.now());
-                        return newPref;
-                    });
+                    .orElseGet(() -> UserPreference.builder()
+                            .member(member)
+                            .preferences("{}")
+                            .lastUpdated(LocalDateTime.now())
+                            .build());
 
             // 기존 선호도 파싱
-            Map<String, Object> currentPrefs = Json.decode(preference.getPreferences(), Map.class);
+            Map<String, Object> prefs = Json.decode(preference.getPreferences(), Map.class);
+            if (prefs == null) {
+                prefs = new HashMap<>();
+            }
 
-            // 새로운 의도와 병합
-            Map<String, Object> mergedPrefs = mergePreferences(currentPrefs, intent);
+            // 의도에서 선호도 정보 추출
+            updatePreferenceFromIntent(prefs, intent);
 
             // 저장
-            preference.setPreferences(Json.encode(mergedPrefs));
+            preference.setPreferences(Json.encode(prefs));
             preference.setLastUpdated(LocalDateTime.now());
             prefRepo.save(preference);
 
-            log.debug("선호도 업데이트 완료: memberId={}", member.getNumber());
-
         } catch (Exception e) {
-            log.error("선호도 업데이트 실패: memberId={}", member.getNumber(), e);
+            log.error("선호도 업데이트 실패", e);
         }
     }
 
     /**
-     * 선호도 병합
+     * 의도에서 선호도 정보 업데이트
      */
-    private Map<String, Object> mergePreferences(Map<String, Object> current, Map<String, Object> newIntent) {
-        Map<String, Object> merged = new HashMap<>(current);
-
-        // 카테고리 병합 (최대 10개)
-        List<String> categories = mergeList(
-                (List<String>) current.getOrDefault("categories", new ArrayList<>()),
-                (List<String>) newIntent.getOrDefault("categories", new ArrayList<>()),
-                10
-        );
-        merged.put("categories", categories);
-
-        // 브랜드 병합 (최대 10개)
-        List<String> brands = mergeList(
-                (List<String>) current.getOrDefault("brands", new ArrayList<>()),
-                (List<String>) newIntent.getOrDefault("brands", new ArrayList<>()),
-                10
-        );
-        merged.put("brands", brands);
+    private void updatePreferenceFromIntent(Map<String, Object> prefs, Map<String, Object> intent) {
+        // 카테고리 업데이트
+        List<String> categories = (List<String>) intent.get("categories");
+        if (categories != null && !categories.isEmpty()) {
+            List<String> existingCategories = (List<String>) prefs.getOrDefault("categories", new ArrayList<>());
+            Set<String> mergedCategories = new LinkedHashSet<>(categories);
+            mergedCategories.addAll(existingCategories);
+            prefs.put("categories", new ArrayList<>(mergedCategories));
+        }
 
         // 가격 범위 업데이트
-        Map<String, Integer> newPriceRange = (Map<String, Integer>) newIntent.get("priceRange");
-        if (newPriceRange != null && !newPriceRange.isEmpty()) {
-            Map<String, Integer> currentRange = (Map<String, Integer>)
-                    merged.getOrDefault("priceRange", new HashMap<>());
-
-            // 가격 범위 확장
-            int currentMin = currentRange.getOrDefault("min", 0);
-            int currentMax = currentRange.getOrDefault("max", 1000000);
-            int newMin = newPriceRange.getOrDefault("min", currentMin);
-            int newMax = newPriceRange.getOrDefault("max", currentMax);
-
-            merged.put("priceRange", Map.of(
-                    "min", Math.min(currentMin, newMin),
-                    "max", Math.max(currentMax, newMax)
-            ));
+        Integer minPrice = (Integer) intent.get("minPrice");
+        Integer maxPrice = (Integer) intent.get("maxPrice");
+        if (minPrice != null || maxPrice != null) {
+            prefs.put("minPrice", minPrice);
+            prefs.put("maxPrice", maxPrice);
         }
 
-        // 키워드 병합 (최대 20개)
-        List<String> keywords = mergeList(
-                (List<String>) current.getOrDefault("keywords", new ArrayList<>()),
-                (List<String>) newIntent.getOrDefault("keywords", new ArrayList<>()),
-                20
-        );
-        merged.put("keywords", keywords);
+        // 키워드 업데이트
+        List<String> keywords = (List<String>) intent.get("keywords");
+        if (keywords != null && !keywords.isEmpty()) {
+            List<String> existingKeywords = (List<String>) prefs.getOrDefault("keywords", new ArrayList<>());
+            Set<String> mergedKeywords = new LinkedHashSet<>(keywords);
+            mergedKeywords.addAll(existingKeywords);
 
-        // 메타 정보 업데이트
-        merged.put("lastUpdated", LocalDateTime.now().toString());
-        merged.put("updateCount", ((Integer) merged.getOrDefault("updateCount", 0)) + 1);
+            // 최대 50개까지만 유지
+            List<String> limitedKeywords = mergedKeywords.stream()
+                    .limit(50)
+                    .collect(Collectors.toList());
+            prefs.put("keywords", limitedKeywords);
+        }
 
-        return merged;
+        // 마지막 업데이트 시간
+        prefs.put("lastUpdated", LocalDateTime.now().toString());
     }
 
     /**
-     * 리스트 병합 (중복 제거, 최신성 우선)
+     * AI 응답 생성
      */
-    private List<String> mergeList(List<String> current, List<String> newItems, int maxSize) {
-        LinkedHashSet<String> merged = new LinkedHashSet<>();
-
-        // 새로운 항목을 먼저 추가 (최신성)
-        merged.addAll(newItems);
-
-        // 기존 항목 추가
-        merged.addAll(current);
-
-        // 크기 제한
-        return merged.stream()
-                .limit(maxSize)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * AI 어시스턴트 응답 생성
-     */
-    private String generateAssistantResponse(
-            Map<String, Object> intent,
-            List<ProductResponseDto> products,
-            String userMessage) {
-
-        String intentType = (String) intent.getOrDefault("intent", "browse");
+    private String generateResponse(Map<String, Object> intent,
+                                    List<ProductResponseDto> products,
+                                    String userMessage) {
 
         if (products.isEmpty()) {
             return generateNoResultResponse(intent);
         }
 
         StringBuilder response = new StringBuilder();
+        String intentType = (String) intent.getOrDefault("intent", "browse");
 
         // 의도에 따른 인사말
-        switch (intentType) {
-            case "search":
-                response.append("검색하신 조건에 맞는 ");
-                break;
-            case "compare":
-                response.append("비교해보실 만한 ");
-                break;
-            case "purchase":
-                response.append("구매를 고려하실 만한 ");
-                break;
-            default:
-                response.append("고객님께 추천드리는 ");
-        }
-
-        response.append(products.size()).append("개의 상품을 찾았습니다!\n\n");
+        response.append(getIntentGreeting(intentType, products.size()));
+        response.append("\n\n");
 
         // 상위 3개 상품 하이라이트
         int highlightCount = Math.min(3, products.size());
         for (int i = 0; i < highlightCount; i++) {
             ProductResponseDto product = products.get(i);
-            response.append(String.format("%d. **%s** - %s (%s)\n",
-                    i + 1,
-                    product.getName(),
-                    product.getBrand(),
-                    product.getPrice()  // getPrice()는 이미 포맷된 String
-            ));
-
-            if (product.getIntro() != null && !product.getIntro().isEmpty()) {
-                response.append("   ").append(product.getIntro()).append("\n");
-            }
-            response.append("\n");
+            response.append(formatProductHighlight(i + 1, product));
         }
 
         // 추가 안내
-        response.append(generateAdditionalGuidance(intent, products.size()));
+        response.append(generateAdditionalGuidance(intent, products));
 
         return response.toString();
+    }
+
+    /**
+     * 의도별 인사말
+     */
+    private String getIntentGreeting(String intentType, int productCount) {
+        switch (intentType) {
+            case "search":
+                return String.format("검색하신 조건에 맞는 %d개의 상품을 찾았습니다!", productCount);
+            case "compare":
+                return String.format("비교해보실 만한 %d개의 상품을 준비했습니다.", productCount);
+            case "similar":
+                return String.format("비슷한 스타일의 상품 %d개를 추천드립니다.", productCount);
+            case "price":
+                return String.format("가격 조건에 맞는 %d개의 상품입니다.", productCount);
+            case "purchase":
+                return String.format("구매를 고려하실 만한 %d개의 상품을 엄선했습니다!", productCount);
+            default:
+                return String.format("고객님께 추천드리는 %d개의 상품입니다.", productCount);
+        }
+    }
+
+    /**
+     * 상품 하이라이트 포맷
+     */
+    private String formatProductHighlight(int index, ProductResponseDto product) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(String.format("%d. **%s** - %s\n",
+                index, product.getName(), product.getBrand()));
+        sb.append(String.format("   💰 %s", product.getPrice()));
+
+        // 카테고리 정보 추가
+        if (product.getCategory() != null) {
+            sb.append(" | 📂 ").append(product.getCategory());
+        }
+
+        if (product.getIntro() != null && !product.getIntro().isEmpty()) {
+            sb.append("\n   📝 ").append(product.getIntro());
+        }
+
+        sb.append("\n\n");
+        return sb.toString();
+    }
+
+    /**
+     * 추가 안내 생성
+     */
+    private String generateAdditionalGuidance(Map<String, Object> intent,
+                                              List<ProductResponseDto> products) {
+        StringBuilder guidance = new StringBuilder("\n");
+
+        // 가격 범위가 있는 경우
+        if (intent.containsKey("minPrice") || intent.containsKey("maxPrice")) {
+            guidance.append("💡 가격 필터가 적용되었습니다. ");
+            guidance.append("다른 가격대도 보시려면 말씀해주세요.\n");
+        }
+
+        // 추가 추천 가능 여부
+        if (products.size() >= 10) {
+            guidance.append("📌 더 많은 상품을 보시려면 '더 보여줘'라고 말씀해주세요.\n");
+        }
+
+        // 관련 카테고리 안내
+        List<String> categories = (List<String>) intent.get("categories");
+        if (categories != null && !categories.isEmpty()) {
+            guidance.append("🏷️ 관련 카테고리: ").append(String.join(", ", categories)).append("\n");
+        }
+
+        return guidance.toString();
     }
 
     /**
@@ -403,45 +490,57 @@ public class ConversationalRecommendationService {
     private String generateNoResultResponse(Map<String, Object> intent) {
         StringBuilder response = new StringBuilder();
 
-        response.append("죄송합니다. 말씀하신 조건에 맞는 상품을 찾지 못했습니다.\n\n");
+        response.append("죄송합니다. 말씀하신 조건에 정확히 맞는 상품을 찾지 못했습니다. 😔\n\n");
 
-        // 의도에 따른 대안 제시
-        List<String> categories = (List<String>) intent.getOrDefault("categories", new ArrayList<>());
-        if (!categories.isEmpty()) {
-            response.append("다른 ").append(categories.get(0)).append(" 상품을 보시겠어요?\n");
-        }
+        // 대안 제시
+        response.append("다음과 같은 방법을 시도해보시는 건 어떨까요?\n");
+        response.append("• 검색 조건을 조금 넓혀보기\n");
+        response.append("• 다른 카테고리 둘러보기\n");
+        response.append("• 인기 상품 확인하기\n\n");
 
-        response.append("다음과 같이 검색 조건을 변경해보세요:\n");
-        response.append("- 가격 범위를 넓혀보세요\n");
-        response.append("- 다른 브랜드나 스타일을 시도해보세요\n");
-        response.append("- 더 일반적인 키워드를 사용해보세요");
+        response.append("도움이 필요하시면 언제든 말씀해주세요!");
 
         return response.toString();
     }
 
     /**
-     * 추가 안내 메시지 생성
+     * 유사 상품 응답 생성
      */
-    private String generateAdditionalGuidance(Map<String, Object> intent, int resultCount) {
-        StringBuilder guidance = new StringBuilder();
-
-        if (resultCount > 3) {
-            guidance.append("더 많은 상품은 아래에서 확인하실 수 있습니다.\n");
+    private String generateSimilarProductResponse(List<ProductResponseDto> products, Long productId) {
+        if (products.isEmpty()) {
+            return "죄송합니다. 현재 유사한 상품을 찾을 수 없습니다. 다른 상품을 확인해보시겠어요?";
         }
 
-        // 의도별 추가 안내
-        String intentType = (String) intent.getOrDefault("intent", "browse");
-        switch (intentType) {
-            case "compare":
-                guidance.append("상품을 클릭하시면 자세한 비교가 가능합니다.\n");
-                break;
-            case "purchase":
-                guidance.append("장바구니에 담거나 바로 구매하실 수 있습니다.\n");
-                break;
+        return String.format(
+                "선택하신 상품과 비슷한 %d개의 상품을 찾았습니다! 🎯\n" +
+                        "스타일, 가격대, 브랜드를 고려하여 엄선했습니다.\n\n" +
+                        "마음에 드는 상품이 있으신가요?",
+                products.size()
+        );
+    }
+
+    /**
+     * 카테고리 응답 생성
+     */
+    private String generateCategoryResponse(String category, List<ProductResponseDto> products) {
+        if (products.isEmpty()) {
+            return String.format("%s 카테고리에 현재 추천할 상품이 없습니다. 다른 카테고리를 확인해보시겠어요?", category);
         }
 
-        guidance.append("\n다른 조건으로 검색하시려면 말씀해주세요!");
+        return String.format(
+                "%s 카테고리에서 인기 있는 상품 %d개를 추천드립니다! 🛍️\n" +
+                        "최신 트렌드와 판매량을 기준으로 선정했습니다.",
+                category, products.size()
+        );
+    }
 
-        return guidance.toString();
+    /**
+     * 에러 응답 생성
+     */
+    private RecommendationResponseDto createErrorResponse(String message) {
+        return RecommendationResponseDto.builder()
+                .systemResponse(message)
+                .recommendedProducts(new ArrayList<>())
+                .build();
     }
 }
