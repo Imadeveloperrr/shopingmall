@@ -121,13 +121,13 @@ services:
     command: |
       "
       echo 'Creating Kafka topics...'
-      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic conversation.message.created --partitions 3 --replication-factor 1
-      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic recommendation.generated --partitions 3 --replication-factor 1
-      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic recommendation.ready --partitions 3 --replication-factor 1
-      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic product.viewed --partitions 3 --replication-factor 1
-      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic order.completed --partitions 3 --replication-factor 1
-      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic product.liked --partitions 3 --replication-factor 1
-      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic search.performed --partitions 3 --replication-factor 1
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic conv-msg-created --partitions 3 --replication-factor 1
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic product-viewed --partitions 3 --replication-factor 1
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic order-completed --partitions 3 --replication-factor 1
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic user-behavior --partitions 3 --replication-factor 1
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic recommendation-events --partitions 3 --replication-factor 1
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic analytics-events --partitions 3 --replication-factor 1
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic purchase-pattern-analyzed --partitions 3 --replication-factor 1
       echo 'Kafka topics created successfully!'
       "
 
@@ -162,15 +162,15 @@ services:
           memory: 512M
 
   # ――――――[ML Service] ――――――
-  ml:
+  embedding-service:
     build:
       context: ./ml-service
       dockerfile: Dockerfile
       args:
         - BUILDKIT_INLINE_CACHE=1
-    container_name: ml-service
+    container_name: embedding-service
     environment:
-      REDIS_URL: redis://redis:6379/0
+      REDIS_URL: redis://redis:6379/1
       PYTHONUNBUFFERED: 1
       MODEL_CACHE_DIR: /app/model_cache
       LOG_LEVEL: INFO
@@ -212,7 +212,7 @@ services:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
-      ml:
+      embedding-service:
         condition: service_healthy
     environment:
       # Spring Profiles
@@ -234,7 +234,7 @@ services:
       SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
 
       # ML Service
-      EMBEDDING_SERVICE_URL: http://ml:8000
+      EMBEDDING_SERVICE_URL: http://embedding-service:8000
       EMBEDDING_SERVICE_TIMEOUT: 5000
 
       # JVM Options
@@ -277,7 +277,7 @@ services:
     networks: [appnet]
     depends_on:
       - backend
-      - ml
+      - embedding-service
 
   # ――――――[Monitoring: Grafana] ――――――
   grafana:
