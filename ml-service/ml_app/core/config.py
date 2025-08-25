@@ -6,8 +6,8 @@ class Settings(BaseSettings):
     model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
     pool_size: int = 8
 
-    # Redis 설정
-    redis_url: str = "redis://redis:6379/0"
+    # Redis 설정 (환경변수에서 우선 로드, 기본값은 DB 1)
+    redis_url: str = "redis://redis:6379/1"
 
     # Circuit Breaker 설정
     cb_failure_rate: float = 0.5

@@ -38,7 +38,7 @@ scrape_configs:
     metrics_path: '/metrics'
     scrape_interval: 10s
     static_configs:
-      - targets: ['ml:8000']
+      - targets: ['embedding-service:8000']
         labels:
           application: 'ml-embedding-service'
           environment: 'docker'
@@ -87,25 +87,5 @@ scrape_configs:
         labels:
           environment: 'docker'
 
-# Custom metric rules
-metric_relabel_configs:
-  # Keep only relevant metrics to reduce storage
-  - source_labels: [__name__]
-    regex: '(embedding_.*|recommendation_.*|cache_.*|circuit_breaker_.*)'
-    action: keep
-
-  # Add custom labels
-  - source_labels: [__name__]
-    target_label: metric_group
-    regex: 'embedding_.*'
-    replacement: 'ml_service'
-
-  - source_labels: [__name__]
-    target_label: metric_group
-    regex: 'recommendation_.*'
-    replacement: 'recommendation_service'
-
-  - source_labels: [__name__]
-    target_label: metric_group
-    regex: 'cache_.*'
-    replacement: 'cache_service'
+# Global metric relabeling rules (optional - can be removed if not needed)
+# metric_relabel_configs are defined per job, not globally
