@@ -1,8 +1,11 @@
 fastapi==0.111.0
 uvicorn[standard]==0.29.0
 sentence-transformers==2.7.0
-aiobreaker==1.0.0          # timeout_duration 사용
+aiobreaker==1.0.0
 prometheus-fastapi-instrumentator==7.0.0
-aiocache[redis]==0.12.2
+aioredis==2.0.1
 pydantic-settings==2.2.1
-redis==5.0.4
+numpy==1.24.3
+torch==2.0.1
+psutil==5.9.5
+prometheus-client==0.17.1
