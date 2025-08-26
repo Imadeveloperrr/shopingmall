@@ -6,8 +6,7 @@ import json
 import logging
 import pickle
 from typing import Any, Optional, AsyncIterator
-import aioredis
-from aioredis import Redis
+import redis.asyncio as redis
 import asyncio
 
 from .config import get_settings
@@ -22,7 +21,7 @@ class CacheManager:
     """Redis 캐시 매니저"""
 
     def __init__(self):
-        self._redis: Optional[Redis] = None
+        self._redis: Optional[redis.Redis] = None
         self._connected = False
 
     async def connect(self):
@@ -31,7 +30,7 @@ class CacheManager:
             return
 
         try:
-            self._redis = await aioredis.from_url(
+            self._redis = redis.from_url(
                 settings.redis_url,
                 encoding="utf-8",
                 decode_responses=False,  # 바이너리 데이터 처리를 위해
@@ -52,7 +51,7 @@ class CacheManager:
     async def disconnect(self):
         """Redis 연결 해제"""
         if self._redis:
-            await self._redis.close()
+            await self._redis.aclose()
             self._connected = False
             logger.info("Redis 연결 해제")
 

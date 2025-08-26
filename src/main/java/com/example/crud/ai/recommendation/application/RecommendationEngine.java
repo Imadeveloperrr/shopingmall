@@ -14,10 +14,10 @@ import com.example.crud.enums.Category;
 import com.example.crud.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.text.NumberFormat;
 import java.time.Duration;
@@ -27,62 +27,83 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
- * 통합 상품 추천 서비스 (개선된 버전)
- * - 중복 코드 제거 및 메서드 통합
- * - 사용되지 않는 메서드 제거
- * - 에러 처리 개선
+ * 핵심 추천 엔진
+ * - 벡터 기반 유사도 검색
+ * - 사용자 선호도 기반 필터링
+ * - 트렌드 기반 점수 조정
+ * - 하이브리드 추천 알고리즘
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional(readOnly = true)
-public class IntegratedRecommendationService {
+public class RecommendationEngine {
 
-    // Core dependencies
     private final EmbeddingClient embeddingClient;
-    private final ProductRepository productRepository;
     private final ProductVectorRepository vectorRepository;
+    private final ProductRepository productRepository;
     private final UserPreferenceRepository preferenceRepository;
-
-    // Cache & messaging
     private final RecommendationCacheService cacheService;
     private final RedisTemplate<String, Object> redisTemplate;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    // Constants
+    @Value("${ai.cache.enabled:true}")
+    private boolean cacheEnabled;
+
+    // 추천 시스템 상수
     private static final int DEFAULT_RECOMMENDATION_SIZE = 20;
-    private static final int VECTOR_DIMENSION = 384; // ML 서비스와 일치
-    private static final String METRICS_KEY = "recommendation:metrics:";
+    private static final int VECTOR_DIMENSION = 384;
     private static final String TRENDING_KEY = "recommendation:trending:products";
+    private static final String METRICS_KEY = "recommendation:metrics:";
 
     /**
-     * 메인 추천 메서드 - 모든 추천 요청의 진입점
+     * 기본 추천 생성
      */
     public List<ProductResponseDto> recommend(Long userId, String message) {
-        log.debug("추천 요청: userId={}, message={}", userId, message);
+        return recommendWithContext(userId, message, new ArrayList<>());
+    }
+
+    /**
+     * 컨텍스트 기반 추천 생성
+     */
+    public List<ProductResponseDto> recommendWithContext(Long userId, String message, List<String> context) {
+        log.debug("추천 생성 시작: userId={}, message={}", userId, message);
 
         try {
-            // 비회원 처리
-            if (userId == null) {
-                return recommendForGuest(message);
-            }
-
             // 캐시 확인
-            Optional<List<ProductResponseDto>> cached = cacheService.getCachedUserRecommendations(userId);
-            if (cached.isPresent() && !isRefreshRequired(message)) {
-                log.debug("캐시된 추천 반환: userId={}", userId);
-                recordMetrics("cache_hit", userId);
-                return cached.get();
+            if (cacheEnabled && userId != null) {
+                Optional<List<ProductResponseDto>> cached = cacheService.getCachedUserRecommendations(userId);
+                if (cached.isPresent() && !isRefreshRequired(message)) {
+                    log.debug("캐시된 추천 반환: userId={}", userId);
+                    recordMetrics("cache_hit", userId);
+                    return cached.get();
+                }
             }
 
-            // 추천 생성
-            List<ProductResponseDto> recommendations = generateRecommendations(userId, message);
+            // 컨텍스트와 메시지 결합
+            String combinedMessage = buildContextualMessage(context, message);
 
-            // 캐싱 및 이벤트 발행
-            CompletableFuture.runAsync(() -> {
-                cacheService.cacheUserRecommendations(userId, recommendations);
-                publishRecommendationEvent(userId, recommendations);
-            });
+            // 1. 임베딩 생성
+            float[] queryVector = getOrCreateEmbedding(combinedMessage);
+            if (queryVector == null || queryVector.length != VECTOR_DIMENSION) {
+                log.warn("임베딩 생성 실패 또는 차원 불일치");
+                return getFallbackRecommendations(userId);
+            }
+
+            // 2. 사용자 선호도 조회
+            Map<String, Object> preferences = getUserPreferences(userId);
+
+            // 3. 하이브리드 추천 생성
+            List<ProductResponseDto> recommendations = generateHybridRecommendations(
+                    queryVector, preferences, userId
+            );
+
+            // 4. 캐싱 및 이벤트 발행
+            if (cacheEnabled && userId != null && !recommendations.isEmpty()) {
+                CompletableFuture.runAsync(() -> {
+                    cacheService.cacheUserRecommendations(userId, recommendations);
+                    publishRecommendationEvent(userId, recommendations);
+                });
+            }
 
             recordMetrics("recommendation_generated", userId);
             return recommendations;
@@ -94,24 +115,16 @@ public class IntegratedRecommendationService {
     }
 
     /**
-     * 대화 컨텍스트를 포함한 추천
-     */
-    public List<ProductResponseDto> recommendWithContext(Long userId, String message, List<String> context) {
-        String combinedMessage = buildContextualMessage(context, message);
-        return recommend(userId, combinedMessage);
-    }
-
-    /**
      * 카테고리 기반 추천
      */
     public List<ProductResponseDto> recommendByCategory(String categoryName, int limit) {
-        String cacheKey = "rec:category:" + categoryName;
-
         try {
             // 캐시 확인
-            List<ProductResponseDto> cached = getCachedRecommendations(cacheKey);
-            if (!cached.isEmpty()) {
-                return cached.stream().limit(limit).collect(Collectors.toList());
+            if (cacheEnabled) {
+                Optional<List<ProductResponseDto>> cached = cacheService.getCategoryPopular(categoryName);
+                if (cached.isPresent()) {
+                    return cached.get().stream().limit(limit).collect(Collectors.toList());
+                }
             }
 
             // 카테고리 추천 생성
@@ -124,7 +137,9 @@ public class IntegratedRecommendationService {
                     .collect(Collectors.toList());
 
             // 캐싱
-            cacheRecommendations(cacheKey, recommendations, Duration.ofHours(1));
+            if (cacheEnabled && !recommendations.isEmpty()) {
+                cacheService.cacheCategoryPopular(categoryName, recommendations);
+            }
 
             return recommendations;
 
@@ -135,24 +150,15 @@ public class IntegratedRecommendationService {
     }
 
     /**
-     * 통합 추천 생성 로직 (개선된 버전)
+     * 하이브리드 추천 생성
      */
-    private List<ProductResponseDto> generateRecommendations(Long userId, String message) {
-        // 1. 임베딩 생성
-        float[] queryVector = getOrCreateEmbedding(message);
-        if (queryVector == null || queryVector.length != VECTOR_DIMENSION) {
-            log.warn("임베딩 생성 실패 또는 차원 불일치");
-            return getFallbackRecommendations(userId);
-        }
-
-        // 2. 사용자 선호도 조회
-        Map<String, Object> preferences = getUserPreferences(userId);
-
-        // 3. 점수 계산
+    private List<ProductResponseDto> generateHybridRecommendations(
+            float[] queryVector, Map<String, Object> preferences, Long userId) {
+        
         Map<Long, Double> scoreMap = new HashMap<>();
 
-        // 벡터 유사도 (40%)
-        addVectorSimilarityScores(scoreMap, queryVector, 0.4);
+        // 벡터 유사도 (50%)
+        addVectorSimilarityScores(scoreMap, queryVector, 0.5);
 
         // 사용자 선호도 (30%)
         if (!preferences.isEmpty()) {
@@ -162,10 +168,7 @@ public class IntegratedRecommendationService {
         // 트렌드 (20%)
         addTrendingScores(scoreMap, 0.2);
 
-        // 협업 필터링 (10%)
-        addCollaborativeScores(scoreMap, userId, 0.1);
-
-        // 4. 상위 N개 선택
+        // 상위 N개 선택
         return selectTopProducts(scoreMap, DEFAULT_RECOMMENDATION_SIZE);
     }
 
@@ -198,13 +201,11 @@ public class IntegratedRecommendationService {
                 for (String categoryName : categoryNames) {
                     try {
                         Category category = resolveCategory(categoryName);
-                        // findByCategory는 Category 파라미터 하나만 받음!
                         List<Product> categoryProducts = productRepository.findByCategory(category);
 
-                        // stream으로 필터링 및 제한
                         List<Product> filteredProducts = categoryProducts.stream()
                                 .filter(p -> p.getDescriptionVector() != null)
-                                .limit(100)  // 성능을 위해 제한
+                                .limit(100)
                                 .collect(Collectors.toList());
 
                         for (Product product : filteredProducts) {
@@ -219,7 +220,6 @@ public class IntegratedRecommendationService {
 
             // 브랜드별 추가 점수
             if (!brands.isEmpty()) {
-                // 브랜드로 필터링하여 조회
                 List<Product> allProducts = productRepository.findAll();
                 for (Product product : allProducts) {
                     if (brands.contains(product.getBrand()) && product.getDescriptionVector() != null) {
@@ -256,25 +256,7 @@ public class IntegratedRecommendationService {
     }
 
     /**
-     * 협업 필터링 점수 추가
-     */
-    private void addCollaborativeScores(Map<Long, Double> scoreMap, Long userId, double weight) {
-        try {
-            String userKey = "collaborative:user:" + userId;
-            Map<Object, Object> userProducts = redisTemplate.opsForHash().entries(userKey);
-
-            for (Map.Entry<Object, Object> entry : userProducts.entrySet()) {
-                Long productId = Long.parseLong(entry.getKey().toString());
-                Double score = Double.parseDouble(entry.getValue().toString());
-                scoreMap.merge(productId, score * weight, Double::sum);
-            }
-        } catch (Exception e) {
-            log.debug("협업 필터링 점수 계산 실패: {}", e.getMessage());
-        }
-    }
-
-    /**
-     * 임베딩 생성 또는 캐시 조회 (개선된 버전)
+     * 임베딩 생성
      */
     private float[] getOrCreateEmbedding(String text) {
         if (text == null || text.trim().isEmpty()) {
@@ -294,6 +276,8 @@ public class IntegratedRecommendationService {
      * 사용자 선호도 조회
      */
     private Map<String, Object> getUserPreferences(Long userId) {
+        if (userId == null) return new HashMap<>();
+        
         try {
             UserPreference preference = preferenceRepository.findByMember_Number(userId).orElse(null);
             if (preference != null && preference.getPreferences() != null) {
@@ -334,7 +318,7 @@ public class IntegratedRecommendationService {
         dto.setName(product.getName());
         dto.setBrand(product.getBrand());
 
-        // 가격 포맷팅 (int -> String)
+        // 가격 포맷팅
         NumberFormat formatter = NumberFormat.getInstance(Locale.KOREA);
         dto.setPrice(formatter.format(product.getPrice()) + "원");
 
@@ -369,10 +353,8 @@ public class IntegratedRecommendationService {
      */
     private Category resolveCategory(String categoryName) {
         try {
-            // 대문자로 변환하여 enum 매칭 시도
             return Category.valueOf(categoryName.toUpperCase());
         } catch (Exception e) {
-            // 실패 시 모든 Category 값을 순회하며 매칭
             for (Category cat : Category.values()) {
                 if (cat.name().equalsIgnoreCase(categoryName)) {
                     return cat;
@@ -380,36 +362,6 @@ public class IntegratedRecommendationService {
             }
             throw new IllegalArgumentException("알 수 없는 카테고리: " + categoryName);
         }
-    }
-
-    /**
-     * 비회원 추천
-     */
-    private List<ProductResponseDto> recommendForGuest(String message) {
-        try {
-            float[] queryVector = getOrCreateEmbedding(message);
-            if (queryVector == null) {
-                return getPopularProducts();
-            }
-
-            List<ProductMatch> matches = vectorRepository.findTopN(queryVector, DEFAULT_RECOMMENDATION_SIZE);
-            return convertMatchesToDtos(matches);
-
-        } catch (Exception e) {
-            log.error("비회원 추천 실패: {}", e.getMessage());
-            return getPopularProducts();
-        }
-    }
-
-    /**
-     * 인기 상품 조회 (폴백)
-     */
-    private List<ProductResponseDto> getPopularProducts() {
-        // 최신 상품 20개를 인기 상품으로 간주 (실제로는 판매량, 조회수 등의 기준 필요)
-        List<Product> products = productRepository.findTop20ByOrderByNumberDesc();
-        return products.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
     }
 
     /**
@@ -429,34 +381,12 @@ public class IntegratedRecommendationService {
     }
 
     /**
-     * ProductMatch를 DTO로 변환
+     * 인기 상품 조회 (폴백)
      */
-    private List<ProductResponseDto> convertMatchesToDtos(List<ProductMatch> matches) {
-        if (matches.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        // Product ID 목록 추출
-        List<Long> productIds = matches.stream()
-                .map(ProductMatch::id)
-                .collect(Collectors.toList());
-
-        // 상품 정보 일괄 조회
-        Map<Long, Product> productMap = productRepository.findAllById(productIds).stream()
-                .collect(Collectors.toMap(Product::getNumber, p -> p));
-
-        // 매치 순서대로 DTO 변환
-        return matches.stream()
-                .map(match -> {
-                    Product product = productMap.get(match.id());
-                    if (product != null) {
-                        ProductResponseDto dto = convertToDto(product);
-                        dto.setRelevance(match.score());
-                        return dto;
-                    }
-                    return null;
-                })
-                .filter(Objects::nonNull)
+    private List<ProductResponseDto> getPopularProducts() {
+        List<Product> products = productRepository.findTop20ByOrderByNumberDesc();
+        return products.stream()
+                .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
@@ -489,7 +419,6 @@ public class IntegratedRecommendationService {
      * 새로고침 필요 여부 판단
      */
     private boolean isRefreshRequired(String message) {
-        // 특정 키워드가 포함된 경우 새로고침
         String[] refreshKeywords = {"새로운", "다른", "추가", "더", "변경"};
         String lowerMessage = message.toLowerCase();
 
@@ -505,38 +434,10 @@ public class IntegratedRecommendationService {
             return currentMessage;
         }
 
-        // 최근 3개 메시지만 사용
         int startIdx = Math.max(0, context.size() - 3);
         List<String> recentContext = context.subList(startIdx, context.size());
 
         return String.join(" ", recentContext) + " " + currentMessage;
-    }
-
-    /**
-     * 캐시 저장
-     */
-    private void cacheRecommendations(String key, List<ProductResponseDto> recommendations, Duration ttl) {
-        try {
-            String json = Json.encode(recommendations);
-            redisTemplate.opsForValue().set(key, json, ttl);
-        } catch (Exception e) {
-            log.error("캐시 저장 실패: key={}", key, e);
-        }
-    }
-
-    /**
-     * 캐시 조회
-     */
-    private List<ProductResponseDto> getCachedRecommendations(String key) {
-        try {
-            Object cached = redisTemplate.opsForValue().get(key);
-            if (cached != null) {
-                return Json.decode(cached.toString(), List.class);
-            }
-        } catch (Exception e) {
-            log.error("캐시 조회 실패: key={}", key, e);
-        }
-        return new ArrayList<>();
     }
 
     /**
@@ -566,7 +467,6 @@ public class IntegratedRecommendationService {
             String key = METRICS_KEY + metric;
             redisTemplate.opsForValue().increment(key);
 
-            // 일별 메트릭
             String dailyKey = key + ":" + LocalDateTime.now().toLocalDate();
             redisTemplate.opsForValue().increment(dailyKey);
             redisTemplate.expire(dailyKey, Duration.ofDays(7));

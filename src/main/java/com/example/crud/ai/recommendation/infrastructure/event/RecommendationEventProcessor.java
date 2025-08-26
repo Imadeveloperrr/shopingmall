@@ -3,7 +3,7 @@ package com.example.crud.ai.recommendation.infrastructure.event;
 import com.example.crud.ai.conversation.domain.entity.Conversation;
 import com.example.crud.ai.conversation.domain.event.MsgCreatedPayload;
 import com.example.crud.ai.conversation.domain.repository.ConversationRepository;
-import com.example.crud.ai.recommendation.application.IntegratedRecommendationService;
+import com.example.crud.ai.recommendation.application.RecommendationEngine;
 import com.example.crud.ai.recommendation.infrastructure.RecommendationCacheService;
 import com.example.crud.common.utility.Json;
 import com.example.crud.data.product.dto.ProductResponseDto;
@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 public class RecommendationEventProcessor {
 
     private final ConversationRepository conversationRepository;
-    private final IntegratedRecommendationService recommendationService;
+    private final RecommendationEngine recommendationEngine;
     private final RecommendationCacheService cacheService;
     private final RedisTemplate<String, Object> redisTemplate;
     private final KafkaTemplate<String, String> kafkaTemplate;
@@ -150,7 +150,7 @@ public class RecommendationEventProcessor {
             // 비동기로 추천 생성
             CompletableFuture.runAsync(() -> {
                 try {
-                    List<ProductResponseDto> recommendations = recommendationService
+                    List<ProductResponseDto> recommendations = recommendationEngine
                             .recommend(member.getNumber(), event.content());
 
                     if (!recommendations.isEmpty()) {
