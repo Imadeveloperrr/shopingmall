@@ -12,7 +12,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install Python dependencies
 WORKDIR /tmp
 COPY requirements.txt .
+
+# Install PyTorch CPU version first with explicit index
 RUN pip install --user --no-cache-dir --upgrade pip && \
+    pip install --user --no-cache-dir --index-url https://download.pytorch.org/whl/cpu \
+    torch==2.1.2+cpu torchvision==0.16.2+cpu torchaudio==2.1.2+cpu && \
     pip install --user --no-cache-dir -r requirements.txt
 
 # Download model during build (cache it)

@@ -375,7 +375,7 @@ public class RecommendationCacheService {
         categories.forEach(category -> {
             try {
                 // 카테고리별 인기 상품을 미리 캐싱하는 로직
-                // IntegratedRecommendationService에서 호출 가능
+                // ConversationalRecommendationService에서 호출 가능
                 log.debug("카테고리 캐시 워밍: {}", category);
             } catch (Exception e) {
                 log.error("캐시 워밍 실패: category={}", category, e);

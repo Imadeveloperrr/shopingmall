@@ -4,11 +4,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "chatgpt")
 public record ChatGptProperties (
-    String apiUrl,
+    String apiUrl, // api Endpoint
     String apiKey,
     String model,
-    double temperature,
-    int timeoutSec,
-    int rateLimitPerSec,
-    int streamChunkLimit
+    double temperature, // 창의성 수준 (0.0 ~ 1.0)
+    int timeoutSec, // 타임아웃 설정
+    int rateLimitPerSec, // 초당 요청 제한
+    int streamChunkLimit // 스트림 청크 제한
 ) {}

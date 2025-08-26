@@ -14,17 +14,12 @@ import com.example.crud.entity.Member;
 import com.example.crud.enums.MessageType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 /**
@@ -50,46 +45,9 @@ public class ConversationalRecommendationService {
     private final ConversationCommandService cmdSvc;
     private final ConversationQueryService qrySvc;
     private final ConversationRepository convRepo;
-    private final IntegratedRecommendationService recommendationService;
+    private final RecommendationEngine recommendationEngine;  // ← 새로운 추천 엔진
     private final UserPreferenceRepository prefRepo;
     private final ChatGptServiceLite chatGptService;
-
-    // 설정 가능한 임계값
-    @Value("${ai.complexity.simple.threshold:0.3}")
-    private double simpleThreshold;
-
-    @Value("${ai.complexity.complex.threshold:0.7}")
-    private double complexThreshold;
-
-    @Value("${ai.timeout.ms:2000}")
-    private int aiTimeoutMs;
-
-    @Value("${ai.cache.enabled:true}")
-    private boolean cacheEnabled;
-
-    // 복잡도 판단용 패턴 (컴파일된 패턴으로 성능 향상)
-    private static final Pattern PRICE_PATTERN = Pattern.compile("(\\d{1,3}(,\\d{3})*|\\d+)(만)?\\s*원");
-    private static final Pattern COMPLEX_PATTERN = Pattern.compile(
-        "어떻게|왜|설명|자세히|차이점|장단점|추천\\s*이유|어울리|코디|스타일링|분위기|TPO|상황|행사"
-    );
-
-    // 단순 키워드 세트 (빠른 조회용)
-    private static final Set<String> SIMPLE_KEYWORDS = Set.of(
-        "보여줘", "찾아줘", "추천", "알려줘", "검색", "목록", "리스트"
-    );
-
-    private static final Set<String> CATEGORY_KEYWORDS = Set.of(
-        "원피스", "셔츠", "바지", "스커트", "자켓", "코트", "가방", "신발", "액세서리"
-    );
-
-    // 의도 분석 키워드
-    private static final Map<String, List<String>> INTENT_KEYWORDS = Map.of(
-            "search", List.of("찾", "검색", "보여", "알려", "추천"),
-            "compare", List.of("비교", "차이", "어떤게", "뭐가"),
-            "similar", List.of("비슷", "유사", "같은", "이런"),
-            "price", List.of("가격", "얼마", "비싼", "저렴", "할인"),
-            "purchase", List.of("구매", "살", "주문", "결제")
-    );
 
     /**
      * 사용자 메시지 처리 및 추천 생성
@@ -114,27 +72,21 @@ public class ConversationalRecommendationService {
             // 3. 대화 컨텍스트 구축
             List<String> context = buildConversationContext(convId);
 
-            // 4. 의도 분석 (간단한 규칙 기반)
+            // 4. 의도 분석 (GPT 기반)
             Map<String, Object> intent = analyzeIntent(userMsg, context);
 
             // 5. 사용자 선호도 업데이트 (비동기)
             CompletableFuture.runAsync(() -> updateUserPreference(member, intent));
 
-            // 6. 추천 생성 (인터페이스 통일)
-            List<ProductResponseDto> recommendations = recommendationService
+            // 6. 추천 생성 (추천 엔진에 위임)
+            List<ProductResponseDto> recommendations = recommendationEngine
                     .recommendWithContext(member.getNumber(), userMsg, context);
 
-            // 7. AI 응답 생성 (복잡한 패턴일 때만)
+            // 7. AI 응답 생성 (GPT 기반)
             String assistantResponse;
-            if (isComplexPattern(userMsg)) {
                 assistantResponse = chatGptService.completion(
-                        List.of(new ChatMessage("user", userMsg)), "").block();
-                if (assistantResponse == null || assistantResponse.isBlank()) {
-                    assistantResponse = generateResponse(intent, recommendations, userMsg);
-                }
-            } else {
-                assistantResponse = generateResponse(intent, recommendations, userMsg);
-            }
+                        List.of(new ChatMessage("system", "너는 친근한 쇼핑몰 상품 추천 전문가야. 사용자에게 자연스럽고 도움이 되는 답변을 해줘."),
+                                new ChatMessage("user", userMsg)), "").block();
 
             // 8. AI 응답 저장
             cmdSvc.addMessage(convId, MessageType.ASSISTANT, assistantResponse);
@@ -154,12 +106,6 @@ public class ConversationalRecommendationService {
         }
     }
 
-    // 복잡한 패턴 여부 체크
-    private boolean isComplexPattern(String message) {
-        String lower = message.toLowerCase();
-        return COMPLEX_PATTERN.matcher(lower).find();
-    }
-
     /**
      * 특정 상품에 대한 유사 상품 추천
      */
@@ -176,7 +122,7 @@ public class ConversationalRecommendationService {
             String message = String.format("상품 ID %d와 비슷한 상품을 추천해주세요", productId);
 
             // 추천 생성
-            List<ProductResponseDto> recommendations = recommendationService
+            List<ProductResponseDto> recommendations = recommendationEngine
                     .recommend(conversation.getMember().getNumber(), message);
 
             // 응답 생성
@@ -206,7 +152,7 @@ public class ConversationalRecommendationService {
                     .orElseThrow(() -> new IllegalArgumentException("대화를 찾을 수 없습니다: " + convId));
 
             // 카테고리 추천
-            List<ProductResponseDto> recommendations = recommendationService
+            List<ProductResponseDto> recommendations = recommendationEngine
                     .recommendByCategory(category, 20);
 
             // 응답 생성
@@ -243,124 +189,49 @@ public class ConversationalRecommendationService {
     }
 
     /**
-     * 의도 분석 (규칙 기반)
+     * 의도 분석 (GPT 기반)
      */
     private Map<String, Object> analyzeIntent(String message, List<String> context) {
         Map<String, Object> intent = new HashMap<>();
-        String lowerMessage = message.toLowerCase();
 
-        // 의도 타입 결정
-        String intentType = "browse"; // 기본값
-        int maxScore = 0;
+        String gptResponse = chatGptService.completion(List.of(
+                new ChatMessage("system",
+                        "사용자의 의도와, 키워드, 가격범위, 카테고리를 다음과 같은 json 형태로 반환해줘. " +
+                                "intent는 search, compare, similar, price, purchase 중에 하나. "
+                                +
+                                "{\n" +
+                                "  \"intent\": \"search\",\n" +
+                                "  \"keywords\": [\"원피스\", \"예쁜\"],\n" +
+                                "  \"priceRange\": {\n" +
+                                "    \"min\": 50000,\n" +
+                                "    \"max\": 100000\n" +
+                                "  },\n" +
+                                "  \"categories\": [\"의류\"]\n" +
+                                "}"),
+                new ChatMessage("user", message)
+                ), "").block();
+        Map<String, Object> gptResult = Json.decode(gptResponse, Map.class);
 
-        for (Map.Entry<String, List<String>> entry : INTENT_KEYWORDS.entrySet()) {
-            int score = 0;
-            for (String keyword : entry.getValue()) {
-                if (lowerMessage.contains(keyword)) {
-                    score++;
-                }
-            }
-            if (score > maxScore) {
-                maxScore = score;
-                intentType = entry.getKey();
-            }
-        }
-
-        intent.put("intent", intentType);
+        intent.put("intent", gptResult.get("intent"));
         intent.put("message", message);
 
         // 키워드 추출
-        List<String> keywords = extractKeywords(message);
-        intent.put("keywords", keywords);
+        intent.put("keywords", gptResult.get("keywords"));
 
         // 가격 범위 추출
-        extractPriceRange(message, intent);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> priceRange = (Map<String, Object>) gptResult.get("priceRange");
+        if (priceRange != null) {
+            intent.put("minPrice", priceRange.get("min"));
+            intent.put("maxPrice", priceRange.get("max"));
+        }
 
         // 카테고리 추출
-        extractCategories(message, intent);
+        intent.put("category", gptResult.get("categories"));
 
         return intent;
     }
 
-    /**
-     * 키워드 추출
-     */
-    private List<String> extractKeywords(String message) {
-        // 간단한 키워드 추출 (실제로는 더 복잡한 NLP 필요)
-        List<String> keywords = new ArrayList<>();
-
-        String[] words = message.split("\\s+");
-        for (String word : words) {
-            if (word.length() > 2 && !isStopWord(word)) {
-                keywords.add(word);
-            }
-        }
-
-        return keywords;
-    }
-
-    /**
-     * 불용어 확인
-     */
-    private boolean isStopWord(String word) {
-        Set<String> stopWords = Set.of(
-                "그", "이", "저", "것", "수", "등", "및", "의", "를", "을", "은", "는",
-                "가", "이", "에", "에서", "으로", "와", "과", "한", "하는", "있는"
-        );
-        return stopWords.contains(word);
-    }
-
-    /**
-     * 가격 범위 추출
-     */
-    private void extractPriceRange(String message, Map<String, Object> intent) {
-        // 숫자와 "만원", "원" 패턴 찾기
-        Matcher m = PRICE_PATTERN.matcher(message);
-
-        List<Integer> prices = new ArrayList<>();
-        while (m.find()) {
-            int price = Integer.parseInt(m.group(1).replace(",", ""));
-            if (m.group(2) != null) { // "만원"
-                price *= 10000;
-            }
-            prices.add(price);
-        }
-
-        if (!prices.isEmpty()) {
-            Collections.sort(prices);
-            intent.put("minPrice", prices.get(0));
-            intent.put("maxPrice", prices.get(prices.size() - 1));
-        }
-    }
-
-    /**
-     * 카테고리 추출
-     */
-    private void extractCategories(String message, Map<String, Object> intent) {
-        List<String> categories = new ArrayList<>();
-
-        // 카테고리 키워드 매핑
-        Map<String, List<String>> categoryKeywords = Map.of(
-                "의류", List.of("옷", "의류", "티셔츠", "셔츠", "바지", "청바지"),
-                "신발", List.of("신발", "운동화", "구두", "스니커즈"),
-                "가방", List.of("가방", "백팩", "크로스백", "토트백"),
-                "액세서리", List.of("액세서리", "시계", "지갑", "벨트")
-        );
-
-        String lowerMessage = message.toLowerCase();
-        for (Map.Entry<String, List<String>> entry : categoryKeywords.entrySet()) {
-            for (String keyword : entry.getValue()) {
-                if (lowerMessage.contains(keyword)) {
-                    categories.add(entry.getKey());
-                    break;
-                }
-            }
-        }
-
-        if (!categories.isEmpty()) {
-            intent.put("categories", categories);
-        }
-    }
 
     /**
      * 사용자 선호도 업데이트
@@ -592,5 +463,20 @@ public class ConversationalRecommendationService {
                 .recommendedProducts(new ArrayList<>())
                 .build();
     }
-}
 
+    // ========== 호환성 메서드들 (외부 컴포넌트용) ==========
+    
+    /**
+     * 단순 추천 생성 (이벤트 프로세서용)
+     */
+    public List<ProductResponseDto> recommend(Long userId, String message) {
+        return recommendationEngine.recommend(userId, message);
+    }
+
+    /**
+     * 컨텍스트와 함께 추천 생성 (이벤트 프로세서용)
+     */
+    public List<ProductResponseDto> recommendWithContext(Long userId, String message, List<String> context) {
+        return recommendationEngine.recommendWithContext(userId, message, context);
+    }
+}
