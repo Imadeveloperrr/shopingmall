@@ -20,12 +20,12 @@ public class WebClientConfig {
     public WebClient chatGptClient() {
         HttpClient http = HttpClient.create()
                 .responseTimeout(Duration.ofSeconds(prop.timeoutSec()))
-                .compress(true);
+                .compress(prop.compress());
 
         return WebClient.builder()
                 .baseUrl(prop.apiUrl())
                 .clientConnector(new ReactorClientHttpConnector(http))
-                .defaultHeader("Authorization", "Bearer " + prop.apiKey())
+                .defaultHeader("Authorization", prop.authType() + " " + prop.apiKey())
                 .filter(MaskingFilter.auth())
                 .build();
     }
