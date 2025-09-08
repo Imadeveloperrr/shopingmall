@@ -3,7 +3,7 @@ package com.example.crud.ai.recommendation.presentation;
 import com.example.crud.ai.recommendation.application.RecommendationEngine;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService.ProductSimilarity;
-import com.example.crud.ai.embedding.SimpleEmbeddingService;
+import com.example.crud.ai.embedding.EmbeddingApiClient;
 import com.example.crud.data.product.dto.ProductResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ public class RecommendationTestController {
 
     private final RecommendationEngine recommendationEngine;
     private final ProductVectorService vectorService;
-    private final SimpleEmbeddingService embeddingService;
+    private final EmbeddingApiClient embeddingApiClient;
 
     /**
      * 텍스트 기반 상품 추천 테스트
@@ -88,7 +88,7 @@ public class RecommendationTestController {
             }
 
             long startTime = System.currentTimeMillis();
-            float[] embedding = embeddingService.generateEmbedding(text);
+            float[] embedding = embeddingApiClient.generateEmbedding(text);
             long endTime = System.currentTimeMillis();
 
             Map<String, Object> response = Map.of(
@@ -151,12 +151,12 @@ public class RecommendationTestController {
         try {
             // 간단한 임베딩 테스트
             long startTime = System.currentTimeMillis();
-            float[] testEmbedding = embeddingService.generateEmbedding("테스트");
+            float[] testEmbedding = embeddingApiClient.generateEmbedding("테스트");
             long endTime = System.currentTimeMillis();
 
             Map<String, Object> response = Map.of(
                 "status", "healthy",
-                "embeddingService", "working",
+                "embeddingApiClient", "working",
                 "embeddingDimension", testEmbedding.length,
                 "responseTimeMs", endTime - startTime,
                 "timestamp", System.currentTimeMillis()

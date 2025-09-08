@@ -1,6 +1,6 @@
 package com.example.crud.ai.recommendation.infrastructure;
 
-import com.example.crud.ai.embedding.SimpleEmbeddingService;
+import com.example.crud.ai.embedding.EmbeddingApiClient;
 import com.example.crud.entity.Product;
 import com.example.crud.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 public class ProductVectorService {
 
     private final ProductRepository productRepository;
-    private final SimpleEmbeddingService embeddingService;
+    private final EmbeddingApiClient embeddingApiClient;
 
     /**
      * 쿼리 텍스트와 유사한 상품들을 벡터 기반으로 찾기
@@ -31,7 +31,7 @@ public class ProductVectorService {
     public List<ProductSimilarity> findSimilarProducts(String queryText, int limit) {
         try {
             // 1. 쿼리 텍스트의 임베딩 생성
-            float[] queryVector = embeddingService.generateEmbedding(queryText);
+            float[] queryVector = embeddingApiClient.generateEmbedding(queryText);
             if (queryVector == null) {
                 return new ArrayList<>();
             }
@@ -42,7 +42,7 @@ public class ProductVectorService {
 
             for (Product product : products) {
                 if (product.getDescriptionVector() != null) {
-                    double similarity = embeddingService.calculateSimilarity(
+                    double similarity = embeddingApiClient.calculateSimilarity(
                         queryVector, product.getDescriptionVector());
                     
                     if (similarity > 0.3) { // 최소 임계값
@@ -80,7 +80,7 @@ public class ProductVectorService {
             for (Product product : products) {
                 if (product.getDescriptionVector() == null && product.getDescription() != null) {
                     String description = product.getName() + " " + product.getDescription();
-                    float[] vector = embeddingService.generateEmbedding(description);
+                    float[] vector = embeddingApiClient.generateEmbedding(description);
                     
                     product.setDescriptionVector(vector);
                     productRepository.save(product);
@@ -110,7 +110,7 @@ public class ProductVectorService {
 
             for (Product product : allProducts) {
                 if (!product.getNumber().equals(productId) && product.getDescriptionVector() != null) {
-                    double similarity = embeddingService.calculateSimilarity(
+                    double similarity = embeddingApiClient.calculateSimilarity(
                         targetProduct.getDescriptionVector(), 
                         product.getDescriptionVector());
                         
