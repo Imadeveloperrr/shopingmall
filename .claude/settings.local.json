@@ -40,7 +40,12 @@
       "Read(/C:\\Users\\sungho\\IdeaProjects\\shopingmall\\src\\main\\java\\com\\example\\crud\\ai\\recommendation\\application/**)",
       "Read(/C:\\Users\\sungho\\IdeaProjects\\shopingmall\\src\\main\\java\\com\\example\\crud\\ai\\embedding/**)",
       "Read(/C:\\Users\\sungho\\IdeaProjects\\shopingmall\\src\\main\\java\\com\\example\\crud\\ai\\embedding/**)",
-      "Read(/C:\\Users\\sungho\\IdeaProjects\\shopingmall\\src\\main\\java\\com\\example\\crud\\ai\\embedding/**)"
+      "Read(/C:\\Users\\sungho\\IdeaProjects\\shopingmall\\src\\main\\java\\com\\example\\crud\\ai\\embedding/**)",
+      "Read(/C:\\Users\\sungho\\IdeaProjects\\shopingmall\\src\\main\\java\\com\\example\\crud\\ai\\embedding/**)",
+      "Read(/C:\\Users\\sungho\\IdeaProjects\\shopingmall\\src\\main\\java\\com\\example\\crud\\ai\\recommendation\\infrastructure/**)",
+      "Read(/C:\\Users\\sungho\\IdeaProjects\\shopingmall\\src\\main\\java\\com\\example\\crud\\ai\\recommendation\\application/**)",
+      "Read(/C:\\Users\\sungho\\IdeaProjects\\shopingmall\\src\\main\\java\\com\\example\\crud\\ai\\recommendation\\application/**)",
+      "Bash(./gradlew test:*)"
     ],
     "deny": [],
     "ask": []

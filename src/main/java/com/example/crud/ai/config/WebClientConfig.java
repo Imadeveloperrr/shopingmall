@@ -29,4 +29,16 @@ public class WebClientConfig {
                 .filter(MaskingFilter.auth())
                 .build();
     }
+    
+    @Bean("embeddingWebClient")
+    public WebClient embeddingWebClient() {
+        HttpClient http = HttpClient.create()
+                .responseTimeout(Duration.ofSeconds(10))
+                .compress(true);
+
+        return WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(http))
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
+                .build();
+    }
 }

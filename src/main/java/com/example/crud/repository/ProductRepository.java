@@ -24,6 +24,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // 임베딩이 없는 상품 조회
     @Query("SELECT p FROM Product p WHERE p.descriptionVector IS NULL")
     List<Product> findByDescriptionVectorIsNull();
+    
+    // ProductEmbeddingService에서 사용하는 메서드 별칭
+    default List<Product> findProductsWithoutEmbedding() {
+        return findByDescriptionVectorIsNull();
+    }
 
     // 카테고리별 유사 상품 검색을 위한 네이티브 쿼리
     @Query(value = """
