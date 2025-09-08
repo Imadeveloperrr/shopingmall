@@ -1,7 +1,6 @@
 package com.example.crud.ai.recommendation.application;
 
 import com.example.crud.ai.conversation.application.command.ConversationCommandService;
-import com.example.crud.ai.conversation.application.query.ConversationQueryService;
 import com.example.crud.ai.recommendation.domain.dto.RecommendationResponseDto;
 import com.example.crud.ai.recommendation.domain.dto.ProductMatch;
 import com.example.crud.enums.MessageType;
@@ -20,7 +19,6 @@ import java.util.List;
 public class ConversationalRecommendationService {
     
     private final ConversationCommandService conversationCommandService;
-    private final ConversationQueryService conversationQueryService;
     private final RecommendationEngine recommendationEngine;
     
     /**

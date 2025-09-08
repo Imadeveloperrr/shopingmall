@@ -1,6 +1,5 @@
 package com.example.crud.common.config;
 
-import com.example.crud.ai.recommendation.domain.dto.MessageDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
@@ -72,30 +71,6 @@ public class RedisConfig {
         return new LettuceConnectionFactory(redisConfig, clientConfig);
     }
 
-    /**
-     * MessageDto 저장을 위한 RedisTemplate 구성
-     * 이 템플릿은 String 키와 MessageDto 값을 사용
-     */
-    @Bean
-    public RedisTemplate<String, MessageDto> messageRedisTemplate(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
-        // LocalDateTime 등 Java 8 시간 타입 직렬화를 위한 모듈 추가
-        ObjectMapper redisObjectMapper = objectMapper.copy();
-        redisObjectMapper.registerModule(new JavaTimeModule());
-
-        // MessageDto를 위한 직렬화 설정
-        Jackson2JsonRedisSerializer<MessageDto> serializer = new Jackson2JsonRedisSerializer<>(redisObjectMapper, MessageDto.class);
-
-        RedisTemplate<String, MessageDto> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(serializer);
-        template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(serializer);
-        template.setEnableTransactionSupport(true);
-        template.afterPropertiesSet();
-
-        return template;
-    }
 
     /**
      * 문자열 데이터 처리를 위한 StringRedisTemplate
