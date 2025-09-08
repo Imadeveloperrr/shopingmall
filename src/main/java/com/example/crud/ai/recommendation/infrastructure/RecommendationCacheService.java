@@ -15,7 +15,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class SimpleRecommendationCache {
+public class RecommendationCacheService {
 
     /**
      * 사용자 추천 결과 캐싱 - Spring Cache 어노테이션 사용

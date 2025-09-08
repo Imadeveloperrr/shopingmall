@@ -2,7 +2,7 @@ package com.example.crud.ai.recommendation.application.event;
 
 import com.example.crud.ai.conversation.domain.event.MessageCreatedEvent;
 import com.example.crud.ai.recommendation.application.RecommendationEngine;
-import com.example.crud.ai.recommendation.infrastructure.SimpleRecommendationCache;
+import com.example.crud.ai.recommendation.infrastructure.RecommendationCacheService;
 import com.example.crud.data.product.dto.ProductResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ import java.util.List;
 public class RecommendationEventHandler {
 
     private final RecommendationEngine recommendationEngine;
-    private final SimpleRecommendationCache cacheService;
+    private final RecommendationCacheService cacheService;
     private final RedisTemplate<String, Object> redisTemplate;
 
     /**

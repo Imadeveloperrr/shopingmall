@@ -12,12 +12,12 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 실용적인 임베딩 서비스 - OpenAI API 또는 HuggingFace API 사용
- * 복잡한 자체 ML 서비스 대신 외부 API 활용
+ * 임베딩 API 클라이언트 - 멀티 소스 임베딩 생성
+ * OpenAI API → HuggingFace API → Keyword 기반 순으로 Fallback 처리
  */
 @Service
 @Slf4j
-public class SimpleEmbeddingService {
+public class EmbeddingApiClient {
 
     private final WebClient webClient;
     private final Map<String, float[]> embeddingCache = new ConcurrentHashMap<>();
@@ -28,7 +28,7 @@ public class SimpleEmbeddingService {
     @Value("${huggingface.api.key:}")
     private String huggingfaceApiKey;
     
-    public SimpleEmbeddingService(@Qualifier("embeddingWebClient") WebClient webClient) {
+    public EmbeddingApiClient(@Qualifier("embeddingWebClient") WebClient webClient) {
         this.webClient = webClient;
     }
 
@@ -48,34 +48,44 @@ public class SimpleEmbeddingService {
 
         try {
             float[] embedding = null;
+            String method = "Keyword";
             
-            // 1순위: OpenAI API 사용 (가장 정확)
+            // OpenAI API 시도 (키가 있으면)
             if (openaiApiKey != null && !openaiApiKey.isEmpty()) {
-                embedding = generateOpenAIEmbedding(text);
+                try {
+                    embedding = generateOpenAIEmbedding(text);
+                    method = "OpenAI";
+                } catch (Exception e) {
+                    log.warn("OpenAI API 호출 실패, HuggingFace로 fallback: {}", e.getMessage());
+                }
             }
-            // 2순위: HuggingFace API 사용 (무료)
-            else if (huggingfaceApiKey != null && !huggingfaceApiKey.isEmpty()) {
-                embedding = generateHuggingFaceEmbedding(text);
+            
+            // HuggingFace API 시도 (OpenAI 실패했거나 키가 없으면)
+            if (embedding == null && huggingfaceApiKey != null && !huggingfaceApiKey.isEmpty()) {
+                try {
+                    embedding = generateHuggingFaceEmbedding(text);
+                    method = "HuggingFace";
+                } catch (Exception e) {
+                    log.warn("HuggingFace API 호출 실패, 키워드 기반으로 fallback: {}", e.getMessage());
+                }
             }
-            // 3순위: 간단한 키워드 기반 벡터 (Fallback)
-            else {
+            
+            // 키워드 기반 fallback (모든 API가 실패했거나 키가 없으면)
+            if (embedding == null) {
                 embedding = generateKeywordBasedEmbedding(text);
+                method = "Keyword";
             }
 
-            // 캠싱 (최대 1000개)
+            // 캐싱 (최대 1000개)
             if (embeddingCache.size() < 1000) {
                 embeddingCache.put(cacheKey, embedding);
             }
 
-            log.debug("임베딩 생성: text length={}, method={}", 
-                text.length(), 
-                openaiApiKey != null ? "OpenAI" : 
-                huggingfaceApiKey != null ? "HuggingFace" : "Keyword");
-                
+            log.debug("임베딩 생성 완료: text length={}, method={}", text.length(), method);
             return embedding;
             
         } catch (Exception e) {
-            log.warn("임베딩 생성 실패, fallback 사용: {}", e.getMessage());
+            log.error("모든 임베딩 생성 방법 실패, 키워드 기반 fallback 사용: {}", e.getMessage());
             return generateKeywordBasedEmbedding(text);
         }
     }

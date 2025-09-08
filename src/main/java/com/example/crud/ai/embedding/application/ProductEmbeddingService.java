@@ -1,6 +1,6 @@
 package com.example.crud.ai.embedding.application;
 
-import com.example.crud.ai.embedding.SimpleEmbeddingService;
+import com.example.crud.ai.embedding.EmbeddingApiClient;
 import com.example.crud.entity.Product;
 import com.example.crud.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import java.util.List;
 @Slf4j
 public class ProductEmbeddingService {
     
-    private final SimpleEmbeddingService embeddingService;
+    private final EmbeddingApiClient embeddingApiClient;
     private final ProductRepository productRepository;
     
     /**
@@ -49,7 +49,7 @@ public class ProductEmbeddingService {
             String productText = buildProductText(product);
             
             // 임베딩 벡터 생성
-            float[] embedding = embeddingService.generateEmbedding(productText);
+            float[] embedding = embeddingApiClient.generateEmbedding(productText);
             
             // 상품에 임베딩 벡터 저장
             product.setDescriptionVector(embedding);

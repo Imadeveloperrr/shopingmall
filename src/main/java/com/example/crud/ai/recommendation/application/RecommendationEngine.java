@@ -2,8 +2,8 @@ package com.example.crud.ai.recommendation.application;
 
 import com.example.crud.ai.conversation.domain.entity.UserPreference;
 import com.example.crud.ai.conversation.domain.repository.UserPreferenceRepository;
-import com.example.crud.ai.embedding.SimpleEmbeddingService;
-import com.example.crud.ai.recommendation.infrastructure.SimpleRecommendationCache;
+import com.example.crud.ai.embedding.EmbeddingApiClient;
+import com.example.crud.ai.recommendation.infrastructure.RecommendationCacheService;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService.ProductSimilarity;
 import com.example.crud.ai.recommendation.domain.dto.ProductMatch;
@@ -38,11 +38,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RecommendationEngine {
 
-    private final SimpleEmbeddingService embeddingService;
+    private final EmbeddingApiClient embeddingApiClient;
     private final ProductVectorService vectorService;
     private final ProductRepository productRepository;
     private final UserPreferenceRepository preferenceRepository;
-    private final SimpleRecommendationCache cacheService;
+    private final RecommendationCacheService cacheService;
     private final RedisTemplate<String, Object> redisTemplate;
 
     @Value("${ai.cache.enabled:true}")
