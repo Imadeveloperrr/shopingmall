@@ -6,6 +6,7 @@ import com.example.crud.ai.embedding.SimpleEmbeddingService;
 import com.example.crud.ai.recommendation.infrastructure.SimpleRecommendationCache;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService.ProductSimilarity;
+import com.example.crud.ai.recommendation.domain.dto.ProductMatch;
 import com.example.crud.common.utility.Json;
 import com.example.crud.data.product.dto.ProductOptionDto;
 import com.example.crud.data.product.dto.ProductResponseDto;
@@ -52,6 +53,29 @@ public class RecommendationEngine {
     private static final int VECTOR_DIMENSION = 384;
     private static final String TRENDING_KEY = "recommendation:trending:products";
     private static final String METRICS_KEY = "recommendation:metrics:";
+
+    /**
+     * ProductMatch 형태로 추천 결과 반환 (ConversationalRecommendationService용)
+     */
+    public List<ProductMatch> getRecommendations(String message, int limit) {
+        try {
+            // 1. 벡터 기반 유사 상품 찾기
+            List<ProductSimilarity> vectorMatches = vectorService.findSimilarProducts(message, limit);
+            
+            // 2. ProductMatch 형태로 변환
+            return vectorMatches.stream()
+                    .map(similarity -> new ProductMatch(
+                            similarity.productId(),
+                            similarity.productName(),
+                            similarity.similarity()
+                    ))
+                    .collect(Collectors.toList());
+                    
+        } catch (Exception e) {
+            log.error("추천 생성 실패: message={}", message, e);
+            return List.of();
+        }
+    }
 
     /**
      * 기본 추천 생성

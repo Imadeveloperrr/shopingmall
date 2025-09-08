@@ -1,7 +1,7 @@
 package com.example.crud.ai.embedding;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -16,7 +16,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * 복잡한 자체 ML 서비스 대신 외부 API 활용
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class SimpleEmbeddingService {
 
@@ -29,10 +28,8 @@ public class SimpleEmbeddingService {
     @Value("${huggingface.api.key:}")
     private String huggingfaceApiKey;
     
-    public SimpleEmbeddingService() {
-        this.webClient = WebClient.builder()
-            .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
-            .build();
+    public SimpleEmbeddingService(@Qualifier("embeddingWebClient") WebClient webClient) {
+        this.webClient = webClient;
     }
 
     /**
@@ -179,10 +176,10 @@ public class SimpleEmbeddingService {
         String normalizedText = text.toLowerCase();
         
         // 상품 관련 키워드 매핑
-        Map<String, Integer> keywordMap = Map.of(
-            "옵트", 0, "상의", 10, "하의", 20, "원피스", 30,
-            "신발", 40, "가방", 50, "모자", 60, "액세서리", 70,
-            "화장품", 80, "향수", 90, "전자제품", 100, "가전", 110
+        Map<String, Integer> keywordMap = Map.ofEntries(
+                Map.entry("옵트", 0), Map.entry("상의", 10), Map.entry("하의", 20), Map.entry("원피스", 30),
+                Map.entry("신발", 40), Map.entry("가방", 50), Map.entry("모자", 60), Map.entry("액세서리", 70),
+                Map.entry("화장품", 80), Map.entry("향수", 90), Map.entry("전자제품", 100), Map.entry("가전", 110)
         );
         
         // 키워드 매칭

@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an **AI-powered conversational shopping mall recommendation system** built with a microservices architecture. The system provides real-time, personalized product recommendations through conversational AI, vector similarity search, and hybrid recommendation algorithms.
+This is an **AI-powered conversational shopping mall recommendation system** built with Spring Boot. The system provides personalized product recommendations through conversational AI, vector similarity search, and hybrid recommendation algorithms.
 
 **Core Technology Stack:**
-- **Backend**: Spring Boot 3.1.4 with Spring Security, JPA, WebFlux, Kafka
-- **AI/ML**: FastAPI service with Sentence Transformers (384-dim embeddings), OpenAI GPT-4
-- **Databases**: PostgreSQL + pgvector, Redis, Elasticsearch  
-- **Infrastructure**: Docker Compose with Kafka, Zookeeper, Prometheus, Grafana
+- **Backend**: Spring Boot 3.1.4 with Spring Security, JPA, WebFlux
+- **AI/ML**: OpenAI GPT-4 API, HuggingFace API for embeddings (384-dim), Simple fallback embedding service
+- **Databases**: PostgreSQL + pgvector, Redis for caching
+- **Infrastructure**: Docker Compose with simplified service architecture
 
 ## Essential Development Commands
 
@@ -35,7 +35,7 @@ This is an **AI-powered conversational shopping mall recommendation system** bui
 docker-compose up -d
 
 # Start individual services
-docker-compose up -d db redis kafka zookeeper elasticsearch embedding-service
+docker-compose up -d db redis backend
 
 # Check service health
 docker-compose ps
@@ -60,19 +60,19 @@ docker-compose down -v
 ./gradlew test jacocoTestReport
 ```
 
-### ML Service (Python FastAPI)
+### AI Services Configuration
 ```bash
-# Navigate to ML service directory
-cd ml-service
+# Configure OpenAI API (preferred)
+# Add to src/main/resources/application-secrets.properties:
+openai.api.key=sk-proj-your-key-here
 
-# Install dependencies
-pip install -r requirements.txt
+# OR configure HuggingFace API (free alternative)
+huggingface.api.key=hf_your-key-here
 
-# Run ML service locally (for development)
-uvicorn ml_app.main:app --reload --port 8000
-
-# Run tests
-pytest tests/
+# Test embedding service
+curl -X POST http://localhost:8080/api/ai/embedding \
+  -H "Content-Type: application/json" \
+  -d '{"text": "sample product description"}'
 ```
 
 ### Database Operations
@@ -92,77 +92,71 @@ docker-compose exec db psql -U sungho -d app -c "SELECT number, name, descriptio
 # Application health
 curl http://localhost:8080/actuator/health
 
-# ML service health  
-curl http://localhost:8000/healthz
-
-# Elasticsearch health
-curl http://localhost:9200/_cluster/health
+# Application metrics
+curl http://localhost:8080/actuator/metrics
 
 # Redis connection
 docker-compose exec redis redis-cli ping
 
-# View Grafana dashboard
-open http://localhost:3000 (admin/admin)
+# Check embedding service status
+curl http://localhost:8080/actuator/health | grep embedding
 ```
 
 ## Architecture Overview
 
 ### High-Level System Flow
-The system follows an **event-driven microservices architecture** with the following data flow:
+The system follows a **simplified AI-powered architecture** with the following data flow:
 
 1. **User Interaction** → Spring Boot Controllers
-2. **Message Processing** → ConversationService → Database + Outbox Pattern
-3. **Event Publishing** → OutboxDispatcher → Kafka Topics
-4. **Parallel Processing**:
-   - **Elasticsearch Indexing** (MsgCreatedConsumer)
-   - **Preference Analysis** (PreferenceAnalysisConsumer → ChatGPT API)
-   - **Recommendation Updates** (RecommendationEventProcessor)
-5. **AI Recommendation** → ML Service (FastAPI) → Vector Search (pgvector)
+2. **Conversation Processing** → ConversationService → Database Storage
+3. **AI Integration**:
+   - **Embedding Generation** → SimpleEmbeddingService → OpenAI/HuggingFace APIs
+   - **Preference Analysis** → ChatGPT API Integration
+   - **Vector Search** → pgvector similarity search
+4. **Caching Strategy** → Redis for performance optimization
 
 ### Key Architectural Patterns
 
-**Outbox Pattern**: Ensures transactional safety for event publishing
-- `Outbox` entity stores events in the same transaction as business data
-- `OutboxDispatcher` publishes events to Kafka asynchronously
-- Guarantees at-least-once delivery with idempotency
+**API-First AI Integration**: Direct integration with external AI services
+- `SimpleEmbeddingService` handles OpenAI and HuggingFace API calls
+- Fallback to keyword-based embeddings when APIs unavailable
+- Configurable timeout and retry mechanisms
 
 **Circuit Breaker Pattern**: Protects against cascade failures
 - `ResilienceConfig` defines service-specific circuit breakers
-- ML Service: 50% failure threshold, 30s wait time
-- ChatGPT Service: 40% failure threshold, 20s wait time
-- Redis Cache: 70% failure threshold, 5s wait time
+- ChatGPT Service: configurable failure threshold and timeout
+- External API fallbacks prevent complete service disruption
 
 **Multi-Layer Caching Strategy**:
-- **L1 Cache**: Spring `@Cacheable` (JVM level)
-- **L2 Cache**: Redis distributed cache (application level)  
-- **L3 Cache**: ML Service internal cache (model level)
+- **L1 Cache**: In-memory embedding cache (ConcurrentHashMap)
+- **L2 Cache**: Redis distributed cache for recommendations and preferences
+- **Application Cache**: Spring `@Cacheable` for frequently accessed data
 
 **Vector Similarity Search**:
 - Products stored with 384-dimensional embeddings in `product.description_vector`
-- Real-time similarity search using pgvector with IVFFlat indexing
-- Hybrid scoring combines vector similarity (40%) + preference matching (60%)
+- Real-time similarity search using pgvector with cosine similarity
+- Hybrid scoring combines vector similarity + preference matching + trending factors
 
 ### Core Domain Services
 
 **ConversationService**: Manages user interactions and message flow
 - `ConversationCommandService`: Creates conversations and messages
 - `ConversationQueryService`: Retrieves conversation history
-- `MsgCreatedConsumer`: Syncs messages to Elasticsearch
 
 **RecommendationService**: Orchestrates the recommendation pipeline
 - `IntegratedRecommendationService`: Main recommendation orchestrator
 - `ConversationalRecommendationService`: Handles conversational context
 - `RecommendationCacheService`: Multi-tier caching strategy
 
-**EmbeddingService**: Integrates with Python ML service
-- `EmbeddingClient`: HTTP client with circuit breaker and retry logic
+**EmbeddingService**: Direct API integration for vector embeddings
+- `SimpleEmbeddingService`: Handles OpenAI, HuggingFace, and fallback embeddings
 - `ProductEmbeddingService`: Batch processing for product embeddings
-- `EmbeddingBatchScheduler`: Scheduled embedding updates
+- In-memory caching with configurable size limits
 
 **AI/ML Integration**:
-- FastAPI service (`ml-service/`) provides embedding generation
-- OpenAI GPT-4 integration for preference analysis and conversational AI
-- Real-time user preference learning through Kafka events
+- Direct OpenAI GPT-4 API integration for preference analysis and conversational AI
+- HuggingFace API for embedding generation (sentence-transformers models)
+- Keyword-based fallback embedding system for offline operation
 
 ### Database Schema Key Points
 
@@ -174,13 +168,8 @@ The system follows an **event-driven microservices architecture** with the follo
 
 **Redis Structure**:
 - DB 0: Java application cache (recommendations, preferences, sessions)
-- DB 1: Python ML service cache (embeddings, model cache)
-- Separate namespaces prevent cache collisions
-
-**Kafka Topics**:
-- `conv-msg-created`: New message events
-- `product-viewed`, `order-completed`: User behavior events
-- `recommendation-events`: Recommendation system events
+- Distributed caching for performance optimization
+- TTL-based cache expiration strategies
 
 ## Development Guidelines
 
@@ -189,9 +178,10 @@ The system follows an **event-driven microservices architecture** with the follo
 
 1. `docker-compose up -d` (wait ~30 seconds for all services to be healthy)
 2. Verify services: `docker-compose ps` 
-3. `./gradlew bootRun`
+3. Configure AI API keys in `application-secrets.properties`
+4. `./gradlew bootRun`
 
-The application **cannot start** without the required infrastructure services (PostgreSQL, Redis, Kafka, Elasticsearch, ML Service).
+The application **cannot start** without PostgreSQL and Redis. AI features require OpenAI or HuggingFace API keys.
 
 ### Configuration Management
 - **Local Development**: `application.properties` 
@@ -200,65 +190,74 @@ The application **cannot start** without the required infrastructure services (P
 
 ### Key Configuration Properties
 ```properties
-# ML Service Integration
-embedding.service.url=http://localhost:8000  # Local dev
-embedding.service.url=http://embedding-service:8000  # Docker
+# OpenAI API Integration (primary)
+openai.api.key=sk-proj-...  # In secrets file
 
-# OpenAI Integration
-chatgpt.api.key=sk-proj-...  # In secrets file
+# HuggingFace API Integration (fallback)
+huggingface.api.key=hf_...  # In secrets file
+
+# ChatGPT Integration
+chatgpt.api.key=sk-proj-...  # Same as OpenAI key
 chatgpt.model=gpt-4o
 chatgpt.timeout-sec=6
+chatgpt.rate-limit-per-sec=8
 
-# Circuit Breaker Tuning
-resilience4j.circuitbreaker.instances.embeddingService.failure-rate-threshold=50
-resilience4j.bulkhead.instances.embeddingService.max-concurrent-calls=10
+# Redis Configuration
+spring.data.redis.host=localhost
+spring.data.redis.port=6379
+spring.data.redis.database=0
+spring.data.redis.timeout=2000ms
 ```
 
 ### Testing Strategy
-- **Unit Tests**: Mock external dependencies (ML Service, ChatGPT API)
+- **Unit Tests**: Mock external dependencies (OpenAI API, HuggingFace API, ChatGPT API)
 - **Integration Tests**: Use `@SpringBootTest` with test containers
-- **ML Service Tests**: pytest with FastAPI TestClient
+- **Embedding Tests**: Test fallback mechanisms and similarity calculations
 
 ### Common Development Scenarios
 
-**Adding New Recommendation Features**:
-1. Extend `IntegratedRecommendationService` with new scoring algorithms
-2. Update `RecommendationCacheService` for new cache keys
-3. Add corresponding metrics in `RecommendationSystemMonitor`
+**Adding New Embedding Sources**:
+1. Extend `SimpleEmbeddingService` with new API integration
+2. Add configuration properties for new service
+3. Update fallback chain in `generateEmbedding()` method
 
-**Modifying User Preference Analysis**:
-1. Update `PreferenceAnalysisConsumer` for new analysis logic
-2. Modify ChatGPT prompts in the preference analysis method
-3. Update `UserPreference` entity JSON schema if needed
+**Modifying Recommendation Algorithms**:
+1. Update `IntegratedRecommendationService` with new scoring logic
+2. Modify vector similarity calculations in recommendation services
+3. Update cache keys and TTL settings if needed
 
-**Adding New Event Types**:
-1. Create new Kafka topic in `docker-compose.yml`
-2. Add corresponding consumer in the infrastructure layer
-3. Update `OutboxDispatcher` if new outbox events are needed
+**Adding New AI Features**:
+1. Extend ChatGPT integration with new prompts and models
+2. Add new endpoints in AI-related controllers
+3. Update circuit breaker configurations for new external services
 
 ### Performance Monitoring
 - **Application Metrics**: http://localhost:8080/actuator/metrics
-- **Prometheus**: http://localhost:9090
-- **Grafana Dashboards**: http://localhost:3000
-- **ML Service Stats**: http://localhost:8000/stats
+- **Application Health**: http://localhost:8080/actuator/health
+- **Embedding Cache Stats**: Monitor hit rates and cache size in logs
+- **API Rate Limiting**: Monitor ChatGPT and external API usage
 
 ### Troubleshooting Common Issues
 
-**ML Service Connection Failures**:
-- Check if embedding-service container is running: `docker-compose ps`
-- Verify health: `curl http://localhost:8000/healthz`
-- Check circuit breaker state in application logs
+**OpenAI API Connection Failures**:
+- Verify API key is set in `application-secrets.properties`
+- Check rate limits: ChatGPT has 8 requests/second limit
+- Monitor application logs for API timeout errors
+- System falls back to HuggingFace API or keyword embedding
 
-**Kafka Consumer Lag**:
-- Monitor consumer groups: `docker-compose exec kafka kafka-consumer-groups.sh --bootstrap-server localhost:9092 --list`
-- Check OutboxDispatcher for failed message processing
+**HuggingFace API Issues**:
+- Verify API key configuration
+- Check if inference endpoint is available
+- Monitor timeout settings (10 seconds default)
+- System falls back to keyword-based embedding
 
 **Vector Search Performance**:
 - Verify pgvector index exists: `\d+ product` in PostgreSQL
 - Monitor query performance in application metrics
-- Adjust IVFFlat `lists` parameter if needed
+- Check if embeddings are generated for products: `SELECT COUNT(*) FROM product WHERE description_vector IS NOT NULL;`
 
 **Cache Issues**:
 - Check Redis connectivity: `docker-compose exec redis redis-cli ping`
-- Monitor cache hit rates in Grafana dashboards
-- Clear cache: `docker-compose exec redis redis-cli FLUSHDB`
+- Monitor embedding cache size in SimpleEmbeddingService logs
+- Clear Redis cache: `docker-compose exec redis redis-cli FLUSHDB`
+- Clear in-memory embedding cache: restart application
