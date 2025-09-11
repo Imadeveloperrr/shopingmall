@@ -11,7 +11,7 @@
         UPDATE member
         SET
             password = #{password},
-            update_at = NOW()
+            update_at = CURRENT_TIMESTAMP
         WHERE number = #{number}
     </update>
 </mapper>

@@ -28,10 +28,6 @@
         <result property="category" column="category"
                 javaType="com.example.crud.enums.Category"
                 typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
-        <result property="descriptionVector"
-                column="description_vector"
-                javaType="float[]"
-                typeHandler="com.example.crud.ai.embedding.infrastructure.PgVectorFloatArrayTypeHandler"/>
 
 
         <association property="member" javaType="com.example.crud.entity.Member"

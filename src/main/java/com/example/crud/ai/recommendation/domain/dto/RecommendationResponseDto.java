@@ -11,7 +11,6 @@ import java.util.List;
 public class RecommendationResponseDto {
     private Long conversationId;
     private String aiResponse;
-    private String systemResponse;
     private List<ProductMatch> recommendations;
     private List<ProductResponseDto> recommendedProducts;
     private Integer totalRecommendations;

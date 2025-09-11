@@ -4,13 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an **AI-powered conversational shopping mall recommendation system** built with Spring Boot. The system provides personalized product recommendations through conversational AI, vector similarity search, and hybrid recommendation algorithms.
+This is an **AI-enhanced shopping mall system** built with Spring Boot 3.1.4. The system integrates conversational AI and vector-based product recommendations through direct API integration with OpenAI and HuggingFace services.
 
 **Core Technology Stack:**
-- **Backend**: Spring Boot 3.1.4 with Spring Security, JPA, WebFlux
-- **AI/ML**: OpenAI GPT-4 API, HuggingFace API for embeddings (384-dim), Simple fallback embedding service
-- **Databases**: PostgreSQL + pgvector, Redis for caching
-- **Infrastructure**: Docker Compose with simplified service architecture
+- **Backend**: Spring Boot 3.1.4 with Spring Security, JPA, WebFlux, QueryDSL
+- **AI Integration**: Direct OpenAI GPT-4 API + HuggingFace API with keyword fallback
+- **Vector Storage**: PostgreSQL with pgvector extension (384-dimensional embeddings)
+- **Caching**: Redis for recommendation and conversation caching
+- **Infrastructure**: Simple Docker Compose with 3 services (PostgreSQL, Redis, Spring Boot)
 
 ## Essential Development Commands
 
@@ -118,7 +119,7 @@ The system follows a **simplified AI-powered architecture** with the following d
 ### Key Architectural Patterns
 
 **API-First AI Integration**: Direct integration with external AI services
-- `SimpleEmbeddingService` handles OpenAI and HuggingFace API calls
+- `EmbeddingApiClient` handles OpenAI and HuggingFace API calls with try-catch fallback
 - Fallback to keyword-based embeddings when APIs unavailable
 - Configurable timeout and retry mechanisms
 
@@ -141,15 +142,15 @@ The system follows a **simplified AI-powered architecture** with the following d
 
 **ConversationService**: Manages user interactions and message flow
 - `ConversationCommandService`: Creates conversations and messages
-- `ConversationQueryService`: Retrieves conversation history
+- Conversation history management through domain repositories
 
 **RecommendationService**: Orchestrates the recommendation pipeline
-- `IntegratedRecommendationService`: Main recommendation orchestrator
-- `ConversationalRecommendationService`: Handles conversational context
+- `ConversationalRecommendationService`: Main conversational recommendation orchestrator
+- `RecommendationEngine`: Core recommendation logic and vector similarity search
 - `RecommendationCacheService`: Multi-tier caching strategy
 
 **EmbeddingService**: Direct API integration for vector embeddings
-- `SimpleEmbeddingService`: Handles OpenAI, HuggingFace, and fallback embeddings
+- `EmbeddingApiClient`: Handles OpenAI, HuggingFace, and fallback embeddings with multi-tier fallback
 - `ProductEmbeddingService`: Batch processing for product embeddings
 - In-memory caching with configurable size limits
 
@@ -217,7 +218,7 @@ spring.data.redis.timeout=2000ms
 ### Common Development Scenarios
 
 **Adding New Embedding Sources**:
-1. Extend `SimpleEmbeddingService` with new API integration
+1. Extend `EmbeddingApiClient` with new API integration
 2. Add configuration properties for new service
 3. Update fallback chain in `generateEmbedding()` method
 
@@ -234,7 +235,7 @@ spring.data.redis.timeout=2000ms
 ### Performance Monitoring
 - **Application Metrics**: http://localhost:8080/actuator/metrics
 - **Application Health**: http://localhost:8080/actuator/health
-- **Embedding Cache Stats**: Monitor hit rates and cache size in logs
+- **Embedding Cache Stats**: Monitor hit rates and cache size in EmbeddingApiClient logs
 - **API Rate Limiting**: Monitor ChatGPT and external API usage
 
 ### Troubleshooting Common Issues
@@ -258,6 +259,38 @@ spring.data.redis.timeout=2000ms
 
 **Cache Issues**:
 - Check Redis connectivity: `docker-compose exec redis redis-cli ping`
-- Monitor embedding cache size in SimpleEmbeddingService logs
+- Monitor embedding cache size in EmbeddingApiClient logs
 - Clear Redis cache: `docker-compose exec redis redis-cli FLUSHDB`
 - Clear in-memory embedding cache: restart application
+
+## Core AI System Reading Guide
+
+For understanding the core operations "사용자 메시지 → AI 추천", read in this sequence:
+
+### 1. Entry Point - Message Processing
+**ConversationController.sendMessage()** (`src/main/java/com/example/crud/ai/conversation/interfaces/ConversationController.java:26`)
+- Receives user messages via REST API
+- Delegates to ConversationalRecommendationService
+
+### 2. Main Orchestration
+**ConversationalRecommendationService.processUserMessage()** (`src/main/java/com/example/crud/ai/recommendation/application/ConversationalRecommendationService.java:27`)
+- Core workflow orchestrator
+- Coordinates message storage, AI analysis, and recommendation generation
+
+### 3. Message Storage
+**ConversationCommandService.addMessage()** (`src/main/java/com/example/crud/ai/conversation/application/command/ConversationCommandService.java:23`)
+- Stores user messages in database
+- Publishes Spring events for async processing
+
+### 4. AI Integration - Embeddings
+**EmbeddingApiClient.generateEmbedding()** (`src/main/java/com/example/crud/ai/embedding/EmbeddingApiClient.java:38`)
+- Multi-tier fallback: OpenAI → HuggingFace → Keyword-based
+- 384-dimensional vector generation with caching
+
+### 5. AI Integration - Recommendations
+**RecommendationEngine.getRecommendations()** (`src/main/java/com/example/crud/ai/recommendation/application/RecommendationEngine.java:34`)
+- Main recommendation algorithm coordinator
+- PostgreSQL pgvector similarity search
+- Cosine similarity calculation with hybrid scoring
+
+This sequence covers the complete "User Message → AI Recommendation" pipeline.
