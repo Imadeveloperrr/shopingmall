@@ -1,2 +1,4 @@
 # Hide Claude from GitHub contributors display
-Claude <noreply@anthropic.com>
+# Map Claude to be ignored in GitHub statistics
+Claude <noreply@anthropic.com> <ignored@hidden.local>
+<noreply@anthropic.com> <ignored@hidden.local>
