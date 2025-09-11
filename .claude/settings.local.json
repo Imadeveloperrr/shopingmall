@@ -45,7 +45,15 @@
       "Read(/C:\\Users\\sungho\\IdeaProjects\\shopingmall\\src\\main\\java\\com\\example\\crud\\ai\\recommendation\\infrastructure/**)",
       "Read(/C:\\Users\\sungho\\IdeaProjects\\shopingmall\\src\\main\\java\\com\\example\\crud\\ai\\recommendation\\application/**)",
       "Read(/C:\\Users\\sungho\\IdeaProjects\\shopingmall\\src\\main\\java\\com\\example\\crud\\ai\\recommendation\\application/**)",
-      "Bash(./gradlew test:*)"
+      "Bash(./gradlew test:*)",
+      "Bash(docker:*)",
+      "Bash(./gradlew:*)",
+      "Bash(curl:*)",
+      "Bash(cat:*)",
+      "Bash(netstat:*)",
+      "Bash(tasklist)",
+      "Bash(tasklist:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []

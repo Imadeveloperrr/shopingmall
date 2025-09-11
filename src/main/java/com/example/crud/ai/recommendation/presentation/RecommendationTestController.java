@@ -4,7 +4,6 @@ import com.example.crud.ai.recommendation.application.RecommendationEngine;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService.ProductSimilarity;
 import com.example.crud.ai.embedding.EmbeddingApiClient;
-import com.example.crud.data.product.dto.ProductResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -47,18 +46,15 @@ public class RecommendationTestController {
             // 1. 벡터 기반 유사 상품 검색
             List<ProductSimilarity> vectorResults = vectorService.findSimilarProducts(query, 10);
             
-            // 2. 전체 추천 엔진 테스트 (userId가 있는 경우)
-            List<ProductResponseDto> fullRecommendations = null;
-            if (userId != null) {
-                fullRecommendations = recommendationEngine.recommend(userId, query);
-            }
+            // 2. 추천 엔진 테스트 (ProductMatch 형태로)
+            var recommendationMatches = recommendationEngine.getRecommendations(query, 10);
 
             Map<String, Object> response = Map.of(
                 "query", query,
                 "vectorResults", vectorResults,
                 "vectorResultCount", vectorResults.size(),
-                "fullRecommendations", fullRecommendations != null ? fullRecommendations : List.of(),
-                "fullRecommendationCount", fullRecommendations != null ? fullRecommendations.size() : 0,
+                "recommendationMatches", recommendationMatches,
+                "recommendationCount", recommendationMatches.size(),
                 "timestamp", System.currentTimeMillis()
             );
 

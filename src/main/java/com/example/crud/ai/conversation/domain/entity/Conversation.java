@@ -30,7 +30,7 @@ public class Conversation {
     private Long id;
 
     /*── 회원 연관 ──*/
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false) // optional = false ▶ not null
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
@@ -47,7 +47,7 @@ public class Conversation {
     @Builder.Default
     private ConversationStatus status = ConversationStatus.ACTIVE;
 
-    @Version                       // ▶ Optimistic Lock
+    @Version // ▶ Optimistic Lock
     private Integer version;
 
     /*── 메시지 컬렉션 ──*/
@@ -70,8 +70,4 @@ public class Conversation {
         return msg;
     }
 
-    /** 읽기 전용 콜렉션 반환 (수정 불가) */
-    public List<ConversationMessage> getMessagesUnmodifiable() {
-        return Collections.unmodifiableList(messages);
-    }
 }

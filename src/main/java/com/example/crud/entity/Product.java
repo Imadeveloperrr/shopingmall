@@ -60,12 +60,6 @@ public class Product {
     @Builder.Default
     private List<ProductOption> productOptions = new ArrayList<>();
 
-    public ProductOption getProductOptionByColorAndSize(String color, String size) {
-        return productOptions.stream()
-                .filter(option -> option.getColor().equals(color) && option.getSize().equals(size))
-                .findFirst()
-                .orElse(null);
-    }
 
     // 양방향 관계 관리 메서드 추가
     public void addProductOption(ProductOption option) {
@@ -73,26 +67,15 @@ public class Product {
         option.setProduct(this);
     }
 
-    public void removeProductOption(ProductOption option) {
-        productOptions.remove(option);
-        option.setProduct(null);
-    }
 
-    // 상품 설명 임베딩 (384-차원 BERT) - pgvector
+    // 상품 설명 임베딩 (1536차원 - text-embedding-3-small 모델) - pgvector
     @JdbcTypeCode(SqlTypes.OTHER)
     @Column(name = "description_vector",
-    columnDefinition = "vector(384)", nullable = true)
+    columnDefinition = "vector(1536)", nullable = true)
     private float[] descriptionVector;
 
     public String getMemberEmail() {
         return member.getEmail();
     }
 
-    public String getMemberName() {
-        return member.getName();
-    }
-
-    public String getMemberNickname() {
-        return member.getNickname();
-    }
 }

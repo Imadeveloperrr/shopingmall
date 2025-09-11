@@ -5,12 +5,9 @@ import com.example.crud.ai.conversation.domain.repository.ConversationRepository
 import com.example.crud.ai.recommendation.application.ConversationalRecommendationService;
 import com.example.crud.ai.recommendation.domain.dto.RecommendationResponseDto;
 import com.example.crud.ai.recommendation.domain.dto.UserMessageRequestDto;
-import com.example.crud.common.exception.BaseException;
-import com.example.crud.common.exception.ErrorCode;
 import com.example.crud.data.member.service.MemberService;
 import com.example.crud.entity.Member;
 import com.example.crud.enums.ConversationStatus;
-import com.example.crud.repository.MemberRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,11 +17,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-
-/**
- * 대화형 상품 추천 API 컨트롤러
- */
 
 @RestController
 @RequestMapping("/api/conversation")
@@ -32,83 +26,93 @@ import java.util.Map;
 @Slf4j
 public class ConversationController {
 
-    private final ConversationalRecommendationService recommendationService;
-    private final ConversationRepository conversationRepository;
+    private final ConversationalRecommendationService crService;
     private final MemberService memberService;
-    private final MemberRepository memberRepository;
+    private final ConversationRepository cRepository;
 
-    /**
-     * 새 대화 시작
-     */
     @PostMapping("/start")
     public ResponseEntity<Map<String, Object>> startConversation(Authentication auth) {
-        Member member = memberService.getMemberEntity(auth.getName());
+        try {
+            Member member = memberService.getMemberEntity(auth.getName());
 
-        Conversation conversation = Conversation.builder()
-                .member(member)
-                .startTime(LocalDateTime.now())
-                .status(ConversationStatus.ACTIVE)
-                .lastUpdated(LocalDateTime.now())
-                .build();
+            Conversation conv = Conversation.builder()
+                    .member(member)
+                    .startTime(LocalDateTime.now())
+                    .status(ConversationStatus.ACTIVE)
+                    .lastUpdated(LocalDateTime.now())
+                    .build();
 
-        conversation = conversationRepository.save(conversation);
+            Long convid = cRepository.save(conv).getId();
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("conversationId", conversation.getId());
-        response.put("message", "안녕하세요! 어떤 스타일의 상품을 찾고 계신가요?");
-
-        return ResponseEntity.ok(response);
+            Map<String, Object> response = Map.of(
+                    "conversationId", convid,
+                    "message", "안녕하세요. 어떤 상품을 찾고 계시나요?"
+            );
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "대화 시작 중 오류가 발생했습니다."));
+        }
     }
 
     /**
      * 사용자 메시지 처리 및 추천
      */
     @PostMapping("/{conversationId}/message")
-    public ResponseEntity<RecommendationResponseDto> sendMessage(
-            @PathVariable Long conversationId,
-            @Valid @RequestBody UserMessageRequestDto request,
-            Authentication auth) {
+    public ResponseEntity<RecommendationResponseDto> sendMessage(@PathVariable Long conversationId,
+                                                                 @Valid @RequestBody UserMessageRequestDto requestDto,
+                                                                 Authentication auth) {
+        try {
+            Conversation conv = cRepository.findById(conversationId)
+                    .orElseThrow(() -> new IllegalArgumentException("대화를 찾을 수 없습니다."));
 
-        // 대화 권한 확인
-        Conversation conversation = conversationRepository.findById(conversationId)
-                .orElseThrow(() -> new IllegalArgumentException("대화를 찾을 수 없습니다."));
+            if (!conv.getMember().getEmail().equals(auth.getName())) {
+                return ResponseEntity.ok(errorResponse(conversationId, "권한이 없습니다."));
+            }
 
-        if (!conversation.getMember().getEmail().equals(auth.getName())) {
-            throw new IllegalArgumentException("권한이 없습니다.");
+            if (conv.getStatus() != ConversationStatus.ACTIVE) {
+                return ResponseEntity.ok(errorResponse(conversationId, "비활성화된 대화입니다."));
+            }
+
+            RecommendationResponseDto responseDto = crService.processUserMessage(conversationId, requestDto.getMessage());
+            return ResponseEntity.ok(responseDto);
+        } catch (Exception e) {
+            return ResponseEntity.ok(errorResponse(conversationId, "죄송합니다. 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요."));
         }
-
-        if (conversation.getStatus() != ConversationStatus.ACTIVE) {
-            throw new IllegalArgumentException("종료된 대화입니다.");
-        }
-
-        // 메시지 처리 및 추천
-        RecommendationResponseDto response = recommendationService.processUserMessage(conversationId, request.getMessage());
-
-        return ResponseEntity.ok(response);
     }
 
-    /**
-     * 대화 종료
-     */
     @PostMapping("/{conversationId}/end")
-    public ResponseEntity<Map<String, String>> endConversation(
-            @PathVariable Long conversationId,
-            Authentication auth) {
+    public ResponseEntity<Map<String, Object>> endConversation(@PathVariable Long conversationId, Authentication auth) {
+        try {
+            Conversation conv = cRepository.findById(conversationId).orElseThrow(() -> new IllegalArgumentException("대화를 찾을 수 없습니다."));
+            if (!conv.getMember().getEmail().equals(auth.getName())) {
+                return ResponseEntity.ok(Map.of("error", "권한이 없습니다."));
+            }
 
-        Conversation conversation = conversationRepository.findById(conversationId)
-                .orElseThrow(() -> new IllegalArgumentException("대화를 찾을 수 없습니다."));
+            conv.setStatus(ConversationStatus.COMPLETED);
+            conv.setLastUpdated(LocalDateTime.now());
+            cRepository.save(conv);
 
-        if (!conversation.getMember().getEmail().equals(auth.getName())) {
-            throw new IllegalStateException("권한이 없습니다.");
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "대화가 종료되었습니다.");
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.ok(Map.of("error", e.getMessage()));
         }
-
-        conversation.setStatus(ConversationStatus.COMPLETED);
-        conversation.setLastUpdated(LocalDateTime.now());
-        conversationRepository.save(conversation);
-
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "대화가 종료되었습니다. 감사합니다!");
-
-        return ResponseEntity.ok(response);
+        catch (Exception e) {
+            return ResponseEntity.ok(Map.of(
+                    "error",
+                    "죄송합니다. 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요."));
+        }
     }
+
+
+    public RecommendationResponseDto errorResponse(Long conversationId, String message) {
+        return RecommendationResponseDto.builder()
+                .conversationId(conversationId)
+                .aiResponse(message)
+                .recommendations(List.of())
+                .totalRecommendations(0)
+                .build();
+    }
+
 }
