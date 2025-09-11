@@ -53,7 +53,8 @@
       "Bash(netstat:*)",
       "Bash(tasklist)",
       "Bash(tasklist:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []
