@@ -18,13 +18,18 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException, ServletException {
-        if ("GET".equalsIgnoreCase(request.getMethod())) {
-            response.sendRedirect("/login");
-        } else {
-            // 다른 HTTP 메서드 (예: POST, PUT 등)는 JSON 에러 메시지를 반환
+        String requestURI = request.getRequestURI();
+        
+        // API 요청이나 특정 경로는 JSON 응답
+        if (requestURI.startsWith("/api/") || 
+            requestURI.startsWith("/actuator/") ||
+            "XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"message\": \"아이디 또는 비밀번호가 다릅니다.\"}");
+            response.getWriter().write("{\"message\": \"인증이 필요합니다.\"}");
+        } else {
+            // 일반 웹 페이지 요청은 로그인 페이지로 리다이렉트
+            response.sendRedirect("/login");
         }
     }
 }
