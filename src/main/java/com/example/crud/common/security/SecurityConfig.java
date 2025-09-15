@@ -45,18 +45,18 @@ public class SecurityConfig {
 
                 // 권한 설정
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/").permitAll()
-                        .requestMatchers("/register").permitAll()
-                        .requestMatchers("/login").permitAll()
-                        .requestMatchers("/logout").permitAll()
-
-                        .requestMatchers("/img/**").permitAll()              // 추가: /img 경로 허용
-                        .requestMatchers("/favicon.ico").permitAll()          // 추가: favicon 허용
-
+                        // 정적 리소스 먼저 허용
+                        .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/img/**", "/favicon.ico").permitAll()
+                        
+                        // 공개 페이지
+                        .requestMatchers("/", "/register", "/login", "/logout").permitAll()
+                        
+                        // 보호된 페이지
                         .requestMatchers("/mypage/**").hasRole("USER")
                         .requestMatchers("/cart/**").hasRole("USER")
                         .requestMatchers("/product/**").hasRole("USER")
-                        .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+                        
                         .anyRequest().authenticated()
                 )
 

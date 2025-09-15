@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:text-align="http://www.w3.org/1999/xhtml">
 <head>
-    <div th:replace="~{/fragments/header.html :: fragment-header}"></div>
+    <div th:replace="~{fragments/header.html :: fragment-header}"></div>
     <title>spring framework study</title>
     <!-- index -->
     <link href="/css/styles.css" rel="stylesheet"/>
@@ -11,7 +11,7 @@
 </head>
 <body>
 <!-- Navigation -->
-<div th:insert="~{/fragments/nav.html :: fragment-nav}"></div>
+<div th:insert="~{fragments/nav.html :: fragment-nav}"></div>
 <!-- Head -->
 <section class="logo-carousel-section">
 
@@ -59,7 +59,7 @@
     </div>
 </section>
 
-<footer th:insert="~{/fragments/footer.html :: fragment-footer}"></footer>
+<footer th:insert="~{fragments/footer.html :: fragment-footer}"></footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
         crossorigin="anonymous"></script>

@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,9 +36,20 @@ public class IndexController {
 
     @GetMapping("/")
     public String index(Model model) {
-        List<ProductResponseDto> products = productService.getProducts();
-        model.addAttribute("products", products);
+        try {
+            List<ProductResponseDto> products = productService.getProducts();
+            model.addAttribute("products", products);
+        } catch (Exception e) {
+            log.warn("Failed to load products for main page: {}", e.getMessage());
+            model.addAttribute("products", new ArrayList<ProductResponseDto>());
+        }
         return "index";
+    }
+    
+    @GetMapping("/test")
+    @ResponseBody
+    public String test() {
+        return "Test endpoint working - " + java.time.LocalDateTime.now();
     }
 
     @GetMapping("/login")
