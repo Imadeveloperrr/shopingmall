@@ -14,8 +14,8 @@
     --font-primary: 'Work Sans', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     --border-radius: 8px;
     --border-radius-lg: 12px;
-    --z-nav: 1000;
-    --z-overlay: 1100;
+    --z-nav: 9999;
+    --z-overlay: 10000;
 }
 
 /* 전역 스크롤 방지 */
@@ -31,6 +31,8 @@ html.no-scroll body {
     font-size: 11px;
     color: #666;
     min-height: 32px;
+    position: relative;
+    z-index: var(--z-nav);
 }
 
 .utility-inner {
@@ -91,6 +93,18 @@ html.no-scroll body {
     height: 40px;
     border-radius: var(--border-radius);
     object-fit: cover;
+}
+
+.brand-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--nav-text);
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
 }
 
 .brand-text {
@@ -222,7 +236,7 @@ html.no-scroll body {
     visibility: hidden;
     pointer-events: none;
     transition: var(--transition-smooth);
-    z-index: 100;
+    z-index: 10001;
 }
 
 .has-dropdown .dropdown-panel.open {
