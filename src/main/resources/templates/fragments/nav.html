@@ -25,7 +25,9 @@
                     <i class="fa-solid fa-bars"></i>
                 </button>
                 <a th:href="@{/}" class="brand d-flex align-items-center text-decoration-none">
-                    <img src="https://cdn-icons-png.flaticon.com/256/49/49039.png" alt="Sungho Logo" class="brand-logo">
+                    <div class="brand-icon">
+                        <i class="fa-solid fa-shopping-bag"></i>
+                    </div>
                     <span class="brand-text ms-2 d-none d-sm-inline">SungHo</span>
                 </a>
             </div>
@@ -234,6 +236,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const btn = item.querySelector('.dropdown-toggle-btn');
         const panel = item.querySelector('.dropdown-panel');
         let hideTimer;
+
+        if (!btn || !panel) return; // 필요한 요소가 없으면 스킵
 
         const showPanel = () => {
             clearTimeout(hideTimer);
