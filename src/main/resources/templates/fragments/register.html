@@ -71,6 +71,8 @@
 
                                 </form>
 
+                                <div id="errorMessage" class="alert alert-danger mt-3" style="display: none;"></div>
+
                             </div>
                             <div class="col-md-10 col-lg-6 col-xl-7 d-flex align-items-center order-1 order-lg-2">
 
@@ -94,14 +96,20 @@
         var nickname = document.getElementById('nickname').value;
         var password = document.getElementById('password').value;
         var password2 = document.getElementById('password2').value;
+        var regAgree = document.getElementById('regAgree').checked;
 
         if (password !== password2) {
-            alert("비밀번호가 일치하지 않습니다.");
+            showError("비밀번호가 일치하지 않습니다.");
             return;
         }
 
         if (password.length < 8) {
-            showError("비밀번호는 8자 이상어야야 합니다.");
+            showError("비밀번호는 8자 이상이어야 합니다.");
+            return ;
+        }
+
+        if (regAgree === false) {
+            showError("개인정보 수집 및 이용에 동의해야 합니다.");
             return ;
         }
 

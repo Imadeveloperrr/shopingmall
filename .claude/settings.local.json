@@ -54,7 +54,8 @@
       "Bash(tasklist)",
       "Bash(tasklist:*)",
       "Bash(taskkill:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

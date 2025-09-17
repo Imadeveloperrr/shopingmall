@@ -2,81 +2,237 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <div th:replace="~{fragments/header.html :: fragment-header}"></div>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/mypage.css}">
 </head>
-<body>
-<div th:insert="~{fragments/nav.html :: fragment-nav}"></div>
-<section class="h-100 gradient-custom-2">
-    <div class="container py-5 h-100">
-        <div class="row d-flex justify-content-center align-items-center h-100">
-            <div class="col col-lg-9 col-xl-7">
-                <div class="card">
-                    <div class="rounded-top text-white d-flex flex-row" style="background-color: #000; height:200px;">
-                        <div class="ms-4 mt-5 d-flex flex-column" style="width: 150px;">
-                            <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-profiles/avatar-1.webp"
-                                 alt="Generic placeholder image" class="img-fluid img-thumbnail mt-4 mb-2"
-                                 style="width: 150px; z-index: 1">
-                            <a th:href="@{/mypage/profileEdit}" class="btn btn-outline-dark" data-mdb-ripple-color="dark"
-                                    style="z-index: 1;">
-                                프로필 수정
-                            </a>
-                        </div>
-                        <div class="ms-3" style="margin-top: 130px;">
-                            <h5 th:text="${member.name}">Name</h5>
-                            <p th:text="${member.nickname}">Nickname</p>
-                        </div>
-                    </div>
-                    <div class="p-4 text-black" style="background-color: #f8f9fa;">
-                        <div class="d-flex justify-content-end text-center py-1">
-                            <div>
-                                <p class="mb-1 h5" th:text="${products.size()}"></p>
-                                <p class="small text-muted mb-0">Product</p>
-                            </div>
-                            <div class="px-3">
-                                <p class="mb-1 h5">1026</p>
-                                <p class="small text-muted mb-0">Followers</p>
-                            </div>
-                            <div>
-                                <p class="mb-1 h5">478</p>
-                                <p class="small text-muted mb-0">Following</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-body p-4 text-black">
-                        <div class="mb-5">
-                            <p class="lead fw-normal mb-1">자기소개</p>
-                            <div class="p-4" style="background-color: #f8f9fa;">
-                                <p class="font-italic mb-1" th:text="${member.introduction}">Web Developer</p>
-                            </div>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <p class="lead fw-normal mb-0">내 상품</p>
-                            <a th:href="@{/product}" class="btn btn-outline-dark" data-mdb-ripple-color="dark"
-                               style="z-index: 1;">
-                                상품 등록하기
-                            </a>
-                            <a th:href="@{/cart}" class="btn btn-outline-dark" data-mdb-ripple-color="dark"
-                               style="z-index: 1;">
-                                장바구니
-                            </a>
-                            <p class="mb-0"><a href="#!" class="text-muted">Show all</a></p>
-                        </div>
-                        <div class="row g-2 d-flex flex-wrap">
-                            <div th:each="product : ${products}" class="col mb-2 flex-fill" style="max-width: 50%;">
-<!--                                <img src="https://mdbcdn.b-cdn.net/img/Photos/Lightbox/Original/img%20(112).webp"-->
-<!--                                     alt="Product Image" class="w-100 rounded-3">-->
-                                <a th:href="@{/product/detail/{id}(id=${product.number})}">
-                                    <img th:src="@{${product.imageUrl}}" alt="Product Image" class="w-100 rounded-3">
-                                </a>
-                            </div>
-                        </div>
+
+<body class="mypage-body">
+    <div th:insert="~{fragments/nav.html :: fragment-nav}"></div>
+
+    <div class="mypage-container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-info">
+                <div class="profile-avatar">
+                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
+                         alt="Profile Picture">
+                    <div class="status-indicator"></div>
+                </div>
+                <div class="profile-details">
+                    <h1 th:text="${member.name}">성호</h1>
+                    <p th:text="${member.nickname}">쇼핑몰 운영자</p>
+                    <div class="profile-badges">
+                        <span class="badge">
+                            <i class="fas fa-crown"></i> Premium Member
+                        </span>
+                        <span class="badge">
+                            <i class="fas fa-medal"></i> Top Seller
+                        </span>
+                        <span class="badge">
+                            <i class="fas fa-star"></i> Verified
+                        </span>
                     </div>
                 </div>
             </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" th:text="${products.size()}">12</div>
+                    <div class="stat-label">등록상품</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">847</div>
+                    <div class="stat-label">총 주문</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">₩2.4M</div>
+                    <div class="stat-label">총 매출</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">4.9★</div>
+                    <div class="stat-label">평점</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Cards -->
+        <div class="action-grid">
+            <div class="action-card">
+                <h3>
+                    <div class="icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    장바구니 관리
+                </h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    장바구니에 담긴 상품들을 확인하고 주문을 진행하세요.
+                </p>
+                <a th:href="@{/cart}" class="action-button">
+                    <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i>
+                    장바구니 보기
+                </a>
+            </div>
+
+            <div class="action-card">
+                <h3>
+                    <div class="icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    상품 등록
+                </h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    새로운 상품을 등록하고 고객들에게 선보이세요.
+                </p>
+                <a th:href="@{/product}" class="action-button">
+                    <i class="fas fa-upload" style="margin-left: 0.5rem;"></i>
+                    상품 등록하기
+                </a>
+            </div>
+
+            <div class="action-card">
+                <h3>
+                    <div class="icon">
+                        <i class="fas fa-user-edit"></i>
+                    </div>
+                    프로필 관리
+                </h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    개인정보와 계정 설정을 업데이트하세요.
+                </p>
+                <a th:href="@{/mypage/profileEdit}" class="action-button secondary">
+                    <i class="fas fa-cog" style="margin-left: 0.5rem;"></i>
+                    설정하기
+                </a>
+            </div>
+
+            <div class="action-card">
+                <h3>
+                    <div class="icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    판매 분석
+                </h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    판매 실적과 고객 데이터를 분석해보세요.
+                </p>
+                <a href="#" class="action-button secondary">
+                    <i class="fas fa-analytics" style="margin-left: 0.5rem;"></i>
+                    분석 보기
+                </a>
+            </div>
+        </div>
+
+        <!-- Products Section -->
+        <div class="products-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <div class="icon">
+                        <i class="fas fa-store"></i>
+                    </div>
+                    내 상품 갤러리
+                </h2>
+                <a th:href="@{/product}" class="action-button">
+                    <i class="fas fa-plus"></i>
+                    새 상품 추가
+                </a>
+            </div>
+
+            <div class="products-grid" th:if="${products != null and !products.isEmpty()}">
+                <div th:each="product : ${products}" class="product-card">
+                    <a th:href="@{/product/detail/{id}(id=${product.number})}" style="text-decoration: none; color: inherit;">
+                        <img th:src="@{${product.imageUrl}}" alt="Product Image" class="product-image">
+                        <div class="product-info">
+                            <div class="product-name" th:text="${product.name}">상품명</div>
+                            <div class="product-price" th:text="${product.price + '원'}">가격</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div th:if="${products == null or products.isEmpty()}" style="text-align: center; padding: 4rem 2rem; color: var(--text-secondary);">
+                <i class="fas fa-box-open" style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                <h3 style="margin-bottom: 1rem;">등록된 상품이 없습니다</h3>
+                <p style="margin-bottom: 2rem;">첫 번째 상품을 등록하여 쇼핑몰을 시작해보세요!</p>
+                <a th:href="@{/product}" class="action-button">
+                    <i class="fas fa-plus"></i>
+                    첫 상품 등록하기
+                </a>
+            </div>
         </div>
     </div>
-</section>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
-        crossorigin="anonymous"></script>
+
+    <!-- Floating Action Menu -->
+    <div class="floating-actions">
+        <div class="floating-menu">
+            <a th:href="@{/cart}" class="floating-btn" title="장바구니">
+                <i class="fas fa-shopping-cart"></i>
+            </a>
+            <a th:href="@{/product}" class="floating-btn" title="상품 등록">
+                <i class="fas fa-plus"></i>
+            </a>
+            <a href="#" class="floating-btn primary" title="메뉴" onclick="toggleFloatingMenu()">
+                <i class="fas fa-bars"></i>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Floating menu toggle
+        function toggleFloatingMenu() {
+            const menu = document.querySelector('.floating-menu');
+            const buttons = menu.querySelectorAll('.floating-btn:not(.primary)');
+
+            buttons.forEach((btn, index) => {
+                if (btn.style.display === 'none' || btn.style.display === '') {
+                    setTimeout(() => {
+                        btn.style.display = 'flex';
+                        btn.style.animation = `slideUp 0.3s ease ${index * 0.1}s forwards`;
+                    }, index * 50);
+                } else {
+                    btn.style.animation = `slideDown 0.3s ease forwards`;
+                    setTimeout(() => {
+                        btn.style.display = 'none';
+                    }, 300);
+                }
+            });
+        }
+
+        // Animation styles are now in mypage.css
+
+        // Smooth scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all animated elements
+        document.querySelectorAll('.action-card, .product-card, .stat-card').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+
+        // Initialize floating menu (hide all buttons except primary)
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.floating-btn:not(.primary)');
+            buttons.forEach(btn => {
+                btn.style.display = 'none';
+            });
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+            crossorigin="anonymous"></script>
 </body>
 </html>

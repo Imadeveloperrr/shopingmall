@@ -35,7 +35,7 @@ public class ProductController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<?> addProduct(@ModelAttribute ProductDto productDto, @RequestParam("imageUrl") MultipartFile file) {
+    public ResponseEntity<?> addProduct(@ModelAttribute ProductDto productDto, @RequestParam("imageFile") MultipartFile file) {
         try {
             log.info("Received product: {}", productDto);
             if (file.isEmpty()) {
