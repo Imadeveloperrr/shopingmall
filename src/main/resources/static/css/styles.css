@@ -1,70 +1,23 @@
-body {
-    font-family: 'Work Sans', 'Noto Sans KR', sans-serif;
+/* Old navbar styles removed - using modern-nav.css instead */
+
+/* Remove margin-top from carousel section */
+.logo-carousel-section {
+    margin-top: 0;  /* -76px에서 0으로 변경 */
 }
-
-
-.navbar-brand {
-    color: black !important;
-}
-
-.navbar .nav-link {
-    color: black !important;
-    font-weight: 500;
-}
-
-.navbar .nav-link.active {
-    color: black !important;
-}
-
-.navbar .nav-link:hover {
-    color: #b09f8e !important;
-}
-
-.navbar .dropdown-menu {
-    background: #fff;
-    backdrop-filter: blur(10px);
-}
-
-.navbar .dropdown-menu .dropdown-item {
-    font-size: 13px !important;
-}
-
-.navbar .dropdown-item {
-    color: black;
-}
-
-.navbar .dropdown-item:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #b09f8e;
-}
-
-.navbar .dropdown-toggle::after {
-    display: none !important;
-}
-
-.navbar-toggler {
-    border-color: rgba(255, 255, 255, 0.5);
-}
-
-.navbar-toggler-icon {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.75%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
-}
-
-/* Login/Register links */
-.navbar .navbar-nav .nav-link.text-dark {
-    color: black !important;
+/* Remove margin-top from carousel section */
+.logo-carousel-section {
+    margin-top: 0;  /* -76px에서 0으로 변경 */
 }
 
 .logo-carousel-section {
-    margin-top: 0;
     text-align: center;
-    height: 800px;
+    height: 800px; /* 550px에서 650px로 증가 */
     position: relative;
 }
 
 .logo-carousel-container {
     width: 100%;
-    height: 800px;
+    height: 800px; /* 550px에서 650px로 증가 */
     position: relative;
     overflow: hidden;
 }
@@ -92,8 +45,8 @@ body {
     transform: translateY(-50%);
     background: rgba(35, 42, 52, 0.8);
     border: none;
-    width: 70px;
-    height: 70px;
+    width: 70px; /* 50px에서 70px로 증가 */
+    height: 70px; /* 50px에서 70px로 증가 */
     cursor: pointer;
     border-radius: 50%;
     transition: background-color 0.3s;
@@ -132,16 +85,17 @@ body {
 
 .logo-arrow {
     border: solid #fff;
-    border-width: 0 5px 5px 0;
+    border-width: 0 5px 5px 0; /* 3px에서 5px로 증가 */
     display: inline-block;
-    padding: 10px;
-    margin-top: 8px;
+    padding: 10px; /* 6px에서 10px로 증가 */
+    margin-top: 8px; /* 5px에서 8px로 증가 */
 }
 
 .right { transform: rotate(-45deg); }
 .left { transform: rotate(135deg); }
 
-a {
+/* Nav와 캐러셀 영역의 링크에만 적용 */
+.navbar a, .logo-carousel-section a {
      text-decoration: none;
- }
+}
 

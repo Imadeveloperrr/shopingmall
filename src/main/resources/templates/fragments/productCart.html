@@ -1,58 +1,27 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <div th:replace="~{fragments/header.html :: fragment-header}"></div>
-    <link href="/css/productCart.css" rel="stylesheet"/>
-    <link rel="stylesheet" href="../../static/css/productCart.css">
-</head>
-
-
-<div th:insert="~{fragments/nav.html :: fragment-nav}"></div>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: fragment-header"></head>
 <body>
+    <!-- 내비게이션 (원래 위치: head 밖 body 상단) -->
+    <div th:replace="fragments/nav :: fragment-nav"></div>
 
     <div id="wrapper">
         <div id="cnt" class="member">
             <div class="maincontent">
+                <!-- 페이지 상단 헤더 -->
                 <div class="top">
-                    <div class="info" id="info" style="display:none">
-                        <img src="https://atimg.sonyunara.com/2022/member/info.svg" alt="">
-                        <div class="ment">
-                            <ul>
-                                <li>· [전체 상품 주문] 버튼을 누르시면 장바구니의 구분없이 <br>&nbsp;&nbsp;선택된 모든 상품에 대한 주문/결제가 이루어집니다.</li>
-                                <li>· [상품명]상단 □를 체크 하시고 [선택 상품 주문] 버튼을 누르시면 <br>&nbsp;&nbsp;선택된 상품에 대한 주문/결제가 이루어집니다.</li>
-                                <li>· 장바구니에 담긴 상품은 무기한 보관됩니다. 옵션변경 버튼 우측의 <br>&nbsp;&nbsp;♡를 클릭하시면 [좋아요]페이지에 보관됩니다. 우측의 X를 누르시면 상품이 삭제 됩니다.</li>
-                                <li>· 선택하신 상품의 수량을 변경하실 경우 숫자 좌우의 -,+버튼을 이용하시면 됩니다, <br>&nbsp;&nbsp;또한 옵션을 변경하실 경우 변경 후 [옵션변경] 버튼누르시면 색상 / 사이즈 변경이 가능 합니다.</li>
-                                <li>· 품절상품의 경우 비슷한 상품을 추천해드립니다.</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="wrap_inner ">
+                    <div class="wrap_inner">
+                        <!-- 브레드크럼 네비게이션 -->
                         <div class="navi">
                             홈 &gt;
-                            <a href="/member/mypage.php">마이페이지 &gt; </a>
-                            <a href="/member/cart.php" class="active">장바구니</a></div>
-                        <div>
-                            <div class="title">장바구니
-                                <div class="info" id="info" style="display:none">
-                                    <img src="https://atimg.sonyunara.com/2022/member/info.svg" alt="">
-                                    <div class="ment" style="display: none;">
-                                        <ul>
-                                            <li>· [전체 상품 주문] 버튼을 누르시면 장바구니의 구분없이 <br>&nbsp;&nbsp;선택된 모든 상품에 대한 주문/결제가 이루어집니다.</li>
-                                            <li>· [상품명]상단 □를 체크 하시고 [선택 상품 주문] 버튼을 누르시면 <br>&nbsp;&nbsp;선택된 상품에 대한 주문/결제가 이루어집니다.</li>
-                                            <li>· 장바구니에 담긴 상품은 무기한 보관됩니다. 옵션변경 버튼 우측의 <br>&nbsp;&nbsp;♡를 클릭하시면 [좋아요]페이지에 보관됩니다. 우측의 X를 누르시면 상품이 삭제 됩니다.</li>
-                                            <li>· 선택하신 상품의 수량을 변경하실 경우 숫자 좌우의 -,+버튼을 이용하시면 됩니다, <br>&nbsp;&nbsp;또한 옵션을 변경하실 경우 변경 후 [옵션변경] 버튼누르시면 색상 / 사이즈 변경이 가능 합니다.</li>
-                                            <li>· 품절상품의 경우 비슷한 상품을 추천해드립니다.</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
+                            <a href="/mypage">마이페이지 &gt;</a>
+                            <a href="/cart" class="active">장바구니</a>
+                        </div>
 
-                            <!-- <link rel="stylesheet" type="text/css" href="/asset/css/style_renew.css?a=20210413"> -->
-                            <!-- 마이페이지 메뉴 -->
-                            <dd class="nowish" style="height:100%; text-align: center; display:none">
-                                <span style="    display: inline-block; margin: 32px 0 10px; background: url(https://atimg.sonyunara.com/files/admin/newpro/1660826830_1_re23.gif) no-repeat; width: 44px; height: 28px; background-size: 44px; "> </span>
-                                <div style="font-size:16px; color:#C0C0C0;">자주 찾는 카테고리를<br>즐겨 찾기 해보세요!</div>
-                            </dd>
+                        <div>
+                            <div class="title">장바구니</div>
+
+                            <!-- 마이페이지 메뉴 (원본 구조) -->
                             <div id="my_menu" class="my_menu">
                                 <dl id="favor" style="background-color:#fff">
                                     <dt>즐겨찾기</dt>
@@ -60,35 +29,34 @@
                                 <dl>
                                     <dt><img src="https://atimg.sonyunara.com/2023/renew/list/mypage_1.png" class="icon" alt="">주문관리</dt>
                                     <dd class="order">
-                                        <a href="/member/order.php">주문/배송조회</a>
-                                        <a class="star1 " onclick="stargo('order')"></a>
+                                        <a href="/orders">주문/배송조회</a>
+                                        <a class="star1" onclick="stargo('order')"></a>
                                     </dd>
                                     <dd class="today_goods">
-                                        <a href="/member/today_goods.php">최근 본 상품</a>
+                                        <a href="/products/recent">최근 본 상품</a>
                                         <a class="star1" onclick="stargo('today_goods')"></a>
                                     </dd>
                                     <dd class="cart">
-                                        <a href="/member/cart.php" class="active">장바구니</a>
+                                        <a href="/cart" class="active">장바구니</a>
                                         <a class="star1" onclick="stargo('cart')"></a>
                                     </dd>
                                     <dd class="wish">
-                                        <a href="/member/wish.php">좋아요</a>
+                                        <a href="/wishlist">좋아요</a>
                                         <a class="star1" onclick="stargo('wish')"></a>
                                     </dd>
                                 </dl>
                             </div>
-
-                            <!-- //마이페이지 메뉴 --></div>
+                        </div>
                     </div>
-
                 </div>
-                <!-- 오더 스텝 -->
 
-                <!-- //오더 스텝 -->
-
+                <!-- 장바구니 메인 컨텐츠 -->
                 <div id="cart" class="wrap_inner">
+                    <!-- 좌측 상품 목록 -->
                     <div class="area_left">
-                        <form class="goods-form"></form><!-- 삭제금지 -->
+                        <form class="goods-form"></form>
+
+                        <!-- 헤더 (선택, 주문단계) -->
                         <div class="cart-sub-header">
                             <div class="left-content">
                                 <ul>
@@ -107,388 +75,213 @@
                                 <a class="choose_del" href="javascript:void(0);" onclick="deleteSelectedItems()">선택삭제</a>
                             </div>
                         </div>
-                        <ul class="prd list">
-                            <!-- <caption class="hidden">장바구니</caption> -->
 
+                        <!-- 상품 리스트 -->
+                        <ul class="prd list">
                             <li th:each="item : ${cart.cartItems}" th:id="'cartItem-' + ${item.id}">
                                 <form class="goods-form">
                                     <div class="check">
                                         <input type="checkbox" class="itemCheckbox" th:value="${item.id}" onclick="updateTotalPrice()">
                                     </div>
-
                                     <div class="img">
-                                        <a th:href="@{/product/detail/{id}(id=${item.id})}">
+                                        <a th:href="@{/product/detail/{id}(id=${item.productId})}">
                                             <img th:src="${item.imageUrl}" alt="상품 이미지">
                                         </a>
                                     </div>
-
                                     <div class="tal">
-
                                         <div>
-                                            <span style="color:#cf591f">[오늘출발] <img src="https://atimg.sonyunara.com/2023/renew/m/quick_m.png" style="height:15px; margin-right:5px; vertical-align: middle; transform:translateZ(0)"></span>									</div>
+                                            <span style="color:#cf591f">[오늘출발] <img src="https://atimg.sonyunara.com/2023/renew/m/quick_m.png" style="height:15px; margin-right:5px; vertical-align: middle;"></span>
+                                        </div>
                                         <div class="name">
-                                            <style>
-                                                .time-wrap{ width:300px; z-index:1;}
-                                            </style>
-                                            <div class="time-wrap" onclick="$(this).hide();">
-                                                <img src="https://atimg.sonyunara.com/attrangs/assets/web03/asset/img/common/quick_del_close_re2.png" alt="" style="    position: absolute; top: -20px; right: 0; width: auto; cursor:pointer;">
-                                                <div class="time-inner" style="padding:20px; ">
-                                                    <div style="position:relative">
-                                                        <div class="time-title">기간한정특가</div>
-                                                        <div class="bottom-line"></div>
-                                                    </div>
-                                                    <div class="time-time">
-                                                        <div>특가 남은 시간</div>
-                                                        <div class="promotionEndTime" style="letter-spacing:1px">21 : 01 : 02</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <a href="/shop/view.php?index_no=161051" target="_blank">
-                                            <span th:text="${item.productName}">상품명</span></a>
-
-                                            <div>
-                                                <img src="" style="height:20px; margin-right:5px;" onclick="$(this).closest('div.name').find('.time-wrap').show();">
-                                            </div>
+                                            <a th:href="@{/product/detail/{id}(id=${item.productId})}" target="_blank">
+                                                <span th:text="${item.productName}">상품명</span>
+                                            </a>
                                         </div>
                                     </div>
-
                                     <div class="opt">
                                         <div class="current-option">
                                             <span th:text="${item.productColor}">Color</span> / <span th:text="${item.productSize}">Size</span>
                                         </div>
-
                                         <div class="box_btn w80 h30 white5" style="display:block; margin-top:10px;">
                                             <button type="button"
                                                     th:data-product-id="${item.productId}"
                                                     th:data-item-id="${item.id}"
                                                     th:data-color="${item.productColor}"
                                                     th:data-size="${item.productSize}"
-                                                    onclick="openOptionModal(this)">
-                                                옵션변경
-                                            </button>
+                                                    onclick="openOptionModal(this)">옵션변경</button>
                                         </div>
-
-                                        <!-- 옵션 변경 모달 -->
-                                        <div th:id="'optionModal-' + ${item.id}" class="option-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:20px; border-radius:5px; box-shadow:0 0 10px rgba(0,0,0,0.1); z-index:1000;">
+                                        <div th:id="'optionModal-' + ${item.id}" class="option-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:#fff; padding:20px; border-radius:5px; box-shadow:0 0 10px rgba(0,0,0,0.1); z-index:1000;">
                                             <h4>옵션 변경</h4>
                                             <div class="option-selects" style="margin:15px 0;">
                                                 <div class="color-select" style="margin-bottom:10px;">
                                                     <label>색상:</label>
-                                                    <select class="form-select color-selector">
-                                                        <option value="">색상 선택</option>
-                                                    </select>
+                                                    <select class="form-select color-selector"><option value="">색상 선택</option></select>
                                                 </div>
                                                 <div class="size-select">
                                                     <label>사이즈:</label>
-                                                    <select class="form-select size-selector">
-                                                        <option value="">사이즈 선택</option>
-                                                    </select>
+                                                    <select class="form-select size-selector"><option value="">사이즈 선택</option></select>
                                                 </div>
                                             </div>
-                                            <div class="stock-info" style="margin:10px 0; font-size:0.9em; color:#666;">
-                                                재고: <span class="current-stock">0</span>개
-                                            </div>
+                                            <div class="stock-info" style="margin:10px 0; font-size:0.9em; color:#666;">재고: <span class="current-stock">0</span>개</div>
                                             <div class="modal-buttons" style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px;">
                                                 <button type="button" class="btn btn-primary confirm-option" style="padding:5px 15px;">변경</button>
                                                 <button type="button" class="btn btn-secondary close-modal" style="padding:5px 15px;" onclick="closeOptionModal(this)">취소</button>
                                             </div>
                                         </div>
                                     </div>
-
-                                    <!-- 수량 변경 부분 -->
                                     <div class="opt_chg">
                                         <div class="box_qty">
-                                            <a href="javascript:void(0);"
-                                               class="ea_down"
-                                               th:data-item-id="${item.id}"
-                                               onclick="updateQuantity(this.getAttribute('data-item-id'), -1)"
-                                               style="display: inline-block; cursor: pointer; text-decoration: none;">
-                                            </a>
-                                            <input type="text"
-                                                   th:value="${item.quantity}"
-                                                   class="form_input"
-                                                   readonly>
-                                            <a href="javascript:void(0);"
-                                               class="ea_up"
-                                               th:data-item-id="${item.id}"
-                                               onclick="updateQuantity(this.getAttribute('data-item-id'), 1)"
-                                               style="display: inline-block; cursor: pointer; text-decoration: none;">
-                                            </a>
+                                            <a href="javascript:void(0);" class="ea_down" th:data-item-id="${item.id}" onclick="updateQuantity(this.getAttribute('data-item-id'), -1)"></a>
+                                            <input type="text" th:value="${item.quantity}" class="form_input" readonly>
+                                            <a href="javascript:void(0);" class="ea_up" th:data-item-id="${item.id}" onclick="updateQuantity(this.getAttribute('data-item-id'), 1)"></a>
                                         </div>
                                     </div>
-
                                     <div class="price">
                                         <p th:text="${#numbers.formatInteger(item.price, 0, 'COMMA') + '원'}">가격</p>
                                     </div>
-
                                     <div class="delete_wish">
-                                        <a href="javascript:" onclick="GoodsProc.set_wish_single(161051)" style="vertical-align: middle;">
-                                            <div class="wish-icon "></div>
-                                        </a>
+                                        <a href="javascript:" onclick="alert('좋아요 기능은 개발 중입니다.')"><div class="wish-icon"></div></a>
                                         <a href="javascript:void(0);" th:onclick="'deleteCartItem(' + ${item.id} + ')'">
                                             <img src="https://atimg.sonyunara.com/attrangs/assets/web03/asset/img/shop/icon_del.png" alt="삭제">
                                         </a>
                                     </div>
                                 </form>
                             </li>
-
                         </ul>
                     </div>
 
-
+                    <!-- 오른쪽 요약 영역 -->
                     <div class="area_right">
                         <div class="box">
                             <div class="price-wrap">
                                 <div class="price-title">선택한 상품 <span id="selectedItemCount">0</span>개</div>
                                 <div class="price-won"><span id="selectedTotalPrice">0</span>원</div>
-                                <div style="text-align: center;">배송비<span id="del_account">
-                                     0</span>원
+                                <div style="text-align: center;">배송비<span id="del_account">0</span>원
                                     <div class="deliveryInfo">
-                                        <img src="https://atimg.sonyunara.com/attrangs/2019/icon/i.gif" style="vertical-align: middle; width:19px;" class="gif-lib-track">
+                                        <img src="https://atimg.sonyunara.com/attrangs/2019/icon/i.gif" style="vertical-align: middle; width:19px;">
                                         <span>80,000원이상</span> 구매시 <span>무료배송</span> 입니다.
                                     </div>
                                 </div>
                                 <div style="color:#333"><span id="selectedTotalPrice2"><strong id="use_account">0</strong></span>원</div>
                             </div>
-
                             <div class="btn-custom tac">
-                                    <span style="background-color:var(--season_color_01); width:62px; padding:0; border:1px solid #cfcfcf; padding:7px 0;position:relative;text-align: center;display: inline-block;top:13px; height:62px" onclick="alert('선물하기는 모바일에서 이용가능합니다');" class="giftspanBtn">
-                                    <a href="javascript:" style="background-color:transparent;">
+                                <span style="background-color:var(--season_color_01); width:62px; padding:7px 0; border:1px solid #cfcfcf; position:relative; text-align:center; display:inline-block; top:13px; height:62px" onclick="alert('선물하기는 모바일에서 이용가능합니다');" class="giftspanBtn">
+                                    <a href="javascript:" style="background:transparent; display:block;">
                                         <img src="https://atimg.sonyunara.com/2023/renew/list/gift.png" alt="" style="width:25px;">
-                                        <p style=" margin-top:3px; font-size:12px;">선물하기</p>
+                                        <p style="margin-top:3px; font-size:12px;">선물하기</p>
                                     </a>
                                 </span>
-                                <span class="okbox">
-                                    <a href="javascript:void(0);" onclick="orderSelectedItems()">선택상품 주문하기</a>
-                                </span>
-                                <span class="canbox"><a href="javascript:" onclick="MemberProc.all_buy();">전체상품 주문하기</a></span>
+                                <span class="okbox"><a href="javascript:void(0);" onclick="orderSelectedItems()">선택상품 주문하기</a></span>
+                                <span class="canbox"><a href="javascript:" onclick="alert('전체상품 주문 기능은 개발 중입니다.');">전체상품 주문하기</a></span>
                             </div>
                         </div>
-
                     </div>
                     <div class="clear"></div>
                     <br>
-
                 </div>
             </div>
         </div>
     </div>
 
     <script th:inline="javascript">
-        // 상품 옵션 정보를 가져오는 함수
+        // 원본 스크립트 (핵심 로직 유지)
         async function getProductOptions(productId) {
             try {
-                const response = await fetch(`/cart/product/options/${productId}`);
-                if (!response.ok) {
-                    throw new Error('옵션 정보를 가져오는데 실패했습니다.');
-                }
-                return await response.json();
-            } catch (error) {
-                console.error('옵션 정보 로딩 실패:', error);
-                return [];
-            }
+                const res = await fetch(`/cart/product/options/${productId}`);
+                if(!res.ok) throw new Error('옵션 정보를 가져오는데 실패했습니다.');
+                return await res.json();
+            } catch(e){ console.error(e); return []; }
         }
-
-        // 옵션 변경 모달 열기
-        async function openOptionModal(button) {  // 파라미터를 button으로 받아야 함
-            const modal = document.getElementById(`optionModal-${button.getAttribute('data-item-id')}`);  // 모달 요소 찾기 추가
+        async function openOptionModal(btn){
+            const modal = document.getElementById(`optionModal-${btn.getAttribute('data-item-id')}`);
             const colorSelect = modal.querySelector('.color-selector');
             const sizeSelect = modal.querySelector('.size-selector');
             const stockInfo = modal.querySelector('.current-stock');
             const confirmBtn = modal.querySelector('.confirm-option');
-
-            const productId = button.getAttribute('data-product-id');
-            const itemId = button.getAttribute('data-item-id');
-            const currentColor = button.getAttribute('data-color');
-            const currentSize = button.getAttribute('data-size');
-
-            // 기존 이벤트 리스너 제거 및 새로운 리스너 추가
-            const newConfirmBtn = confirmBtn.cloneNode(true);
-            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-
-            newConfirmBtn.addEventListener('click', () => {
-                updateCartItemOption(itemId, colorSelect.value, sizeSelect.value);
-            });
-
-            // 상품 옵션 데이터 가져오기
+            const productId = btn.getAttribute('data-product-id');
+            const itemId = btn.getAttribute('data-item-id');
+            const currentColor = btn.getAttribute('data-color');
+            const currentSize = btn.getAttribute('data-size');
+            const clone = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(clone, confirmBtn);
+            clone.addEventListener('click', ()=>updateCartItemOption(itemId, colorSelect.value, sizeSelect.value));
             const options = await getProductOptions(productId);
-
-            // 색상 옵션 세팅
-            const colors = [...new Set(options.map(opt => opt.color))];
-            colorSelect.innerHTML = '<option value="">색상 선택</option>' +
-                colors.map(color =>
-                    `<option value="${color}" ${color === currentColor ? 'selected' : ''}>${color}</option>`
-                ).join('');
-
-            // 초기 사이즈 옵션 설정
-            if (currentColor) {
-                const availableSizes = options.filter(opt => opt.color === currentColor);
-                sizeSelect.innerHTML = '<option value="">사이즈 선택</option>' +
-                    availableSizes.map(opt =>
-                        `<option value="${opt.size}" ${opt.size === currentSize ? 'selected' : ''}>${opt.size}</option>`
-                    ).join('');
-
-                const currentOption = options.find(opt => opt.color === currentColor && opt.size === currentSize);
-                if (currentOption) {
-                    stockInfo.textContent = currentOption.stock;
-                }
+            const colors = [...new Set(options.map(o=>o.color))];
+            colorSelect.innerHTML = '<option value="">색상 선택</option>' + colors.map(c=>`<option value="${c}" ${c===currentColor?'selected':''}>${c}</option>`).join('');
+            if(currentColor){
+                const sizes = options.filter(o=>o.color===currentColor);
+                sizeSelect.innerHTML = '<option value="">사이즈 선택</option>' + sizes.map(o=>`<option value="${o.size}" ${o.size===currentSize?'selected':''}>${o.size}</option>`).join('');
+                const cur = options.find(o=>o.color===currentColor && o.size===currentSize);
+                if(cur) stockInfo.textContent = cur.stock;
             }
-
-            // 색상 선택 시 이벤트
-            colorSelect.addEventListener('change', () => {
-                const selectedColor = colorSelect.value;
-                const availableSizes = options.filter(opt => opt.color === selectedColor);
-
-                sizeSelect.innerHTML = '<option value="">사이즈 선택</option>' +
-                    availableSizes.map(opt => `<option value="${opt.size}">${opt.size}</option>`).join('');
-
-                stockInfo.textContent = '0';
+            colorSelect.addEventListener('change',()=>{
+                const sel = colorSelect.value;
+                const sizes = options.filter(o=>o.color===sel);
+                sizeSelect.innerHTML = '<option value="">사이즈 선택</option>' + sizes.map(o=>`<option value="${o.size}">${o.size}</option>`).join('');
+                stockInfo.textContent='0';
             });
-
-            // 사이즈 선택 시 이벤트
-            sizeSelect.addEventListener('change', () => {
-                const selectedColor = colorSelect.value;
-                const selectedSize = sizeSelect.value;
-                const selectedOption = options.find(opt =>
-                    opt.color === selectedColor && opt.size === selectedSize
-                );
-
-                stockInfo.textContent = selectedOption ? selectedOption.stock : '0';
+            sizeSelect.addEventListener('change',()=>{
+                const selColor = colorSelect.value;
+                const selSize = sizeSelect.value;
+                const opt = options.find(o=>o.color===selColor && o.size===selSize);
+                stockInfo.textContent = opt? opt.stock : '0';
             });
-
-            modal.style.display = 'block';
+            modal.style.display='block';
         }
-
-        // 옵션 변경 모달 닫기
-        function closeOptionModal(button) {
-            const modal = button.closest('.option-modal');
-            modal.style.display = 'none';
-        }
-
-        // 장바구니 아이템 옵션 업데이트
-        async function updateCartItemOption(cartItemId, color, size) {
-            if (!color || !size) {
-                alert('색상과 사이즈를 모두 선택해주세요.');
-                return;
-            }
-
+        function closeOptionModal(b){ b.closest('.option-modal').style.display='none'; }
+        async function updateCartItemOption(id,color,size){
+            if(!color||!size){ alert('색상과 사이즈를 모두 선택해주세요.'); return; }
             try {
-                const response = await fetch(`/cart/update-option/${cartItemId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ color, size })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || '옵션 변경에 실패했습니다.');
-                }
-
+                const res= await fetch(`/cart/update-option/${id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({color,size})});
+                if(!res.ok){ const err=await res.json(); throw new Error(err.message||'옵션 변경 실패'); }
                 location.reload();
-            } catch (error) {
-                alert(error.message);
-            }
+            }catch(e){ alert(e.message); }
         }
-
-        function toggleAllItems() {
+        function toggleAllItems(){
             const checked = document.getElementById('selectAll').checked;
-            document.querySelectorAll('.itemCheckbox').forEach(checkbox => {
-                checkbox.checked = checked;
-            });
+            document.querySelectorAll('.itemCheckbox').forEach(c=>c.checked=checked);
             updateTotalPrice();
-        } // checkbox
-
-        function updateQuantity(itemId, change) {
-            fetch(`/cart/update/${itemId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ quantity: change })
-            })
-                .then(response => {
-                    if (response.ok) {
-                        location.reload();
-                    } else {
-                        throw new Error('수량 변경 실패');
-                    }
-                })
-                .catch(error => alert(error.message));
         }
-
-        function deleteCartItem(itemId) {
-            if (confirm('선택한 상품을 삭제하시겠습니까?')) {
-                fetch(`/cart/remove/${itemId}`, {
-                    method: 'DELETE'
-                })
-                .then(response => {
-                    if (response.ok) {
-                        document.getElementById(`cartItem-${itemId}`).remove();
-                        updateTotalPrice();
-                    } else {
-                        throw new Error('삭제 실패');
-                    }
-                })
-                .catch(error => alert(error.message));
-            }
+        function updateQuantity(id,delta){
+            fetch(`/cart/update/${id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({quantity:delta})})
+                .then(r=>{if(r.ok) location.reload(); else throw new Error('수량 변경 실패');})
+                .catch(e=>alert(e.message));
         }
-
-        function deleteSelectedItems() {
-            const selectedItems = Array.from(document.querySelectorAll('.itemCheckbox:checked'))
-                .map(checkbox => checkbox.value);
-
-            if (selectedItems.length === 0) {
-                alert('선택된 상품이 없습니다.');
-                return;
-            }
-
-            if (confirm('선택한 상품들을 삭제하시겠습니까?')) {
-                Promise.all(selectedItems.map(itemId =>
-                    fetch(`/cart/remove/${itemId}`, { method: 'DELETE' })
-                ))
-                    .then(() => location.reload())
-                    .catch(error => alert('삭제 중 오류가 발생했습니다.'));
-            }
+        function deleteCartItem(id){
+            if(!confirm('선택한 상품을 삭제하시겠습니까?')) return;
+            fetch(`/cart/remove/${id}`,{method:'DELETE'})
+              .then(r=>{ if(r.ok){ document.getElementById(`cartItem-${id}`).remove(); updateTotalPrice(); } else throw new Error('삭제 실패'); })
+              .catch(e=>alert(e.message));
         }
-
-        function updateTotalPrice() {
-            const checkedItems = document.querySelectorAll('.itemCheckbox:checked');
-            let totalPrice = 0;
-            checkedItems.forEach(checkbox => {
-                const itemPrice = parseInt(checkbox.closest('li').querySelector('.price p').textContent.replace(/[^0-9]/g, ''));
-                const quantity = parseInt(checkbox.closest('li').querySelector('.form_input').value);
-                totalPrice += itemPrice * quantity;
+        function deleteSelectedItems(){
+            const ids=[...document.querySelectorAll('.itemCheckbox:checked')].map(c=>c.value);
+            if(ids.length===0){ alert('선택된 상품이 없습니다.'); return; }
+            if(!confirm('선택한 상품들을 삭제하시겠습니까?')) return;
+            Promise.all(ids.map(i=>fetch(`/cart/remove/${i}`,{method:'DELETE'})))
+              .then(()=>location.reload())
+              .catch(()=>alert('삭제 중 오류가 발생했습니다.'));
+        }
+        function updateTotalPrice(){
+            let total=0; const checked=[...document.querySelectorAll('.itemCheckbox:checked')];
+            checked.forEach(ch=>{
+                const li=ch.closest('li');
+                const price=parseInt(li.querySelector('.price p').textContent.replace(/[^0-9]/g,''));
+                const qty=parseInt(li.querySelector('.form_input').value);
+                total+=price*qty;
             });
-
-            document.getElementById('selectedItemCount').textContent = checkedItems.length;
-            document.getElementById('selectedTotalPrice').textContent = totalPrice.toLocaleString();
-            document.getElementById('selectedTotalPrice2').textContent = totalPrice.toLocaleString(); // 나중에 배송비 값 추가해야함.
-            document.getElementById('selectedCount').textContent = checkedItems.length;
+            document.getElementById('selectedItemCount').textContent=checked.length;
+            document.getElementById('selectedTotalPrice').textContent=total.toLocaleString();
+            document.getElementById('selectedTotalPrice2').textContent=total.toLocaleString();
+            document.getElementById('selectedCount').textContent=checked.length;
         }
-
-        function orderSelectedItems() {
-            const selectedItems = Array.from(document.querySelectorAll('.itemCheckbox:checked'))
-                .map(checkbox => checkbox.value);
-
-            if (selectedItems.length === 0) {
-                alert('주문할 상품을 선택해주세요.');
-                return;
-            }
-
-            // 주문 페이지로 이동
-            location.href = '/order/checkout?items=' + selectedItems.join(',');
+        function orderSelectedItems(){
+            const ids=[...document.querySelectorAll('.itemCheckbox:checked')].map(c=>c.value);
+            if(ids.length===0){ alert('주문할 상품을 선택해주세요.'); return; }
+            location.href='/order/checkout?items='+ids.join(',');
         }
-
-        // 페이지 로드시 초기화
-        document.addEventListener('DOMContentLoaded', function() {
-            updateTotalPrice();
-        });
+        document.addEventListener('DOMContentLoaded',updateTotalPrice);
     </script>
 
+    <link href="/css/productCart.css" rel="stylesheet"/>
 </body>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
-        crossorigin="anonymous"></script>
 </html>

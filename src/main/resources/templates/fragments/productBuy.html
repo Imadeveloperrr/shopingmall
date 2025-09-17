@@ -3,17 +3,14 @@
 <head>
     <div th:replace="~{fragments/header.html :: fragment-header}"></div>
     <link href="/css/productBuy.css" rel="stylesheet"/>
-    <!-- Bootstrap CSS (팝업 모달 활용) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Toss Payments 표준 결제 위젯 스크립트. -->
     <script src="https://js.tosspayments.com/v2/standard"></script>
 </head>
 
 <div th:insert="~{fragments/nav.html :: fragment-nav}"></div>
 <body>
-
     <header id="header">
-        <div class="title"> 주문서 작성 </div>
+        <div class="title">주문서 작성</div>
     </header>
 
     <form class="form_obj" method="post" action="/order/place">
@@ -22,6 +19,7 @@
                 주문상품 <span>([[${orderItems.size()}]]개)</span>
             </p>
 
+            <!-- 주문 상품 목록 -->
             <table class="tbl_col prd ord">
                 <colgroup>
                     <col style="width:10%;">
@@ -45,8 +43,6 @@
                     </tr>
                 </thead>
                 <tbody>
-
-                    <!-- orderItems를 사용한 상품 정보 표시 -->
                     <tr th:each="item : ${orderItems}">
                         <td class="img">
                             <div style="padding: 10px 0;">
@@ -73,8 +69,7 @@
                         <td class="total_prc" th:text="${#numbers.formatInteger(item.price * item.quantity, 0, 'COMMA') + '원'}"></td>
                         <td>
                             <img src="https://attrangs.co.kr/asset/img/shop/i_milage.gif" alt="마일리지" class="gif-lib-track">
-                            <span class="mileage_obj">0</span>
-                            원
+                            <span class="mileage_obj">0</span>원
                         </td>
                         <td></td>
                     </tr>
@@ -82,8 +77,8 @@
             </table>
 
             <div class="area_left">
+                <!-- 배송방법 섹션 -->
                 <h3 class="title">배송방법</h3>
-
                 <table class="tbl_order">
                     <colgroup>
                         <col style="width:131px;">
@@ -109,13 +104,13 @@
                                         오늘출발 상품만 오늘바로 받고싶다면 ( +1,000원)/2024-08-29 오후 도착 예상
                                     </label>
                                 </div>
-                                <div style="display:block; margin-top: 10px; ">
+                                <div style="display:block; margin-top: 10px;">
                                     <input id="is_dawn" type="radio" value="A" name="is_dawn" onclick="BuyProc.calcul();" style="margin-right:5px;">
                                     <label for="is_dawn">
                                         <img src="https://atimg.sonyunara.com/files/attrangs/etc/moon2.png" style="height:18px; margin-right:5px; vertical-align: middle; transform:translateZ(0)">
-                                        새벽도착 <span style="display: inline-block; width: 30px;text-align: center;">-</span>오늘출발 상품만 새벽에 받고싶다면 ( +1,000원)/<span class="letterspc">08-29</span> 새벽 도착 예상										</label>
+                                        새벽도착 <span style="display: inline-block; width: 30px;text-align: center;">-</span>오늘출발 상품만 새벽에 받고싶다면 ( +1,000원)/<span class="letterspc">08-29</span> 새벽 도착 예상
+                                    </label>
                                 </div>
-
                                 <p class="msg">
                                     ※ 오늘도착,새벽도착는 구매 후 배송지 변경이 불가능합니다.
                                     <br>- 오늘도착 휴무일 안내 :일요일, 법정공휴일, 대체휴무일
@@ -123,11 +118,11 @@
                                     <br><span class="blinking-text">- 수령방법 오기입으로 인한 배송 문제가 발생하지 않게 주의 부탁드립니다</span>
                                     <br>- 새벽도착 출입불가 건물 안내 : 학교, 관공서, 대학교(시설/기숙사), 군부대 등 18시 출입문 폐문 예상되는 지역 전부
                                     <br>**출입이 불가한 건물의 경우 오늘도착으로 임의 변경되어 배송될 수 있습니다
-
                                 </p>
                             </td>
                         </tr>
 
+                        <!-- 수령방법 -->
                         <tr id="dawnDeliBox">
                             <th scope="row">수령방법</th>
                             <td>
@@ -139,7 +134,6 @@
                                 <div class="dawnboxLayout" style="margin-bottom: 5px;">
                                     <input type="radio" name="dawnMemo" id="dawnMemo1" style="margin-right: 5px;" value="문앞" class="showBoxBtn">
                                     <label for="dawnMemo1" style="cursor: pointer;">문 앞</label>
-
                                     <div class="dawnBox" style="text-indent: 0;">
                                         <input type="text" class="dawnMemoPasswd1" name="dawnMemoPasswd1" value="" style="border: 1px solid #DCDCDC; height:30px; text-indent: 10px;" placeholder="공동현관 비밀번호">
                                     </div>
@@ -148,7 +142,6 @@
                                 <div style="margin-bottom: 5px;">
                                     <input type="radio" name="dawnMemo" id="dawnMemo3" style="margin-right: 5px;" value="택배함" class="showBoxBtn" onclick="$('#receiveType1').prop('checked',false)">
                                     <label for="dawnMemo3" style="cursor: pointer;">택배함</label>
-
                                     <div class="dawnBox" style="text-indent: 0;">
                                         <input type="text" class="dawnMemoPasswd" name="dawnMemoPasswd2" value="" style="border: 1px solid #DCDCDC; height:30px; text-indent: 10px;" placeholder="비밀번호">
                                     </div>
@@ -163,105 +156,95 @@
                     </tbody>
                 </table>
 
-                <h3 class="title">
-                    주문자 정보
-                    <p class="select check" style="display:none">
-                        <input type="checkbox" id="orderMemberUdt" name="member_update" value="Y" checked="">
-                        <label for="orderMemberUdt">주문자 정보로 회원정보를 업데이트 합니다.</label>
-                    </p>
-                </h3>
-
+                <!-- 주문자 정보 섹션 -->
+                <h3 class="title">주문자 정보</h3>
                 <table class="tbl_order_info">
                     <colgroup>
                         <col style="width:131px;">
                         <col>
                     </colgroup>
                     <tbody>
-                    <tr>
-                        <th scope="row">이름</th>
-                        <td>
-                            <input type="text" class="form_input form_name required" name="name" value="" data-require_msg="주문자명을">
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">결제 비밀번호</th>
-                        <td>
-                            <input type="password" class="form_input form_name required" name="passwds" data-require_msg="결제 비밀번호를" maxlength="10">
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">전화번호</th>
-                        <td>
-                            <input type="text" class="form_input form_phone" name="phone[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum();"> -
-                            <input type="text" class="form_input form_phone" name="phone[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum();"> -
-                            <input type="text" class="form_input form_phone" name="phone[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum();">
-                        </td>
-                    </tr>
+                        <tr>
+                            <th scope="row">이름</th>
+                            <td>
+                                <input type="text" class="form_input form_name required" name="name" value="" data-require_msg="주문자명을">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">결제 비밀번호</th>
+                            <td>
+                                <input type="password" class="form_input form_name required" name="passwds" data-require_msg="결제 비밀번호를" maxlength="10">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">전화번호</th>
+                            <td>
+                                <input type="text" class="form_input form_phone" name="phone[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum();"> -
+                                <input type="text" class="form_input form_phone" name="phone[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum();"> -
+                                <input type="text" class="form_input form_phone" name="phone[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum();">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">휴대폰번호</th>
+                            <td>
+                                <select name="cp[]" class="required">
+                                    <option value="010">010</option>
+                                    <option value="011">011</option>
+                                    <option value="016">016</option>
+                                    <option value="017">017</option>
+                                    <option value="019">019</option>
+                                </select> -
+                                <input type="text" class="form_input form_phone required" name="cp[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum();" data-require_msg="휴대폰번호를"> -
+                                <input type="text" class="form_input form_phone required" name="cp[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum();" data-require_msg="휴대폰번호를">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">이메일</th>
+                            <td>
+                                <input type="text" class="form_input form_email required" name="email" value="" data-require_msg="이메일주소를">
+                            </td>
+                        </tr>
+                        <!-- 비회원 개인정보취급방침 동의 -->
+                        <tr>
+                            <th scope="row">비회원 구매 및 결제 개인정보취급방침</th>
+                            <td>
+                                <div style="margin-bottom: 5px;">
+                                    <span class="question"><label for="nm_agreement">비회원 구매 및 결제 개인정보취급방침에 대하여 동의합니다.</label></span>
+                                    <input id="nm_agreement0" name="nm_agreement" value="T" type="radio"><label for="nm_agreement0">동의함</label>
+                                    <input id="nm_agreement1" name="nm_agreement" value="F" type="radio" checked="checked"><label for="nm_agreement1">동의안함</label>
+                                </div>
+                                <div class="grid">
+                                    <textarea style="line-height:130%; width:100%; height:60px;font-size:11px;" readonly="1">
+이성호(주)가 운영하는 쇼핑몰 브랜드 'ChageClothes'는 고객님의 개인정보를 중요시하며,  '정보통신망 이용촉진 및 정보보호'에 관한 법률을 준수하고 있습니다.
+개인정보처리방침을 통하여 고객님께서 제공하시는 개인정보가 어떠한 용도와 방식으로 이용되고 있으며, 개인정보보호를 위해 어떠한 조치가 취해지고 있는지 알려드립니다.
+개인정보처리방침을 개정하는 경우 웹사이트 공지사항(또는 개별공지)을 통하여 공지할 것입니다.
 
-                    <tr>
-                        <th scope="row">휴대폰번호</th>
-                        <td>
-                            <select name="cp[]" class="required">
-                                <option value="010">010</option>
-                                <option value="011">011</option>
-                                <option value="016">016</option>
-                                <option value="017">017</option>
-                                <option value="019">019</option>
-                            </select> -
-                            <input type="text" class="form_input form_phone required" name="cp[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum();" data-require_msg="휴대폰번호를"> -
-                            <input type="text" class="form_input form_phone required" name="cp[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum();" data-require_msg="휴대폰번호를">
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">이메일</th>
-                        <td>
-                            <input type="text" class="form_input form_email required" name="email" value="" data-require_msg="이메일주소를">
-                        </td>
-                    </tr>
-                    <!-- 비회원일때만 -->
-                    <tr>
-                        <th scope="row">비회원 구매 및 결제 개인정보취급방침</th>
-                        <td>
-                            <div style="margin-bottom: 5px;">
-                                <span class="question"><label for="nm_agreement">비회원 구매 및 결제 개인정보취급방침에 대하여 동의합니다.</label></span>
-                                <input id="nm_agreement0" name="nm_agreement" value="T" type="radio"><label for="nm_agreement0">동의함</label>
-                                <input id="nm_agreement1" name="nm_agreement" value="F" type="radio" checked="checked"><label for="nm_agreement1">동의안함</label>
-                            </div>
-                            <div class="grid">
-                                <textarea style="line-height:130%; width:100%; height:60px;font-size:11px;" readonly="1">
-                                    이성호(주)가 운영하는 쇼핑몰 브랜드 'ChageClothes'는 고객님의 개인정보를 중요시하며,  '정보통신망 이용촉진 및 정보보호'에 관한 법률을 준수하고 있습니다.
-                                    개인정보처리방침을 통하여 고객님께서 제공하시는 개인정보가 어떠한 용도와 방식으로 이용되고 있으며, 개인정보보호를 위해 어떠한 조치가 취해지고 있는지 알려드립니다.
-                                    개인정보처리방침을 개정하는 경우 웹사이트 공지사항(또는 개별공지)을 통하여 공지할 것입니다.
+■ 수집하는 개인정보 항목
+이성호(주)가 운영하는 쇼핑몰 브랜드 'ChageClothes'는 비회원 주문시 아래와 같은 개인정보를 수집하고 있습니다.
+- 수집항목 : 이름, 전화번호, 주소, 휴대전화번호, 이메일, 결제기록
 
-                                    ■ 수집하는 개인정보 항목
-                                    이성호(주)가 운영하는 쇼핑몰 브랜드 'ChageClothes'는 비회원 주문시 아래와 같은 개인정보를 수집하고 있습니다.
-                                    - 수집항목 : 이름, 전화번호, 주소, 휴대전화번호, 이메일, 결제기록
+■ 개인정보의 수집 및 이용목적
+이성호(주)가 운영하는 쇼핑몰 브랜드 'ChageClothes'는  수집한 개인정보를 다음의 목적을 위해 활용합니다.
+- 서비스 제공에 관한 계약 이행 및 서비스 제공에 따른 요금정산, 구매 및 요금 결제, 물품배송
 
-                                    ■ 개인정보의 수집 및 이용목적
-                                    이성호(주)가 운영하는 쇼핑몰 브랜드 'ChageClothes'는  수집한 개인정보를 다음의 목적을 위해 활용합니다.
-                                    - 서비스 제공에 관한 계약 이행 및 서비스 제공에 따른 요금정산, 구매 및 요금 결제, 물품배송
-
-                                    ■ 개인정보의 보유 및 이용기간
-                                    이성호(주)가 운영하는 쇼핑몰 브랜드 'ChageClothes'는  개인정보 수집 및 이용목적이 달성된 후에는 예외 없이 해당 정보를 지체 없이 파기합니다.
-                                    - 계약 또는 청약철회 등에 관한 기록 : 5년
-                                    - 대금결제 및 재화등의 공급에 관한 기록 : 5년
-                                    - 소비자의 불만 또는 분쟁처리에 관한 기록 : 1년
-                                </textarea>
-                            </div>
-                        </td>
-                    </tr>
+■ 개인정보의 보유 및 이용기간
+이성호(주)가 운영하는 쇼핑몰 브랜드 'ChageClothes'는  개인정보 수집 및 이용목적이 달성된 후에는 예외 없이 해당 정보를 지체 없이 파기합니다.
+- 계약 또는 청약철회 등에 관한 기록 : 5년
+- 대금결제 및 재화등의 공급에 관한 기록 : 5년
+- 소비자의 불만 또는 분쟁처리에 관한 기록 : 1년
+                                    </textarea>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
 
-
-
-
+                <!-- 배송지 정보 섹션 -->
                 <h3 class="title">
                     배송지 정보
                     <p class="select check">
                         <input type="radio" value="1" name="del_loc" id="del_loc1" class="del_loc_obj" onclick="BuyProc.deliChange()" checked="">
                         <label for="del_loc1">국내배송</label>
-
                         <input type="radio" value="2" name="del_loc" id="del_loc2" class="del_loc_obj" onclick="BuyProc.deliChange()">
                         <label for="del_loc2">해외배송</label>
                     </p>
@@ -273,80 +256,62 @@
                         <col>
                     </colgroup>
                     <tbody>
-                    <tr style="display:none">
-                        <th scope="row">배송지</th>
-                        <td class="address">
-                            <select class="memberDelZone_obj" onchange="BuyProc.delZoneSelect()">
-                                <option value="">배송지를 선택해주세요</option>
-
-                            </select>
-                            <span class="box_btn w136 h35 white fs13 strong"><a href="/member/address.php" target="_blank">배송지 관리</a></span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">이름</th>
-                        <td>
-                            <input type="text" class="form_input form_name required" name="del_name" value="" data-require_msg="수취인명을">
-                            <p class="check">
-                                <input type="checkbox" id="name_same" name="name_same" onclick="">
-                                <label for="name_same">주문인 정보와 동일</label>
-                            </p>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <th scope="row">전화번호</th>
-                        <td>
-                            <input type="text" class="form_input form_phone" name="del_phone[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()"> -
-                            <input type="text" class="form_input form_phone" name="del_phone[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()"> -
-                            <input type="text" class="form_input form_phone" name="del_phone[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()">
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <th scope="row">휴대폰번호</th>
-                        <td>
-                            <select name="del_cp[]">
-                                <option value="010">010</option>
-                                <option value="011">011</option>
-                                <option value="016">016</option>
-                                <option value="017">017</option>
-                                <option value="019">019</option>
-                            </select> -
-                            <input type="text" class="form_input form_phone required" name="del_cp[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()" data-require_msg="휴대폰번호를"> -
-                            <input type="text" class="form_input form_phone required" name="del_cp[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()" data-require_msg="휴대폰번호를">
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">주소</th>
-                        <td>
-                            <!-- 국내배송 -->
-                            <div class="delTypeBox">
-                                <div class="addbtn">
-                                    <div>
-                                        <input type="text" class="form_input form_addr0 zip_obj" id="del_zip" name="del_zip" value="" readonly="" placeholder="우편번호">
-                                        <span class="box_btn w136 h35 white fs13 strong"><a href="javascript:" onclick="execDaumPostcode()">우편번호 찾기</a></span>
-                                        <div id="find_zip" style="display:none;border:1px solid;position: relative;">
-                                            <img src="//t1.daumcdn.net/postcode/resource/images/close.png" id="btnFoldWrap" style="cursor:pointer;position:absolute;right:0px;top:-1px;z-index:1" onclick="foldDaumPostcode()" alt="접기 버튼">
+                        <tr>
+                            <th scope="row">이름</th>
+                            <td>
+                                <input type="text" class="form_input form_name required" name="del_name" value="" data-require_msg="수취인명을">
+                                <p class="check">
+                                    <input type="checkbox" id="name_same" name="name_same" onclick="">
+                                    <label for="name_same">주문인 정보와 동일</label>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">전화번호</th>
+                            <td>
+                                <input type="text" class="form_input form_phone" name="del_phone[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()"> -
+                                <input type="text" class="form_input form_phone" name="del_phone[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()"> -
+                                <input type="text" class="form_input form_phone" name="del_phone[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">휴대폰번호</th>
+                            <td>
+                                <select name="del_cp[]">
+                                    <option value="010">010</option>
+                                    <option value="011">011</option>
+                                    <option value="016">016</option>
+                                    <option value="017">017</option>
+                                    <option value="019">019</option>
+                                </select> -
+                                <input type="text" class="form_input form_phone required" name="del_cp[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()" data-require_msg="휴대폰번호를"> -
+                                <input type="text" class="form_input form_phone required" name="del_cp[]" value="" maxlength="4" style="width: 55px;" onkeyup="BuyProc.onlyNum()" data-require_msg="휴대폰번호를">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">주소</th>
+                            <td>
+                                <div class="delTypeBox">
+                                    <div class="addbtn">
+                                        <div>
+                                            <input type="text" class="form_input form_addr0 zip_obj" id="del_zip" name="del_zip" value="" readonly="" placeholder="우편번호">
+                                            <span class="box_btn w136 h35 white fs13 strong"><a href="javascript:" onclick="execDaumPostcode()">우편번호 찾기</a></span>
+                                            <div id="find_zip" style="display:none;border:1px solid;position: relative;">
+                                                <img src="//t1.daumcdn.net/postcode/resource/images/close.png" id="btnFoldWrap" style="cursor:pointer;position:absolute;right:0px;top:-1px;z-index:1" onclick="foldDaumPostcode()" alt="접기 버튼">
+                                            </div>
                                         </div>
-                                        <p class="check" style="display:none">
-                                            <input type="checkbox" id="addr_save" name="addr_save" value="Y" checked="">
-                                            <label for="addr_save">현재 배송지를 회원정보로 저장</label>
-                                        </p>
                                     </div>
+                                    <input type="text" class="form_input form_addr1" id="del_addr1" name="del_addr1" value="" placeholder="주소" readonly="">
+                                    <input type="text" class="form_input form_addr2" id="del_addr2" name="del_addr2" value="" placeholder="상세주소">
                                 </div>
-                                <input type="text" class="form_input form_addr1" id="del_addr1" name="del_addr1" value="" placeholder="주소" readonly="">
-                                <input type="text" class="form_input form_addr2" id="del_addr2" name="del_addr2" value="" placeholder="상세주소">
-                            </div>
-
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">배송메모</th>
-                        <td>
-                            <input name="memo" id="delivery_memo" class="form_input block">
-                        </td>
-                    </tr>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">배송메모</th>
+                            <td>
+                                <input name="memo" id="delivery_memo" class="form_input block">
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
 
@@ -354,9 +319,9 @@
                     배송메모는 배달기사님께 보여지는 메모입니다.<br>
                     주문건 관련하여 요청사항 있으실 경우 게시판에 꼭! 남겨주세요:)
                 </div>
-
             </div>
 
+            <!-- 결제 정보 영역 -->
             <div class="area_right">
                 <div class="inner" style="top: 7.40625px;">
                     <div class="box">
@@ -368,37 +333,26 @@
                                 <col>
                             </colgroup>
                             <tbody>
-                            <tr>
-                                <th scope="row">총 상품금액</th>
-                                <td><span class="total_goods_price_obj">[[${#numbers.formatInteger(totalAmount, 0, 'COMMA')}]]</span>원</td>
-                            </tr>
-                            <tr>
-                                <th scope="row">배송료</th>
-                                <td>
-                                    +<span class="total_delaccount_obj">[[${#numbers.formatInteger(deliveryFee, 0, 'COMMA')}]]</span>원
-                                </td>
-                            </tr>
-                            <tr style="display: none;">
-                                <th scope="row">적립금</th>
-                                <td>
-                                    -
-                                    <span class="point1_discount_obj">0</span>원
-                                </td>
-                            </tr>
-                            <tr style="display: none;">
-                                <th scope="row">예치금</th>
-                                <td>
-                                    -
-                                    <span class="point2_discount_obj">0</span>원
-                                </td>
-                            </tr>
-                            <tr style="display: none;">
-                                <th scope="row">코인</th>
-                                <td>
-                                    -
-                                    <span class="coin_discount_obj">0</span>원
-                                </td>
-                            </tr>
+                                <tr>
+                                    <th scope="row">총 상품금액</th>
+                                    <td><span class="total_goods_price_obj">[[${#numbers.formatInteger(totalAmount, 0, 'COMMA')}]]</span>원</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">배송료</th>
+                                    <td>+<span class="total_delaccount_obj">[[${#numbers.formatInteger(deliveryFee, 0, 'COMMA')}]]</span>원</td>
+                                </tr>
+                                <tr style="display: none;">
+                                    <th scope="row">적립금</th>
+                                    <td>-<span class="point1_discount_obj">0</span>원</td>
+                                </tr>
+                                <tr style="display: none;">
+                                    <th scope="row">예치금</th>
+                                    <td>-<span class="point2_discount_obj">0</span>원</td>
+                                </tr>
+                                <tr style="display: none;">
+                                    <th scope="row">코인</th>
+                                    <td>-<span class="coin_discount_obj">0</span>원</td>
+                                </tr>
                             </tbody>
                         </table>
                         <table class="tbl_order2 ord">
@@ -408,13 +362,10 @@
                                 <col>
                             </colgroup>
                             <tbody>
-                            <tr>
-                                <th scope="row">총할인금액</th>
-                                <td>
-                                    -
-                                    <span class="total_discount_obj">13,000</span>원
-                                </td>
-                            </tr>
+                                <tr>
+                                    <th scope="row">총할인금액</th>
+                                    <td>-<span class="total_discount_obj">13,000</span>원</td>
+                                </tr>
                             </tbody>
                         </table>
                         <dl class="total_ord_prc">
@@ -428,8 +379,7 @@
                     </div>
                     <div class="btn">
                         <span class="box_btn block h50 fs15">
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                    data-bs-target="#tossPaymentModal">결제하기</button>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tossPaymentModal">결제하기</button>
                         </span>
                         <span class="box_btn block h50 fs15 white2">
                             <a href="/">취소</a>
@@ -440,6 +390,7 @@
         </div>
     </form>
 
+    <!-- Toss 결제 모달 -->
     <div class="modal fade" id="tossPaymentModal" tabindex="-1" aria-labelledby="tossPaymentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -448,7 +399,6 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
                 </div>
                 <div class="modal-body">
-                    <!-- 할인 쿠폰 및 결제 위젯 영역 -->
                     <div class="mb-3">
                         <input type="checkbox" id="coupon-box">
                         <label for="coupon-box">5,000원 쿠폰 적용</label>
@@ -457,261 +407,240 @@
                     <div id="agreement"></div>
                 </div>
                 <div class="modal-footer">
-                    <!-- 모달 내부에서 최종 결제 요청 실행 -->
                     <button type="button" id="payment-button" class="btn btn-success" onclick="BuyProc.buy();">결제하기</button>
                 </div>
             </div>
         </div>
     </div>
-</body>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
-        crossorigin="anonymous"></script>
-<script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+            crossorigin="anonymous"></script>
+    <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Toss Payments 위젯 초기화
-        const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm"; // 실제 발급 받은 키로 교체
-        const tossPayments = TossPayments(clientKey);
-        // 회원 결제인 경우 customerKey 사용, 비회원일 경우 TossPayments.ANONYMOUS 사용
-        const customerKey = "FVsyeZOPnbAII8ZfTI3xo";
-        const widgets = tossPayments.widgets({customerKey });
+    <!-- Toss Payments 초기화 -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
+            const tossPayments = TossPayments(clientKey);
+            const customerKey = "FVsyeZOPnbAII8ZfTI3xo";
+            const widgets = tossPayments.widgets({customerKey });
 
-        // 초기 주문 금액을 finalAmount 변수( 서버에서 Thymeleaf로 전달된 값 등)로 설정
-        let orderAmount = finalAmount; // 얘: finalAmount가 50000원인 경우
-        widgets.setAmount({
-            currency: "KRW",
-            value: orderAmount
-        });
-
-        // 결제 UI 및 이용약관 렌더링 (모달 내부 컨테이너에 렌더링)
-        widgets.renderPaymentMethods({
-            selector: "#payment-method",
-            variantKey: "DEFAULT"
-        });
-
-        widgets.renderAgreement({
-            selector: "#agreement",
-            variantKey: "AGREEMENT"
-        });
-
-        // 쿠폰 체크박스 이벤트: 쿠폰 적용 시 금액 업데이트
-        document.getElementById("coupon-box").addEventListener("change", async function(){
-            if(this.checked){
-                orderAmount = finalAmount - 5000;
-            } else {
-                orderAmount = finalAmount;
-            }
-            await widgets.setAmount({
+            let orderAmount = finalAmount;
+            widgets.setAmount({
                 currency: "KRW",
                 value: orderAmount
             });
-        });
-    });
-</script>
 
-<script th:inline="javascript">
-    /*<![CDATA[*/
-    var orderItems = /*[[${orderItems}]]*/ [];
-    var totalAmount = /*[[${totalAmount}]]*/ 0;
-    var deliveryFee = /*[[${deliveryFee}]]*/ 0;
-    var finalAmount = /*[[${finalAmount}]]*/ 0;
-    var orderType = /*[[${orderType}]]*/ "CART";
-    /*]]>*/
-</script>
-
-<script>
-    function execDaumPostcode() {
-        new daum.Postcode({
-            oncomplete: function (data) {
-                // 주소 및 우편번호 설정
-                document.getElementById('del_zip').value = data.zonecode;
-                document.getElementById('del_addr1').value = data.address;
-                // 선택적: 나머지 주소 정보 처리( 예: 건물명 등 )
-            },
-            onclose: function (state) {
-                // 팝업 닫힘 시 처리 (state: "FORCE_CLOSE" 등)
-            },
-        }).open();
-    }
-</script>
-
-<script>
-    document.getElementById("name_same").addEventListener("change", function () {
-        if (this.checked) {
-            // 주문자 정보에서 값을 가져와 배송지 입력란에 복사
-            document.querySelector('input[name="del_name"]').value =
-                document.querySelector('input[name="name"]').value;
-            // 전화번호 등 다른 필드도 필요한 경우 복사
-            var ordererPhones = document.querySelectorAll('input[name="phone[]"]');
-            var deliveryPhones = document.querySelectorAll('input[name="del_phone[]"]');
-            if (ordererPhones.length === deliveryPhones.length) {
-                for (var i = 0; i < ordererPhones.length; i++) {
-                    deliveryPhones[i].value = ordererPhones[i].value;
-                }
-            }
-        } else {
-            // 체크 해제 시 배송지 입력란 초기화
-            document.querySelector('input[name="del_name"]').value = "";
-            var deliveryPhones = document.querySelectorAll('input[name="del_phone"]');
-            deliveryPhones.forEach(function (input) {
-                input.value = "";
+            widgets.renderPaymentMethods({
+                selector: "#payment-method",
+                variantKey: "DEFAULT"
             });
+
+            widgets.renderAgreement({
+                selector: "#agreement",
+                variantKey: "AGREEMENT"
+            });
+
+            document.getElementById("coupon-box").addEventListener("change", async function(){
+                if(this.checked){
+                    orderAmount = finalAmount - 5000;
+                } else {
+                    orderAmount = finalAmount;
+                }
+                await widgets.setAmount({
+                    currency: "KRW",
+                    value: orderAmount
+                });
+            });
+        });
+    </script>
+
+    <!-- Thymeleaf 변수 -->
+    <script th:inline="javascript">
+        var orderItems = /*[[${orderItems}]]*/ [];
+        var totalAmount = /*[[${totalAmount}]]*/ 0;
+        var deliveryFee = /*[[${deliveryFee}]]*/ 0;
+        var finalAmount = /*[[${finalAmount}]]*/ 0;
+        var orderType = /*[[${orderType}]]*/ "CART";
+    </script>
+
+    <!-- 주소 검색 -->
+    <script>
+        function execDaumPostcode() {
+            new daum.Postcode({
+                oncomplete: function (data) {
+                    document.getElementById('del_zip').value = data.zonecode;
+                    document.getElementById('del_addr1').value = data.address;
+                },
+                onclose: function (state) {
+                    // 팝업 닫힘 시 처리
+                }
+            }).open();
         }
-    });
-</script>
+    </script>
 
-<script>
-    // 폼 데이터를 JSON으로 변환하는 유틸 함수
-    function serializeFormToJSON(form) {
-        var obj = {};
-        var formData = new FormData(form);
-
-        // formData의 각 key와 value를 순회.
-        formData.forEach(function(value, key) {
-            // 이미 같은 이름의 필드가 있다면, 배열로 처리
-            if (obj.hasOwnProperty(key)) {
-                if (Array.isArray(obj[key])) { // 기존 값이 배열이면
-                    obj[key].push(value); // 배열에 새 값 추가
-                } else { // 배열이 아니라면
-                    obj[key] = [obj[key], value]; // 기존 값과 새 값을 배열로 변환하여 저장
+    <!-- 주문자 정보 복사 -->
+    <script>
+        document.getElementById("name_same").addEventListener("change", function () {
+            if (this.checked) {
+                document.querySelector('input[name="del_name"]').value = document.querySelector('input[name="name"]').value;
+                var ordererPhones = document.querySelectorAll('input[name="phone[]"]');
+                var deliveryPhones = document.querySelectorAll('input[name="del_phone[]"]');
+                if (ordererPhones.length === deliveryPhones.length) {
+                    for (var i = 0; i < ordererPhones.length; i++) {
+                        deliveryPhones[i].value = ordererPhones[i].value;
+                    }
                 }
             } else {
-                obj[key] = value; // 처음 보는 key이면 그대로 할당
+                document.querySelector('input[name="del_name"]').value = "";
+                var deliveryPhones = document.querySelectorAll('input[name="del_phone"]');
+                deliveryPhones.forEach(function (input) {
+                    input.value = "";
+                });
             }
         });
-        return obj; // 최종적으로 직렬화된 Json 객체 반환
-    }
+    </script>
 
-    var BuyProc = {
-        // 숫자만 입력되도록 필터링하는 함수: 현재 활성화된(포커스된) input 요소의 값을 숫자만 남기도록 함.
-        onlyNum: function () {
-            var input = document.activeElement;
-            // input 요소가 존재하고, value가 있을 때만 처리
-            if (input && input.value) {
-                input.value = input.value.replace(/[^0-9]/g, '');
-            }
-        },
+    <!-- 주문 처리 로직 -->
+    <script>
+        function serializeFormToJSON(form) {
+            var obj = {};
+            var formData = new FormData(form);
 
-
-        buy: function () {
-            // 주문서 폼 선택
-            var form = document.querySelector("form.form_obj");
-
-            // 클라이언트 측 필수 입력값 검증 예제
-            if (!form.querySelector('input[name="del_name"]').value.trim()) {
-                alert("수취인 이름을 입력해주세요.");
-                return;
-            }
-            if (!form.querySelector('input[name="del_zip"]').value.trim() ||
-                !form.querySelector('input[name="del_addr1"]').value.trim()) {
-                alert("배송 주소를 정확히 입력해주세요.");
-                return;
-            }
-            if (!form.querySelector('select[name="cp[]"]').value.trim()) {
-                alert("휴대폰 번호를 입력해주세요.");
-                return;
-            }
-            if (!form.querySelector('input[name="email"]').value.trim()) {
-                alert("이메일 주소를 입력해주세요.");
-                return;
-            }
-
-            // 폼 데이터를 JSON 객체로 직렬화
-            var formData = serializeFormToJSON(form);
-
-            // 전화번호 (일반 전화번호 및 휴대폰 번호)는 배열로 넘어올 수 있으므로 결합 처리
-            var receiverPhone = "";
-            if (formData["phone[]"]) {
-                receiverPhone = Array.isArray(formData["phone[]"]) ? formData["phone[]"].join("-") : formData("phone[]");
-            }
-
-            var receiverMobile = "";
-            if (formData["cp[]"]) {
-                receiverMobile = Array.isArray(formData["cp[]"]) ? formData["cp[]"].join("-") : formData("cp[]");
-            }
-
-            var receiverAddress = "";
-            if (formData.del_zip || formData.del_addr1 || formData.del_addr2) {
-                receiverAddress = (formData.del_zip ? formData.del_zip + " " : "") +
-                    (formData.del_addr1 ? formData.del_addr1 + " " : "") +
-                    (formData.del_addr2 ? formData.del_addr2 + " " : "");
-            }
-
-            // 배송방법은 라디오 버튼 (name = "is_dawn")에서 체크된 값
-            var deliveryMethod = "";
-            var isDawnRadios = document.getElementsByName("is_dawn");
-            for (var i = 0; i < isDawnRadios.length; i++) {
-                if (isDawnRadios[i].checked) {
-                    deliveryMethod = isDawnRadios[i].value;
-                    break;
+            formData.forEach(function(value, key) {
+                if (obj.hasOwnProperty(key)) {
+                    if (Array.isArray(obj[key])) {
+                        obj[key].push(value);
+                    } else {
+                        obj[key] = [obj[key], value];
+                    }
+                } else {
+                    obj[key] = value;
                 }
-            }
+            });
+            return obj;
+        }
 
-            // 주문 DTO 객체 구성 (OrderDto)
-            var orderDto = {
-                orderType: orderType,
-                receiverName: formData.del_name,               // 수취인 이름 (input name="del_name")
-                receiverPhone: receiverPhone,                   // 일반 전화번호
-                receiverMobile: receiverMobile,                 // 휴대폰 번호
-                receiverAddress: receiverAddress,               // 조합된 주소
-                deliveryMethod: deliveryMethod,                 // 배송방법 (예: "T", "A" 등)
-                deliveryMemo: formData.memo,                      // 배송 메모 (input name="memo")
-                // 장바구니 주문인 경우 cartItemIds가 필요함 (hidden input 또는 전역 변수로 전달)
-                cartItemIds: formData.cartItemIds ? formData.cartItemIds : [],
-                orderItems: orderItems,                         // 전역 변수로 Thymeleaf에서 전달된 주문 상품 목록
-                totalAmount: totalAmount,                       // 전역 변수
-                deliveryFee: deliveryFee,                       // 전역 변수
-                // 결제 방법은 폼이나 기본값 지정 (예: "CREDIT_CARD")
-                paymentMethod: formData.paymentMethod ? formData.paymentMethod : "CREDIT_CARD"
-            };
-
-            fetch('/order/place', {
-                method: 'POST',
-                headers: {
-                    'Content-Type' : 'application/json'
-                },
-                body: JSON.stringify(orderDto)
-            })
-            .then(function (response) {
-                if (!response.ok) {
-                    return response.text().then(function (text) {
-                        throw new Error(text || "주문 생성 실패");
-                    });
+        var BuyProc = {
+            onlyNum: function () {
+                var input = document.activeElement;
+                if (input && input.value) {
+                    input.value = input.value.replace(/[^0-9]/g, '');
                 }
-                return response.json();
-            })
-            .then(function (orderResponse) {
-                paymentDto = {
-                    orderId: orderResponse.id,
-                    amount: orderResponse.finalAmount,
-                    paymentMethod: orderDto.paymentMethod
+            },
+
+            buy: function () {
+                var form = document.querySelector("form.form_obj");
+
+                // 필수 입력값 검증
+                if (!form.querySelector('input[name="del_name"]').value.trim()) {
+                    alert("수취인 이름을 입력해주세요.");
+                    return;
+                }
+                if (!form.querySelector('input[name="del_zip"]').value.trim() ||
+                    !form.querySelector('input[name="del_addr1"]').value.trim()) {
+                    alert("배송 주소를 정확히 입력해주세요.");
+                    return;
+                }
+                if (!form.querySelector('select[name="cp[]"]').value.trim()) {
+                    alert("휴대폰 번호를 입력해주세요.");
+                    return;
+                }
+                if (!form.querySelector('input[name="email"]').value.trim()) {
+                    alert("이메일 주소를 입력해주세요.");
+                    return;
+                }
+
+                var formData = serializeFormToJSON(form);
+
+                var receiverPhone = "";
+                if (formData["phone[]"]) {
+                    receiverPhone = Array.isArray(formData["phone[]"]) ? formData["phone[]"].join("-") : formData("phone[]");
+                }
+
+                var receiverMobile = "";
+                if (formData["cp[]"]) {
+                    receiverMobile = Array.isArray(formData["cp[]"]) ? formData["cp[]"].join("-") : formData("cp[]");
+                }
+
+                var receiverAddress = "";
+                if (formData.del_zip || formData.del_addr1 || formData.del_addr2) {
+                    receiverAddress = (formData.del_zip ? formData.del_zip + " " : "") +
+                        (formData.del_addr1 ? formData.del_addr1 + " " : "") +
+                        (formData.del_addr2 ? formData.del_addr2 + " " : "");
+                }
+
+                var deliveryMethod = "";
+                var isDawnRadios = document.getElementsByName("is_dawn");
+                for (var i = 0; i < isDawnRadios.length; i++) {
+                    if (isDawnRadios[i].checked) {
+                        deliveryMethod = isDawnRadios[i].value;
+                        break;
+                    }
+                }
+
+                var orderDto = {
+                    orderType: orderType,
+                    receiverName: formData.del_name,
+                    receiverPhone: receiverPhone,
+                    receiverMobile: receiverMobile,
+                    receiverAddress: receiverAddress,
+                    deliveryMethod: deliveryMethod,
+                    deliveryMemo: formData.memo,
+                    cartItemIds: formData.cartItemIds ? formData.cartItemIds : [],
+                    orderItems: orderItems,
+                    totalAmount: totalAmount,
+                    deliveryFee: deliveryFee,
+                    paymentMethod: formData.paymentMethod ? formData.paymentMethod : "CREDIT_CARD"
                 };
-                return fetch('/payment/process', {
+
+                fetch('/order/place', {
                     method: 'POST',
                     headers: {
                         'Content-Type' : 'application/json'
                     },
-                    body: JSON.stringify(paymentDto)
-                });
-            })
-            .then(function (paymentResponse) {
-                if (!paymentResponse.ok) {
-                    return paymentResponse.text().then(function (text) {
-                        throw new Error(text || "결제 처리 실패");
+                    body: JSON.stringify(orderDto)
+                })
+                .then(function (response) {
+                    if (!response.ok) {
+                        return response.text().then(function (text) {
+                            throw new Error(text || "주문 생성 실패");
+                        });
+                    }
+                    return response.json();
+                })
+                .then(function (orderResponse) {
+                    paymentDto = {
+                        orderId: orderResponse.id,
+                        amount: orderResponse.finalAmount,
+                        paymentMethod: orderDto.paymentMethod
+                    };
+                    return fetch('/payment/process', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type' : 'application/json'
+                        },
+                        body: JSON.stringify(paymentDto)
                     });
-                }
-                return paymentResponse.json();
-            })
-            .then(function (paymentResult) {
-                window.location.href = '/payment/success?orderId=' + paymentResult.orderId;
-            })
-            .catch(function (error) {
-                alert("오류 발생: " + error.message);
-            });
-        }
-    };
-</script>
+                })
+                .then(function (paymentResponse) {
+                    if (!paymentResponse.ok) {
+                        return paymentResponse.text().then(function (text) {
+                            throw new Error(text || "결제 처리 실패");
+                        });
+                    }
+                    return paymentResponse.json();
+                })
+                .then(function (paymentResult) {
+                    window.location.href = '/payment/success?orderId=' + paymentResult.orderId;
+                })
+                .catch(function (error) {
+                    alert("오류 발생: " + error.message);
+                });
+            }
+        };
+    </script>
+</body>
 </html>

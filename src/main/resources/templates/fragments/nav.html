@@ -1,84 +1,333 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!-- Nike 스타일 모던 내비게이션 Fragment -->
 <div th:fragment="fragment-nav">
+    <!-- Utility Bar (상단 얇은 바) -->
+    <div class="utility-bar d-none d-md-flex">
+        <div class="container-fluid px-4">
+            <div class="utility-inner">
+                <div class="utility-left">
+                    <span class="utility-msg">신규 가입 5% 할인 · 5만원 이상 무료배송</span>
+                </div>
+                <div class="utility-right">
+                    <a href="#" class="utility-link d-none d-lg-inline">고객센터</a>
+                    <a href="#" class="utility-link d-none d-lg-inline">주문배송</a>
+                    <a href="#" class="utility-link d-none d-lg-inline">매장찾기</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <!-- 상단 네비게이션 (사이트명, 로그인/회원가입) -->
-    <nav class="navbar navbar-expand-lg bg-white border-bottom">
-        <div class="container-fluid">
-            <!-- 로고 (왼쪽) -->
-            <a class="navbar-brand ms-2" href="#">
-                <img src="https://cdn-icons-png.flaticon.com/256/49/49039.png" alt="logo" width="32" height="32">
-            </a>
-
-            <!-- 가운데 사이트명 Sungho -->
-            <div class="mx-auto">
-                <h1 class="my-3" style="font-size: 24px; padding: 25px 0; margin-left: 50px;">Sungho</h1>
+    <!-- Main Header / Primary Nav -->
+    <nav class="site-nav modern-nav" aria-label="Primary">
+        <div class="nav-core container-fluid px-4">
+            <!-- Left: Mobile Menu + Logo -->
+            <div class="nav-left d-flex align-items-center gap-3">
+                <button class="icon-btn d-inline-flex d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNav" aria-controls="mobileNav" aria-label="메뉴 열기">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <a th:href="@{/}" class="brand d-flex align-items-center text-decoration-none">
+                    <img src="https://cdn-icons-png.flaticon.com/256/49/49039.png" alt="Sungho Logo" class="brand-logo">
+                    <span class="brand-text ms-2 d-none d-sm-inline">SungHo</span>
+                </a>
             </div>
 
-            <!-- 오른쪽 로그인/회원가입/마이페이지/로그아웃 -->
-            <ul class="navbar-nav me-2" style="margin-right: 50px !important;">
-                <!-- 로그인/회원가입: 로그인 안 된 상태에서만 표시 -->
-                <li class="nav-item" id="navLogin">
-                    <a class="nav-link text-dark fs-6" style="margin-right: 5px;" th:unless="${loginCheck}" th:href="@{/login}">LOGIN</a>
+            <!-- Center: Category Menu (Desktop) -->
+            <ul class="primary-menu d-none d-lg-flex" role="menubar">
+                <li class="menu-item" role="none">
+                    <a th:href="@{/}" class="menu-link" data-match="/" role="menuitem">HOME</a>
                 </li>
-                <li class="nav-item" id="navRegister">
-                    <a class="nav-link text-dark fs-6" th:unless="${loginCheck}" th:href="@{/register}">JOIN</a>
+                <li class="menu-item has-dropdown" role="none">
+                    <button class="menu-link dropdown-toggle-btn" type="button" aria-haspopup="true" aria-expanded="false">BEST</button>
+                    <div class="dropdown-panel" role="menu">
+                        <div class="dropdown-col">
+                            <a href="#" class="dropdown-link"><i class="fa-solid fa-fire me-2"></i>실시간 Best</a>
+                            <a href="#" class="dropdown-link"><i class="fa-solid fa-calendar-week me-2"></i>주간 Best</a>
+                            <a href="#" class="dropdown-link"><i class="fa-solid fa-calendar-days me-2"></i>월간 Best</a>
+                        </div>
+                        <div class="dropdown-col">
+                            <a href="#" class="dropdown-link"><i class="fa-solid fa-star me-2"></i>신상품 Best</a>
+                            <a href="#" class="dropdown-link"><i class="fa-solid fa-leaf me-2"></i>Season Best</a>
+                        </div>
+                    </div>
                 </li>
-
-                <!-- 마이페이지/로그아웃: 로그인 된 상태에서만 표시 -->
-                <li class="nav-item" id="navMyPage">
-                    <a class="nav-link text-dark fs-6" style="margin-right: 5px;" th:if="${loginCheck}" th:href="@{/mypage}">MY PAGE</a>
+                <!-- Dynamic Category Groups -->
+                <li class="menu-item has-dropdown" th:each="group : ${categoryGroups}" role="none">
+                    <button class="menu-link dropdown-toggle-btn" type="button" aria-haspopup="true" aria-expanded="false" th:text="${group.groupName}">CATEGORY</button>
+                    <div class="dropdown-panel" role="menu">
+                        <div class="dropdown-col">
+                            <a th:each="cat : ${group.categoryList}" th:href="@{'/products?category=' + ${cat.value}}" class="dropdown-link" th:text="${cat.name}" role="menuitem">Sub</a>
+                        </div>
+                    </div>
                 </li>
-                <li class="nav-item" id="navLogOut">
-                    <a class="nav-link text-dark fs-6" th:if="${loginCheck}" th:href="@{/logout}">LOGOUT</a>
+                <li class="menu-item" role="none">
+                    <a href="#products" class="menu-link" role="menuitem">NEW</a>
+                </li>
+                <li class="menu-item" role="none">
+                    <a href="#" class="menu-link" role="menuitem">SALE</a>
                 </li>
             </ul>
+
+            <!-- Right: Search + Icons + Auth -->
+            <div class="nav-right d-flex align-items-center gap-2">
+                <!-- Search Button -->
+                <button class="icon-btn" id="searchOpenBtn" aria-label="검색 열기">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+
+                <!-- Cart (로그인 시에만) -->
+                <a th:href="@{/cart}" class="icon-btn position-relative" aria-label="장바구니" th:if="${loginCheck}">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span class="cart-badge">3</span>
+                </a>
+
+                <!-- 로그인 안된 상태 -->
+                <a th:href="@{/login}" class="icon-btn" th:unless="${loginCheck}" aria-label="로그인">
+                    <i class="fa-regular fa-user"></i>
+                </a>
+
+                <!-- 로그인된 상태 - 직접 링크 -->
+                <a th:href="@{/mypage}" class="icon-btn" th:if="${loginCheck}" aria-label="마이페이지" title="마이페이지">
+                    <i class="fa-solid fa-user"></i>
+                </a>
+
+                <!-- 로그아웃 버튼 (로그인된 상태) -->
+                <a th:href="@{/logout}" class="icon-btn" th:if="${loginCheck}" aria-label="로그아웃" title="로그아웃">
+                    <i class="fa-solid fa-sign-out-alt"></i>
+                </a>
+            </div>
         </div>
-    </nav>
 
-    <!-- 하단 네비게이션 (카테고리) -->
-    <nav class="navbar navbar-expand-lg bg-white category-nav">
-        <div class="container">
-            <!-- 모바일 토글 버튼 -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCategory"
-                    aria-controls="navbarCategory" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <!-- 카테고리 목록 (중앙정렬) -->
-            <div class="collapse navbar-collapse" id="navbarCategory">
-                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link active fs-6 mx-3" th:href="@{/}">Home</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle fs-6 mx-3" href="#" role="button" data-bs-toggle="dropdown"
-                           aria-expanded="false">
-                            Best
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#">실시간 Best</a></li>
-                            <li><a class="dropdown-item" href="#">주간 Best</a></li>
-                            <li><a class="dropdown-item" href="#">월간 Best</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#">신상품 Best</a></li>
-                            <li><a class="dropdown-item" href="#">Season Best</a></li>
-                        </ul>
-                    </li>
-                    <!-- 이하 아우터/상의/하의/원피스/스커트/가방/신발/악세서리 등 기존 카테고리 동일하게 -->
-                    <li class="nav-item dropdown" th:each="group : ${categoryGroups}">
-                        <a class="nav-link dropdown-toggle fs-6 mx-3" href="#" role="button" data-bs-toggle="dropdown"
-                           th:text="${group.groupName}" aria-expanded="false"></a>
-                        <ul class="dropdown-menu">
-                            <li th:each="cat : ${group.categoryList}">
-                                <a class="dropdown-item" th:href="@{'/products?category=' + ${cat.value}}" th:text="${cat.name}"></a>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
+        <!-- Secondary Category Bar (Mobile horizontal scroll) -->
+        <div class="mobile-cat-scroll d-lg-none" aria-label="카테고리 스크롤">
+            <div class="cat-scroll-inner">
+                <a th:href="@{/}" class="cat-chip active" data-match="/">HOME</a>
+                <a href="#" class="cat-chip">BEST</a>
+                <a th:each="group : ${categoryGroups}" href="#" th:text="${group.groupName}" class="cat-chip">CAT</a>
+                <a href="#products" class="cat-chip">NEW</a>
+                <a href="#" class="cat-chip">SALE</a>
             </div>
         </div>
     </nav>
+
+    <!-- Search Overlay -->
+    <div class="search-overlay" id="searchOverlay" aria-hidden="true">
+        <div class="search-backdrop" id="searchBackdrop"></div>
+        <div class="search-dialog" role="dialog" aria-modal="true" aria-label="사이트 검색">
+            <button class="icon-btn close-btn" id="searchCloseBtn" aria-label="검색 닫기">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <form class="search-form" role="search" th:action="@{/search}" method="get">
+                <div class="search-input-wrap">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" name="q" class="search-field" placeholder="검색어를 입력하세요" autocomplete="off" required>
+                    <button type="submit" class="search-submit">검색</button>
+                </div>
+                <div class="search-hints mt-3">
+                    <span class="hint-label">인기 검색어:</span>
+                    <button type="button" class="hint-btn">BEST</button>
+                    <button type="button" class="hint-btn">NEW</button>
+                    <button type="button" class="hint-btn">SALE</button>
+                    <button type="button" class="hint-btn">아우터</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Mobile Offcanvas Navigation -->
+    <div class="offcanvas offcanvas-start mobile-offcanvas" tabindex="-1" id="mobileNav" aria-labelledby="mobileNavLabel">
+        <div class="offcanvas-header border-bottom">
+            <h5 class="offcanvas-title fw-bold" id="mobileNavLabel">
+                <i class="fa-solid fa-bars me-2"></i>메뉴
+            </h5>
+            <button type="button" class="icon-btn ms-auto" data-bs-dismiss="offcanvas" aria-label="닫기">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="offcanvas-body d-flex flex-column p-0">
+            <!-- Mobile Quick Search -->
+            <div class="mobile-search p-3 border-bottom">
+                <div class="search-mini position-relative">
+                    <i class="fa-solid fa-magnifying-glass mini-icon"></i>
+                    <input type="text" class="form-control form-control-sm ps-4" placeholder="빠른 검색..." id="mobileQuickSearch">
+                </div>
+            </div>
+
+            <!-- Mobile Menu -->
+            <div class="mobile-menu flex-grow-1">
+                <ul class="mobile-menu-list">
+                    <li><a th:href="@{/}" class="mobile-link"><i class="fa-solid fa-home me-3"></i>Home</a></li>
+                    <li class="mobile-group">
+                        <button class="mobile-accordion" type="button">
+                            <i class="fa-solid fa-fire me-3"></i>Best
+                        </button>
+                        <div class="mobile-panel">
+                            <a href="#" class="mobile-sublink">실시간 Best</a>
+                            <a href="#" class="mobile-sublink">주간 Best</a>
+                            <a href="#" class="mobile-sublink">월간 Best</a>
+                            <a href="#" class="mobile-sublink">신상품 Best</a>
+                            <a href="#" class="mobile-sublink">Season Best</a>
+                        </div>
+                    </li>
+                    <li class="mobile-group" th:each="group : ${categoryGroups}">
+                        <button class="mobile-accordion" type="button">
+                            <i class="fa-solid fa-tags me-3"></i><span th:text="${group.groupName}">Group</span>
+                        </button>
+                        <div class="mobile-panel">
+                            <a th:each="cat : ${group.categoryList}" th:href="@{'/products?category=' + ${cat.value}}" class="mobile-sublink" th:text="${cat.name}">Sub</a>
+                        </div>
+                    </li>
+                    <li><a href="#products" class="mobile-link"><i class="fa-solid fa-plus me-3"></i>New</a></li>
+                    <li><a href="#" class="mobile-link"><i class="fa-solid fa-percentage me-3"></i>Sale</a></li>
+                </ul>
+            </div>
+
+            <!-- Mobile Auth Section -->
+            <div class="mobile-auth mt-auto border-top">
+                <div class="p-3">
+                    <!-- 로그인 안된 상태 -->
+                    <div th:unless="${loginCheck}" class="d-flex gap-2">
+                        <a th:href="@{/login}" class="btn btn-dark flex-fill">
+                            <i class="fa-solid fa-sign-in-alt me-2"></i>로그인
+                        </a>
+                        <a th:href="@{/register}" class="btn btn-outline-dark flex-fill">
+                            <i class="fa-solid fa-user-plus me-2"></i>회원가입
+                        </a>
+                    </div>
+                    <!-- 로그인된 상태 -->
+                    <div th:if="${loginCheck}">
+                        <div class="d-flex flex-column gap-2 mb-3">
+                            <a th:href="@{/mypage}" class="btn btn-outline-dark w-100">
+                                <i class="fa-solid fa-user me-2"></i>마이페이지
+                            </a>
+                            <a th:href="@{/cart}" class="btn btn-outline-dark w-100">
+                                <i class="fa-solid fa-shopping-cart me-2"></i>장바구니
+                            </a>
+                        </div>
+                        <a th:href="@{/logout}" class="btn btn-danger w-100">
+                            <i class="fa-solid fa-sign-out-alt me-2"></i>로그아웃
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-</html>
+<!-- Navigation JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Active link highlighting
+    const currentPath = window.location.pathname + window.location.search;
+    const menuLinks = document.querySelectorAll('.primary-menu .menu-link, .cat-chip');
+
+    menuLinks.forEach(link => {
+        const match = link.getAttribute('data-match') || link.getAttribute('href');
+        if (match === '/' && (currentPath === '/' || currentPath === '/?')) {
+            link.classList.add('active');
+        } else if (match && match !== '/' && currentPath.startsWith(match)) {
+            link.classList.add('active');
+        }
+    });
+
+    // Desktop dropdown hover interactions
+    const dropdownItems = document.querySelectorAll('.has-dropdown');
+    dropdownItems.forEach(item => {
+        const btn = item.querySelector('.dropdown-toggle-btn');
+        const panel = item.querySelector('.dropdown-panel');
+        let hideTimer;
+
+        const showPanel = () => {
+            clearTimeout(hideTimer);
+            panel.classList.add('open');
+            btn.setAttribute('aria-expanded', 'true');
+        };
+
+        const hidePanel = () => {
+            panel.classList.remove('open');
+            btn.setAttribute('aria-expanded', 'false');
+        };
+
+        item.addEventListener('mouseenter', showPanel);
+        item.addEventListener('mouseleave', () => {
+            hideTimer = setTimeout(hidePanel, 150);
+        });
+
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            panel.classList.toggle('open');
+            btn.setAttribute('aria-expanded', panel.classList.contains('open'));
+        });
+    });
+
+    // Search overlay functionality
+    const searchOverlay = document.getElementById('searchOverlay');
+    const searchOpenBtn = document.getElementById('searchOpenBtn');
+    const searchCloseBtn = document.getElementById('searchCloseBtn');
+    const searchBackdrop = document.getElementById('searchBackdrop');
+
+    const openSearch = () => {
+        searchOverlay.classList.add('show');
+        searchOverlay.setAttribute('aria-hidden', 'false');
+        document.documentElement.classList.add('no-scroll');
+        setTimeout(() => {
+            const searchField = searchOverlay.querySelector('.search-field');
+            if (searchField) searchField.focus();
+        }, 100);
+    };
+
+    const closeSearch = () => {
+        searchOverlay.classList.remove('show');
+        searchOverlay.setAttribute('aria-hidden', 'true');
+        document.documentElement.classList.remove('no-scroll');
+    };
+
+    if (searchOpenBtn) searchOpenBtn.addEventListener('click', openSearch);
+    if (searchCloseBtn) searchCloseBtn.addEventListener('click', closeSearch);
+    if (searchBackdrop) searchBackdrop.addEventListener('click', closeSearch);
+
+    // Close search on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && searchOverlay.classList.contains('show')) {
+            closeSearch();
+        }
+    });
+
+    // Search hint functionality
+    document.querySelectorAll('.hint-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const searchField = searchOverlay.querySelector('.search-field');
+            if (searchField) {
+                searchField.value = btn.textContent.trim();
+                searchField.focus();
+            }
+        });
+    });
+
+    // Mobile accordion functionality
+    document.querySelectorAll('.mobile-accordion').forEach(accordion => {
+        accordion.addEventListener('click', () => {
+            accordion.classList.toggle('open');
+            const panel = accordion.nextElementSibling;
+            if (panel) {
+                if (panel.style.maxHeight) {
+                    panel.style.maxHeight = null;
+                } else {
+                    panel.style.maxHeight = panel.scrollHeight + 'px';
+                }
+            }
+        });
+    });
+
+    // Mobile quick search
+    const mobileQuickSearch = document.getElementById('mobileQuickSearch');
+    if (mobileQuickSearch) {
+        mobileQuickSearch.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const query = e.target.value.trim();
+                if (query) {
+                    window.location.href = `/search?q=${encodeURIComponent(query)}`;
+                }
+            }
+        });
+    }
+});
+</script>

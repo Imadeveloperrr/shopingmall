@@ -101,6 +101,7 @@ public class ProductServiceImpl implements ProductService {
 
             Product product = convertToProductEntity(productDto, member);
             product.setImageUrl(imageUrl);
+            product.setDescriptionVector(null); // 임시로 벡터 null 설정
 
             // ProductOption 엔티티 생성 및 설정
             if (productDto.getProductOptions() != null && !productDto.getProductOptions().isEmpty()) {
