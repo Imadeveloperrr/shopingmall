@@ -19,8 +19,8 @@
 /* Modern Head Banner Section */
 .modern-banner {
     position: relative;
-    height: 70vh;
-    min-height: 500px;
+    width: 100%;
+    height: 750px; /* 고정 높이 500px */
     overflow: hidden;
     margin-bottom: 0;
 }
@@ -46,6 +46,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center center;
     filter: brightness(0.7);
 }
 
