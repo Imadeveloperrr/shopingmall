@@ -31,8 +31,6 @@ html.no-scroll body {
     font-size: 11px;
     color: #666;
     min-height: 32px;
-    position: relative;
-    z-index: var(--z-nav);
 }
 
 .utility-inner {
@@ -59,15 +57,21 @@ html.no-scroll body {
     color: var(--nav-text-hover);
 }
 
+/* ===== NAVIGATION CONTAINER ===== */
+.nav-container {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-nav);
+    background: var(--nav-bg);
+    box-shadow: var(--nav-shadow);
+}
+
 /* ===== MAIN NAVIGATION ===== */
 .modern-nav.site-nav {
     background: var(--nav-bg);
     border-bottom: 1px solid var(--nav-border-light);
-    box-shadow: var(--nav-shadow);
-    position: sticky;
-    top: 0;
-    z-index: var(--z-nav);
     font-family: var(--font-primary), sans-serif;
+    position: relative;
 }
 
 .nav-core {
@@ -226,12 +230,13 @@ html.no-scroll body {
     transform: translateX(-50%) translateY(8px);
     background: var(--nav-bg);
     border: 1px solid var(--nav-border-light);
-    border-radius: var(--border-radius-lg);
-    padding: 1.5rem;
-    min-width: 280px;
+    border-radius: var(--border-radius);
+    padding: 0.75rem 0;
+    min-width: 150px;
     display: flex;
-    gap: 2rem;
-    box-shadow: 0 8px 24px -4px rgba(0,0,0,0.15), 0 4px 8px -2px rgba(0,0,0,0.08);
+    flex-direction: column;
+    gap: 0;
+    box-shadow: 0 4px 12px -2px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -249,23 +254,27 @@ html.no-scroll body {
 .dropdown-col {
     display: flex;
     flex-direction: column;
-    min-width: 120px;
+    width: 100%;
 }
 
 .dropdown-link {
     color: var(--nav-text);
     text-decoration: none;
-    padding: 0.5rem 0;
+    padding: 0.75rem 1.25rem;
     font-size: 0.875rem;
     font-weight: 500;
     display: flex;
     align-items: center;
+    justify-content: center;
+    text-align: center;
     transition: var(--transition-fast);
+    border-bottom: 1px solid transparent;
 }
 
 .dropdown-link:hover {
-    color: var(--nav-text-hover);
-    transform: translateX(4px);
+    background: var(--nav-text);
+    color: var(--nav-bg);
+    border-bottom-color: var(--nav-border-light);
 }
 
 .dropdown-link i {
@@ -440,7 +449,7 @@ html.no-scroll body {
 .cat-chip:hover,
 .cat-chip.active {
     background: var(--nav-text);
-    color: white;
+    color: var(--nav-bg);
 }
 
 /* ===== MOBILE OFFCANVAS ===== */
@@ -703,6 +712,12 @@ html.no-scroll body {
     .cat-chip {
         background: #333333;
         color: #ffffff;
+    }
+
+    .cat-chip:hover,
+    .cat-chip.active {
+        background: #ffffff;
+        color: #1a1a1a;
     }
 
     .mobile-search {
