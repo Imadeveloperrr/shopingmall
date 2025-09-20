@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <div th:replace="~{fragments/header.html :: fragment-header}"></div>
+    <title>AI 상품 추천 | Sungho Shop</title>
+    <!-- AI Recommendation Styles -->
+    <link href="/css/ai-recommendation.css" rel="stylesheet"/>
+</head>
+<body>
+    <!-- Navigation -->
+    <div th:insert="~{fragments/nav.html :: fragment-nav}"></div>
+
+    <div class="ai-recommendation-container">
+        <!-- Header -->
+        <div class="ai-chat-header">
+            <h1><i class="fas fa-robot"></i> AI 상품 추천</h1>
+            <p>어떤 상품을 찾고 계신가요? AI가 맞춤형 상품을 추천해드립니다.</p>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="chat-container">
+            <!-- Messages Area -->
+            <div class="chat-messages" id="chatMessages">
+                <!-- Welcome Message -->
+                <div class="welcome-message" id="welcomeMessage">
+                    <h3>안녕하세요! 👋</h3>
+                    <p>원하는 상품에 대해 자유롭게 말씀해주세요.<br>
+                    예: "운동할 때 입을 편한 옷 추천해줘", "겨울에 신을 따뜻한 신발"</p>
+
+                    <div class="quick-suggestions">
+                        <button class="suggestion-btn" onclick="sendQuickMessage('캐주얼한 옷 추천해줘')">
+                            🧥 캐주얼 의류
+                        </button>
+                        <button class="suggestion-btn" onclick="sendQuickMessage('운동화 추천해줘')">
+                            👟 운동화
+                        </button>
+                        <button class="suggestion-btn" onclick="sendQuickMessage('겨울 아우터 추천해줘')">
+                            🧥 겨울 아우터
+                        </button>
+                        <button class="suggestion-btn" onclick="sendQuickMessage('가성비 좋은 상품 추천해줘')">
+                            💰 가성비 상품
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div class="loading-indicator" id="loadingIndicator">
+                    <div class="loading-dots">
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                    </div>
+                    <span>AI가 추천 상품을 찾고 있습니다...</span>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="chat-input-container">
+                <form class="chat-input-form" id="chatForm">
+                    <input type="text"
+                           class="chat-input"
+                           id="messageInput"
+                           placeholder="어떤 상품을 찾고 계신가요?"
+                           maxlength="500"
+                           required>
+                    <button type="submit" class="chat-send-btn" id="sendBtn">
+                        <i class="fas fa-paper-plane"></i>
+                        전송
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AIRecommendationChat {
+            constructor() {
+                this.conversationId = null;
+                this.isLoading = false;
+                this.initializeEventListeners();
+                this.startConversation();
+            }
+
+            initializeEventListeners() {
+                const chatForm = document.getElementById('chatForm');
+                const messageInput = document.getElementById('messageInput');
+
+                chatForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.sendMessage();
+                });
+
+                // Enter key handling
+                messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+            }
+
+            async startConversation() {
+                try {
+                    const response = await fetch('/api/conversation/start', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.getJwtToken()}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.conversationId = data.conversationId;
+                        console.log('대화 시작됨:', data);
+                    } else {
+                        this.showError('대화를 시작할 수 없습니다. 로그인이 필요합니다.');
+                    }
+                } catch (error) {
+                    console.error('대화 시작 오류:', error);
+                    this.showError('서버와의 연결에 문제가 있습니다.');
+                }
+            }
+
+            async sendMessage() {
+                const messageInput = document.getElementById('messageInput');
+                const message = messageInput.value.trim();
+
+                if (!message || this.isLoading || !this.conversationId) {
+                    return;
+                }
+
+                // Hide welcome message
+                const welcomeMessage = document.getElementById('welcomeMessage');
+                if (welcomeMessage) {
+                    welcomeMessage.style.display = 'none';
+                }
+
+                // Add user message to chat
+                this.addMessage(message, 'user');
+
+                // Clear input and show loading
+                messageInput.value = '';
+                this.showLoading();
+
+                try {
+                    const response = await fetch(`/api/conversation/${this.conversationId}/message`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.getJwtToken()}`
+                        },
+                        body: JSON.stringify({ message: message })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.handleAIResponse(data);
+                    } else {
+                        throw new Error('메시지 전송 실패');
+                    }
+                } catch (error) {
+                    console.error('메시지 전송 오류:', error);
+                    this.showError('메시지 전송 중 오류가 발생했습니다.');
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            addMessage(content, type) {
+                const chatMessages = document.getElementById('chatMessages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${type}`;
+
+                const avatar = document.createElement('div');
+                avatar.className = 'message-avatar';
+                avatar.innerHTML = type === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+
+                const messageContent = document.createElement('div');
+                messageContent.className = 'message-content';
+                messageContent.textContent = content;
+
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(messageContent);
+                chatMessages.appendChild(messageDiv);
+
+                this.scrollToBottom();
+            }
+
+            handleAIResponse(data) {
+                // Add AI response message
+                this.addMessage(data.aiResponse, 'ai');
+
+                // Add recommendations if available
+                const products = data.recommendedProducts || data.recommendations || [];
+                if (products.length > 0) {
+                    this.addRecommendations(products);
+                }
+            }
+
+            addRecommendations(recommendations) {
+                const chatMessages = document.getElementById('chatMessages');
+                const recommendationsContainer = document.createElement('div');
+                recommendationsContainer.className = 'message ai';
+
+                const avatar = document.createElement('div');
+                avatar.className = 'message-avatar';
+                avatar.innerHTML = '<i class="fas fa-robot"></i>';
+
+                const recommendationsContent = document.createElement('div');
+                recommendationsContent.className = 'message-content';
+                recommendationsContent.style.maxWidth = '90%';
+
+                const title = document.createElement('p');
+                title.innerHTML = `<strong>🛍️ 추천 상품 (${recommendations.length}개)</strong>`;
+                title.style.marginBottom = '1rem';
+                recommendationsContent.appendChild(title);
+
+                const grid = document.createElement('div');
+                grid.className = 'recommendations-grid';
+
+                recommendations.forEach(product => {
+                    const card = this.createRecommendationCard(product);
+                    grid.appendChild(card);
+                });
+
+                recommendationsContent.appendChild(grid);
+                recommendationsContainer.appendChild(avatar);
+                recommendationsContainer.appendChild(recommendationsContent);
+                chatMessages.appendChild(recommendationsContainer);
+
+                this.scrollToBottom();
+            }
+
+            createRecommendationCard(product) {
+                const card = document.createElement('a');
+                card.className = 'recommendation-card';
+
+                // ProductResponseDto 또는 ProductMatch 형태 처리
+                const productId = product.number || product.id;
+                const productName = product.name;
+                const productPrice = product.price || '';
+                const productImage = product.imageUrl || '/img/placeholder-product.jpg';
+                const productScore = product.relevance || product.score || 0;
+
+                card.href = `/product/detail/${productId}`;
+                card.target = '_blank';
+
+                card.innerHTML = `
+                    <img src="${productImage}" alt="${productName}" class="recommendation-image"
+                         onerror="this.src='/img/placeholder-product.jpg'">
+                    <div class="recommendation-info">
+                        <div class="recommendation-name">${productName}</div>
+                        ${productPrice ? `<div class="recommendation-price">${productPrice}</div>` : ''}
+                        <div class="recommendation-score">
+                            <i class="fas fa-star"></i> 매칭도 ${Math.round(productScore * 100)}%
+                        </div>
+                    </div>
+                `;
+
+                return card;
+            }
+
+            showLoading() {
+                this.isLoading = true;
+                const loadingIndicator = document.getElementById('loadingIndicator');
+                const sendBtn = document.getElementById('sendBtn');
+
+                loadingIndicator.style.display = 'flex';
+                sendBtn.disabled = true;
+
+                this.scrollToBottom();
+            }
+
+            hideLoading() {
+                this.isLoading = false;
+                const loadingIndicator = document.getElementById('loadingIndicator');
+                const sendBtn = document.getElementById('sendBtn');
+
+                loadingIndicator.style.display = 'none';
+                sendBtn.disabled = false;
+            }
+
+            showError(message) {
+                const chatMessages = document.getElementById('chatMessages');
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+                chatMessages.appendChild(errorDiv);
+                this.scrollToBottom();
+            }
+
+            scrollToBottom() {
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            getJwtToken() {
+                // 쿠키에서 JWT 토큰 가져오기
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === 'accessToken') {
+                        return value;
+                    }
+                }
+                return localStorage.getItem('jwt') || sessionStorage.getItem('jwt') || '';
+            }
+        }
+
+        // Quick message function for suggestion buttons
+        function sendQuickMessage(message) {
+            const messageInput = document.getElementById('messageInput');
+            messageInput.value = message;
+
+            if (window.aiChat) {
+                window.aiChat.sendMessage();
+            }
+        }
+
+        // Initialize chat when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            window.aiChat = new AIRecommendationChat();
+        });
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

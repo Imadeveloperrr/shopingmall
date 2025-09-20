@@ -61,6 +61,11 @@
                     </div>
                 </li>
                 <li class="menu-item" role="none">
+                    <a th:href="@{/ai-recommendation}" class="menu-link" role="menuitem">
+                        <i class="fa-solid fa-robot me-1"></i>AI 추천
+                    </a>
+                </li>
+                <li class="menu-item" role="none">
                     <a href="#products" class="menu-link" role="menuitem">NEW</a>
                 </li>
                 <li class="menu-item" role="none">
@@ -103,6 +108,7 @@
             <div class="cat-scroll-inner">
                 <a th:href="@{/}" class="cat-chip active" data-match="/">HOME</a>
                 <a href="#" class="cat-chip">BEST</a>
+                <a th:href="@{/ai-recommendation}" class="cat-chip">AI 추천</a>
                 <a th:each="group : ${categoryGroups}" href="#" th:text="${group.groupName}" class="cat-chip">CAT</a>
                 <a href="#products" class="cat-chip">NEW</a>
                 <a href="#" class="cat-chip">SALE</a>
@@ -157,6 +163,7 @@
             <div class="mobile-menu flex-grow-1">
                 <ul class="mobile-menu-list">
                     <li><a th:href="@{/}" class="mobile-link"><i class="fa-solid fa-home me-3"></i>Home</a></li>
+                    <li><a th:href="@{/ai-recommendation}" class="mobile-link"><i class="fa-solid fa-robot me-3"></i>AI 추천</a></li>
                     <li class="mobile-group">
                         <button class="mobile-accordion" type="button">
                             <i class="fa-solid fa-fire me-3"></i>Best
