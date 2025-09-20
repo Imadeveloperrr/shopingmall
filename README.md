@@ -1,6 +1,7 @@
 # 🛍️ AI-Powered Shopping Mall
 
-<img width="80%" src="https://github.com/user-attachments/assets/acbb1c67-c33a-43fe-88ef-054e3cc8a0c6"/>
+<img width="1912" height="3555" alt="Image" src="https://github.com/user-attachments/assets/e5784e83-efc6-46ba-b924-dbc6a6c760cb" />
+<img width="1912" height="1029" alt="Image" src="https://github.com/user-attachments/assets/0920bfd6-4c87-4094-90d7-0001c8548351" />
 
 > **AI 기반 대화형 추천 시스템을 탑재한 현대적인 쇼핑몰 플랫폼**  
 > 실시간 사용자 행동 분석과 벡터 유사도 검색을 통한 개인화된 상품 추천 서비스
