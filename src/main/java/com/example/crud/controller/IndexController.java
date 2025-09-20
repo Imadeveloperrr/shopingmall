@@ -91,6 +91,11 @@ public class IndexController {
         response.addCookie(cookie);
     }
 
+    @GetMapping("/ai-recommendation")
+    public String aiRecommendation() {
+        return "fragments/ai-recommendation";
+    }
+
     @GetMapping("/register")
     public String register() {
         return "fragments/register";

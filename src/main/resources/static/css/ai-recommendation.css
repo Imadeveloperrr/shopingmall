@@ -1,0 +1,340 @@
+/* AI Recommendation Chat Styles */
+.ai-recommendation-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.ai-chat-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.ai-chat-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 0.5rem;
+}
+
+.ai-chat-header p {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 2rem;
+    min-height: 500px;
+    max-height: 70vh;
+    overflow-y: auto;
+    background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+}
+
+.message {
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    animation: fadeInUp 0.5s ease;
+}
+
+.message.user {
+    flex-direction: row-reverse;
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+    margin: 0 1rem;
+}
+
+.message.user .message-avatar {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+}
+
+.message.ai .message-avatar {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.message-content {
+    max-width: 70%;
+    padding: 1rem 1.5rem;
+    border-radius: 18px;
+    font-size: 1rem;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+.message.user .message-content {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.message.ai .message-content {
+    background: #f8f9fa;
+    color: #333;
+    border: 1px solid #e9ecef;
+    border-bottom-left-radius: 4px;
+}
+
+.recommendations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+}
+
+.recommendation-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+
+.recommendation-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    text-decoration: none;
+    color: inherit;
+}
+
+.recommendation-image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    background: #f8f9fa;
+}
+
+.recommendation-info {
+    padding: 1rem;
+}
+
+.recommendation-name {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.recommendation-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #007bff;
+    margin-bottom: 0.5rem;
+}
+
+.recommendation-score {
+    font-size: 0.85rem;
+    color: #666;
+    background: #f8f9fa;
+    padding: 0.25rem 0.5rem;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+.chat-input-container {
+    padding: 1.5rem 2rem;
+    background: white;
+    border-top: 1px solid #e9ecef;
+}
+
+.chat-input-form {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.chat-input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.chat-send-btn {
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.chat-send-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+}
+
+.chat-send-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.loading-indicator {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    color: #666;
+    margin: 1rem 0;
+}
+
+.loading-dots {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.loading-dot {
+    width: 8px;
+    height: 8px;
+    background: #007bff;
+    border-radius: 50%;
+    animation: loadingBounce 1.4s infinite ease-in-out both;
+}
+
+.loading-dot:nth-child(1) { animation-delay: -0.32s; }
+.loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+.welcome-message {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #666;
+}
+
+.welcome-message h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.welcome-message p {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+.quick-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.suggestion-btn {
+    padding: 0.75rem 1.5rem;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 25px;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.suggestion-btn:hover {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border: 1px solid #f5c6cb;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes loadingBounce {
+    0%, 80%, 100% {
+        transform: scale(0);
+    }
+    40% {
+        transform: scale(1);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .ai-recommendation-container {
+        padding: 1rem;
+    }
+
+    .message-content {
+        max-width: 85%;
+    }
+
+    .recommendations-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chat-input-form {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .chat-input {
+        width: 100%;
+    }
+
+    .quick-suggestions {
+        flex-direction: column;
+        align-items: center;
+    }
+}
