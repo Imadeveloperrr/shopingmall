@@ -31,7 +31,8 @@ public class RedisConnectionTest {
             DockerImageName.parse("pgvector/pgvector:pg15").asCompatibleSubstituteFor("postgres"))
             .withDatabaseName("testdb")
             .withUsername("testuser")
-            .withPassword("testpass");
+            .withPassword("testpass")
+            .withInitScript("init-pgvector.sql");
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
@@ -59,7 +60,7 @@ public class RedisConnectionTest {
 
         // When
         stringRedisTemplate.opsForValue().set(testKey, testValue);
-        assertTrue(stringRedisTemplate.hasKey(testKey), "Redis에 키가 저장되지 않았슈");
+        assertTrue(stringRedisTemplate.hasKey(testKey), "Redis에 키가 저장되지 않았습니다");
 
         // Then
         String retrievedValue = stringRedisTemplate.opsForValue().get(testKey);
