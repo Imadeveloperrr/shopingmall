@@ -26,33 +26,33 @@ public class ProductVectorService {
             // embeddingApiClient에서 널값 예외처리.
             float[] queryVector = embeddingApiClient.generateEmbedding(queryText);
 
-            List<Product> products = productRepository.findAll(); // 병목 지점. ★★★★★
+            // 벡터를 PostgreSQL 형식으로 변환
+            String vectorString = formatVectorForPostgreSQL(queryVector);
+
+            // PostgreSQL에서 직접 유사도 계산 (타입 변환 문제 해결)
+            List<Object[]> results = productRepository.findSimilarProductsByVector(
+                vectorString, 0.3, limit
+            );
 
             List<ProductSimilarity> similarities = new ArrayList<>();
+            for (Object[] row : results) {
+                Long productId = ((Number) row[0]).longValue();
+                String productName = (String) row[1];
+                String description = (String) row[2];
+                Double similarity = ((Number) row[3]).doubleValue();
 
-            // 이 부분도 비동기 처리나 최적화 해야함. ★★★★★
-            for (Product product : products) {
-                if (product.getDescriptionVector() != null) {
-                    double similarity = embeddingApiClient.calculateSimilarity(queryVector, product.getDescriptionVector());
-                    if (similarity > 0.3) {
-                        similarities.add(new ProductSimilarity(
-                                product.getNumber(),
-                                similarity,
-                                product.getName(),
-                                product.getDescription()
-                        ));
-                    }
-                }
+                similarities.add(new ProductSimilarity(
+                    productId, similarity, productName, description
+                ));
             }
-            return similarities.stream()
-                    .sorted(Comparator.comparingDouble(ProductSimilarity::similarity).reversed())
-                    .limit(limit)
-                    .toList();
+
+            return similarities;
 
         } catch (NullPointerException e) {
             throw new IllegalArgumentException("검색어가 비어있습니다.", e);
         } catch (Exception e) {
-            throw new RuntimeException("상품 유사도 검색 중 오류 발생", e);
+            log.error("상품 유사도 검색 중 상세 오류", e);
+            throw new RuntimeException("상품 유사도 검색 중 오류 발생: " + e.getMessage(), e);
         }
     }
 
@@ -86,6 +86,20 @@ public class ProductVectorService {
         } catch (Exception e) {
             throw new RuntimeException("상품과 상품간의 유사도 검색 중 오류 발생", e);
         }
+    }
+
+    /**
+     * float[] 배열을 PostgreSQL vector 형식 문자열로 변환
+     */
+    private String formatVectorForPostgreSQL(float[] vector) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        for (int i = 0; i < vector.length; i++) {
+            if (i > 0) sb.append(",");
+            sb.append(vector[i]);
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
     public record ProductSimilarity(

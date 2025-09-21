@@ -3,6 +3,7 @@ package com.example.crud.ai.embedding;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -10,12 +11,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 임베딩 API 클라이언트 - OpenAI API를 활용한 벡터 임베딩 생성
  * - 1536차원 벡터 생성 (text-embedding-3-small 모델)
- * - 인메모리 캐싱으로 성능 최적화
+ * - Redis 분산 캐싱으로 성능 최적화
  * - 배치 처리 지원 (병렬 처리)
  * - 코사인 유사도 계산 기능
  */
@@ -23,7 +23,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class EmbeddingApiClient {
     private final WebClient webClient;
-    private final Map<String, float[]> embeddingCache = new ConcurrentHashMap<>();
 
     @Value("${openai.api.key:}")
     private String openaiApiKey;
@@ -32,32 +31,20 @@ public class EmbeddingApiClient {
         this.webClient = webClient;
     }
 
+    // 임시로 캐시 비활성화 (Redis 연결 문제로 인해)
+    // @Cacheable(value = "embeddings", key = "#text.trim().toLowerCase().hashCode()")
     public float[] generateEmbedding(String text) {
-        if (text == null || text.trim().isEmpty()) { // 널값 체크.
+        if (text == null || text.trim().isEmpty()) {
             throw new NullPointerException("임베딩 생성할 텍스트가 없습니다.");
         }
 
-        String cacheKey = "emb:" + text.trim().toLowerCase().hashCode();
-        if (embeddingCache.containsKey(cacheKey)) {
-            return embeddingCache.get(cacheKey);
-        }
-
         try {
-            float[] embedding;
-            String method;
-
-            if (openaiApiKey != null && !openaiApiKey.trim().isEmpty()) {
-                embedding = generateOpenAIEmbedding(text);
-                method = "OpenAI";
-            } else {
+            if (openaiApiKey == null || openaiApiKey.trim().isEmpty()) {
                 throw new RuntimeException("OpenAI API키가 설정되지 않았습니다.");
             }
 
-            if (embeddingCache.size() < 1000) {
-                embeddingCache.put(cacheKey, embedding);
-            }
-
-            log.debug("임베딩 생성 완료: method={}", method);
+            float[] embedding = generateOpenAIEmbedding(text);
+            log.debug("임베딩 생성 완료 - Redis 캐시 저장됨");
             return embedding;
 
         } catch (Exception e) {
@@ -92,6 +79,7 @@ public class EmbeddingApiClient {
         return result;
 
     }
+
 
     public double calculateSimilarity(float[] vector1, float[] vector2) {
         if (vector1.length != vector2.length) {

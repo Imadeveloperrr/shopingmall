@@ -4,6 +4,7 @@ import com.example.crud.ai.recommendation.application.RecommendationEngine;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService.ProductSimilarity;
 import com.example.crud.ai.embedding.EmbeddingApiClient;
+import com.example.crud.ai.embedding.application.ProductEmbeddingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,7 @@ public class RecommendationTestController {
     private final RecommendationEngine recommendationEngine;
     private final ProductVectorService vectorService;
     private final EmbeddingApiClient embeddingApiClient;
+    private final ProductEmbeddingService productEmbeddingService;
 
     /**
      * 텍스트 기반 상품 추천 테스트
@@ -171,6 +173,76 @@ public class RecommendationTestController {
             );
         }
     }
+
+    /**
+     * 누락된 상품 임베딩 생성
+     */
+    @PostMapping("/generate-missing-embeddings")
+    public ResponseEntity<Map<String, Object>> generateMissingEmbeddings() {
+        try {
+            log.info("누락된 임베딩 생성 시작");
+
+            long startTime = System.currentTimeMillis();
+            productEmbeddingService.createMissingEmbeddings();
+            long endTime = System.currentTimeMillis();
+
+            Map<String, Object> response = Map.of(
+                "status", "success",
+                "message", "누락된 임베딩 생성 완료",
+                "processingTimeMs", endTime - startTime,
+                "timestamp", System.currentTimeMillis()
+            );
+
+            log.info("누락된 임베딩 생성 완료: {}ms", endTime - startTime);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("누락된 임베딩 생성 실패", e);
+            return ResponseEntity.status(500).body(
+                Map.of(
+                    "status", "error",
+                    "message", "임베딩 생성 실패: " + e.getMessage(),
+                    "timestamp", System.currentTimeMillis()
+                )
+            );
+        }
+    }
+
+    /**
+     * 특정 상품의 임베딩 재생성
+     */
+    @PostMapping("/regenerate-embedding/{productId}")
+    public ResponseEntity<Map<String, Object>> regenerateProductEmbedding(@PathVariable Long productId) {
+        try {
+            log.info("상품 임베딩 재생성: productId={}", productId);
+
+            long startTime = System.currentTimeMillis();
+            productEmbeddingService.createAndSaveEmbeddingAsync(productId);
+            long endTime = System.currentTimeMillis();
+
+            Map<String, Object> response = Map.of(
+                "status", "success",
+                "productId", productId,
+                "message", "상품 임베딩 재생성 요청 완료",
+                "processingTimeMs", endTime - startTime,
+                "timestamp", System.currentTimeMillis()
+            );
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("상품 임베딩 재생성 실패: productId={}", productId, e);
+            return ResponseEntity.status(500).body(
+                Map.of(
+                    "status", "error",
+                    "productId", productId,
+                    "message", "임베딩 재생성 실패: " + e.getMessage(),
+                    "timestamp", System.currentTimeMillis()
+                )
+            );
+        }
+    }
+
 
     /**
      * 벡터 노름 계산
