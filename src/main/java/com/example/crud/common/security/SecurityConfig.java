@@ -65,6 +65,9 @@ public class SecurityConfig {
                         // 공개 페이지: 인증 불필요
                         .requestMatchers("/", "/register", "/login", "/logout").permitAll()
 
+                        // API 테스트: 인증 불필요
+                        .requestMatchers("/api/test/**").permitAll()
+
                         // 보호된 페이지: USER 권한 필요
                         .requestMatchers("/mypage/**").hasRole("USER")
                         .requestMatchers("/cart/**").hasRole("USER")

@@ -55,7 +55,12 @@
       "Bash(tasklist:*)",
       "Bash(taskkill:*)",
       "Bash(git log:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(cmd.exe /c \"taskkill /F /PID 34596\")",
+      "Bash(java:*)",
+      "Bash(Remove-Item -Recurse -Force $env:USERPROFILE.gradlecaches8.3)",
+      "Bash(findstr:*)",
+      "Bash(cmd.exe:*)"
     ],
     "deny": [],
     "ask": []

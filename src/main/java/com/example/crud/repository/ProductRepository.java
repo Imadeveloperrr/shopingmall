@@ -44,6 +44,25 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("limit") int limit
     );
 
+    // 벡터 유사도 검색을 위한 네이티브 쿼리 (코사인 유사도)
+    @Query(value = """
+        SELECT
+            p.number as productId,
+            p.name as productName,
+            p.description as description,
+            (1 - (p.description_vector <=> CAST(:queryVector AS vector))) as similarity
+        FROM product p
+        WHERE p.description_vector IS NOT NULL
+        AND (1 - (p.description_vector <=> CAST(:queryVector AS vector))) > :threshold
+        ORDER BY p.description_vector <=> CAST(:queryVector AS vector)
+        LIMIT :limit
+        """, nativeQuery = true)
+    List<Object[]> findSimilarProductsByVector(
+            @Param("queryVector") String queryVector,
+            @Param("threshold") double threshold,
+            @Param("limit") int limit
+    );
+
     // 카테고리 목록에 속하고 벡터가 있는 상품 조회
     @Query("SELECT p FROM Product p WHERE p.category IN :categories AND p.descriptionVector IS NOT NULL")
     List<Product> findByCategoryInAndDescriptionVectorIsNotNull(@Param("categories") List<String> categories);
