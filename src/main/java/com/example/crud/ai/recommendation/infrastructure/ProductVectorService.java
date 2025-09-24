@@ -105,28 +105,38 @@ public class ProductVectorService {
         try {
 
             Product targetProduct = productRepository.findById(productId).orElseThrow();
-            float[] queryVector = targetProduct.getDescriptionVector();
+            String vectorString = targetProduct.getDescriptionVector();
 
-            List<Product> products = productRepository.findAll(); // 병목 지점. ★★★★★
+            if (vectorString == null || vectorString.isEmpty()) {
+                throw new IllegalArgumentException("대상 상품에 임베딩 벡터가 없습니다.");
+            }
+
+            // PostgreSQL에서 직접 유사도 검색 수행
+            List<Object[]> results = productRepository.findSimilarProductsByVector(
+                vectorString, 0.3, limit
+            );
+
             List<ProductSimilarity> similarities = new ArrayList<>();
-            for (Product product : products) { // 모든 상품을 일일히 비교하는중 개선 필요.
-                if (!product.getNumber().equals(productId) && product.getDescriptionVector() != null) {
-                    double similarity = embeddingApiClient.calculateSimilarity(queryVector, product.getDescriptionVector());
-                    if (similarity > 0.3) {
+            for (Object[] row : results) {
+                try {
+                    Long currentProductId = extractLong(row[0], "productId");
+
+                    // 자기 자신은 제외
+                    if (!currentProductId.equals(productId)) {
+                        String productName = extractString(row[1], "productName");
+                        String description = extractString(row[2], "description");
+                        Double similarity = extractDouble(row[3], "similarity");
+
                         similarities.add(new ProductSimilarity(
-                                product.getNumber(),
-                                similarity,
-                                product.getName(),
-                                product.getDescription()
+                            currentProductId, similarity, productName, description
                         ));
                     }
+                } catch (Exception e) {
+                    log.warn("상품 데이터 변환 실패, 해당 상품 건너뜀: {}", Arrays.toString(row), e);
                 }
             }
 
-            return similarities.stream()
-                    .sorted(Comparator.comparingDouble(ProductSimilarity::similarity).reversed())
-                    .limit(limit)
-                    .toList();
+            return similarities;
 
         } catch (Exception e) {
             throw new RuntimeException("상품과 상품간의 유사도 검색 중 오류 발생", e);

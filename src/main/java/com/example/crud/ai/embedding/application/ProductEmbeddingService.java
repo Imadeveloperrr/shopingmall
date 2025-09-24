@@ -8,8 +8,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+import com.example.crud.ai.embedding.event.ProductCreatedEvent;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * 상품 임베딩 서비스 - 상품 정보를 벡터로 변환하여 저장
@@ -18,12 +25,40 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class ProductEmbeddingService {
-    
+
     private final EmbeddingApiClient embeddingApiClient;
     private final ProductRepository productRepository;
+
+    // PostgreSQL 벡터 포맷용 DecimalFormat
+    private static final DecimalFormat VECTOR_FORMAT;
+    static {
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
+        VECTOR_FORMAT = new DecimalFormat("0.########", symbols);
+        VECTOR_FORMAT.setGroupingUsed(false);
+    }
     
     /**
-     * 단일 상품의 임베딩을 비동기로 생성 및 저장
+     * 상품 생성 이벤트 리스너 - 트랜잭션 커밋 후 실행
+     */
+    @Async
+    @Transactional
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleProductCreatedEvent(ProductCreatedEvent event) {
+        try {
+            log.debug("상품 생성 이벤트 수신: productId={}", event.getProductId());
+
+            Product product = productRepository.findById(event.getProductId())
+                    .orElseThrow(() -> new IllegalArgumentException("Product not found: " + event.getProductId()));
+
+            createAndSaveEmbedding(product);
+
+        } catch (Exception e) {
+            log.error("상품 임베딩 생성 실패: productId={}", event.getProductId(), e);
+        }
+    }
+
+    /**
+     * 단일 상품의 임베딩을 비동기로 생성 및 저장 (직접 호출용)
      */
     @Async
     @Transactional
@@ -31,9 +66,9 @@ public class ProductEmbeddingService {
         try {
             Product product = productRepository.findById(productNumber)
                     .orElseThrow(() -> new IllegalArgumentException("Product not found: " + productNumber));
-            
+
             createAndSaveEmbedding(product);
-            
+
         } catch (Exception e) {
             log.error("상품 임베딩 생성 실패: productNumber={}", productNumber, e);
         }
@@ -42,7 +77,7 @@ public class ProductEmbeddingService {
     /**
      * 단일 상품의 임베딩 생성 및 저장
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void createAndSaveEmbedding(Product product) {
         try {
             // 상품 설명 텍스트 생성
@@ -50,13 +85,20 @@ public class ProductEmbeddingService {
             
             // 임베딩 벡터 생성
             float[] embedding = embeddingApiClient.generateEmbedding(productText);
-            
-            // 상품에 임베딩 벡터 저장
-            product.setDescriptionVector(embedding);
-            productRepository.save(product);
-            
-            log.debug("상품 임베딩 생성 완료: productId={}, textLength={}, vectorSize={}", 
-                     product.getNumber(), productText.length(), embedding.length);
+
+            // 상품에 임베딩 벡터 업데이트 (native query로 직접 업데이트)
+            String vectorString = formatVectorForPostgreSQL(embedding);
+            log.info("벡터 업데이트 시도: productId={}, vectorLength={}", product.getNumber(), vectorString.length());
+
+            int updateCount = productRepository.updateDescriptionVector(product.getNumber(), vectorString);
+
+            if (updateCount == 0) {
+                log.error("벡터 업데이트 실패: productId={} - 0개 행 업데이트됨", product.getNumber());
+                throw new RuntimeException("벡터 업데이트 실패 - 상품을 찾을 수 없음");
+            }
+
+            log.info("상품 임베딩 생성 완료: productId={}, textLength={}, vectorSize={}, updateCount={}",
+                     product.getNumber(), productText.length(), embedding.length, updateCount);
             
         } catch (Exception e) {
             log.error("상품 임베딩 생성 실패: productId={}", product.getNumber(), e);
@@ -168,5 +210,19 @@ public class ProductEmbeddingService {
         if (price < 100000) return "중급형";
         if (price < 500000) return "고급형";
         return "프리미엄";
+    }
+
+    /**
+     * float[] 배열을 PostgreSQL vector 형식 문자열로 변환
+     */
+    private String formatVectorForPostgreSQL(float[] vector) {
+        StringBuilder sb = new StringBuilder(vector.length * 12);
+        sb.append("[");
+        for (int i = 0; i < vector.length; i++) {
+            if (i > 0) sb.append(",");
+            sb.append(VECTOR_FORMAT.format(vector[i]));
+        }
+        sb.append("]");
+        return sb.toString();
     }
 }

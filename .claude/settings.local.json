@@ -62,7 +62,11 @@
       "Bash(findstr:*)",
       "Bash(cmd.exe:*)",
       "Bash(grep:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Read(//c/Users/sungho/Desktop/**)",
+      "Bash(Stop-Process -Id 3416 -Force)",
+      "Bash(timeout:*)",
+      "Bash(cmd /c:*)"
     ],
     "deny": [],
     "ask": []
