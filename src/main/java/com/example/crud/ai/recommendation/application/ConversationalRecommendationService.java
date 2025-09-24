@@ -6,10 +6,17 @@ import com.example.crud.ai.conversation.application.command.ConversationCommandS
 import com.example.crud.ai.recommendation.domain.dto.ProductMatch;
 import com.example.crud.ai.recommendation.domain.dto.RecommendationResponseDto;
 import com.example.crud.ai.recommendation.domain.dto.UserMessageRequestDto;
+import com.example.crud.data.product.dto.ProductResponseDto;
+import com.example.crud.entity.Product;
 import com.example.crud.enums.MessageType;
+import com.example.crud.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import java.text.NumberFormat;
+import java.util.Locale;
+import java.util.stream.Collectors;
 /*
  응답 메시지도 저장하는 이유.
 
@@ -50,6 +57,7 @@ public class ConversationalRecommendationService {
 
     private final RecommendationEngine recommendationEngine;
     private final ConversationCommandService commandService;
+    private final ProductRepository productRepository;
 
     public RecommendationResponseDto processUserMessage(Long id, String message) {
         try {
@@ -62,6 +70,9 @@ public class ConversationalRecommendationService {
             // 상품 추천.
             List<ProductMatch> recommendations = recommendationEngine.getRecommendations(message, 5);
 
+            // ProductMatch를 ProductResponseDto로 변환
+            List<ProductResponseDto> productResponseDtos = convertToProductResponseDtos(recommendations);
+
             // AI 응답 메시지
             String AiResponse = generateAIResponse(recommendations);
 
@@ -72,6 +83,7 @@ public class ConversationalRecommendationService {
                     .conversationId(id)
                     .aiResponse(AiResponse)
                     .recommendations(recommendations)
+                    .recommendedProducts(productResponseDtos)
                     .totalRecommendations(recommendations.size())
                     .build();
 
@@ -136,5 +148,46 @@ public class ConversationalRecommendationService {
         }
 
         return sb.toString();
+    }
+
+    private List<ProductResponseDto> convertToProductResponseDtos(List<ProductMatch> matches) {
+        return matches.stream()
+                .map(match -> {
+                    // Product 엔티티 조회
+                    Product product = productRepository.findById(match.id()).orElse(null);
+                    if (product == null) {
+                        // Product를 찾을 수 없는 경우 기본 DTO 반환
+                        ProductResponseDto dto = new ProductResponseDto();
+                        dto.setNumber(match.id());
+                        dto.setName(match.name());
+                        return dto;
+                    }
+
+                    // Product를 ProductResponseDto로 변환
+                    ProductResponseDto dto = new ProductResponseDto();
+                    BeanUtils.copyProperties(product, dto);
+
+                    // 가격 포맷팅
+                    if (product.getPrice() != null) {
+                        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.KOREA);
+                        dto.setPrice(formatter.format(product.getPrice()) + "원");
+                    }
+
+                    // 카테고리 설정
+                    if (product.getCategory() != null) {
+                        dto.setCategory(product.getCategory().name());
+                    }
+
+                    // 설명 줄바꿈 처리
+                    if (product.getDescription() != null) {
+                        dto.setDescription(product.getDescription().replace("\n", "<br>"));
+                    }
+
+                    // 매칭 점수 추가 (선택적)
+                    dto.setRelevance(match.score());
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 }
