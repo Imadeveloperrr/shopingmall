@@ -1,6 +1,8 @@
 package com.example.crud.common.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -24,6 +26,15 @@ public class AsyncConfig implements AsyncConfigurer {
         executor.setQueueCapacity(50);
         executor.setThreadNamePrefix("Embedding-");
         executor.initialize();
+        return executor;
+    }
+
+    @Bean(name = "embeddingTaskExecutor")
+    public TaskExecutor embeddingTaskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(10);
+        executor.setQueueCapacity(100);
         return executor;
     }
 }

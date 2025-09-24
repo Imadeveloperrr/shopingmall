@@ -4,48 +4,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an **AI-enhanced shopping mall system** built with Spring Boot 3.1.4. The system integrates conversational AI and vector-based product recommendations through direct API integration with OpenAI and HuggingFace services.
+AI-enhanced shopping mall system built with Spring Boot 3.1.4. The system integrates conversational AI and vector-based product recommendations through direct OpenAI API integration.
 
-**Core Technology Stack:**
-- **Backend**: Spring Boot 3.1.4 with Spring Security, JPA, WebFlux, QueryDSL
-- **AI Integration**: Direct OpenAI GPT-4 API + HuggingFace API with keyword fallback
-- **Vector Storage**: PostgreSQL with pgvector extension (384-dimensional embeddings)
-- **Caching**: Redis for recommendation and conversation caching
-- **Infrastructure**: Simple Docker Compose with 3 services (PostgreSQL, Redis, Spring Boot)
+**Technology Stack:**
+- **Backend**: Spring Boot 3.1.4, Spring Security, JPA, QueryDSL
+- **AI**: OpenAI GPT-4 API for conversations and embeddings
+- **Database**: PostgreSQL with pgvector extension (1536-dimensional embeddings)
+- **Cache**: Redis
+- **Infrastructure**: Docker Compose (PostgreSQL, Redis, Spring Boot)
 
-## Essential Development Commands
+## Essential Commands
 
 ### Build and Run
 ```bash
-# Build the project
+# Build project
 ./gradlew build
 
-# Run the main application (requires Docker services running first)
+# Run application (Docker services must be running first)
 ./gradlew bootRun
 
-# Run with specific profile
-./gradlew bootRun --args='--spring.profiles.active=docker'
-
-# Build JAR for Docker
+# Build for Docker
 ./gradlew bootJar
 ```
 
 ### Docker Operations
 ```bash
-# Start all infrastructure services (REQUIRED before running Spring Boot)
+# Start all services (REQUIRED before running Spring Boot)
 docker-compose up -d
 
-# Start individual services
-docker-compose up -d db redis backend
-
-# Check service health
+# Check service status
 docker-compose ps
+
+# View logs
 docker-compose logs -f [service-name]
 
-# Stop services (preserves data)
+# Stop services
 docker-compose stop
 
-# Complete cleanup (destroys data volumes)
+# Complete cleanup
 docker-compose down -v
 ```
 
@@ -54,243 +50,68 @@ docker-compose down -v
 # Run all tests
 ./gradlew test
 
-# Run specific test class
+# Run specific test
 ./gradlew test --tests "com.example.crud.MemberControllerTest"
-
-# Run tests with coverage
-./gradlew test jacocoTestReport
 ```
 
-### AI Services Configuration
-```bash
-# Configure OpenAI API (preferred)
-# Add to src/main/resources/application-secrets.properties:
+### Configuration
+Add to `src/main/resources/application-secrets.properties`:
+```properties
 openai.api.key=sk-proj-your-key-here
-
-# OR configure HuggingFace API (free alternative)
-huggingface.api.key=hf_your-key-here
-
-# Test embedding service
-curl -X POST http://localhost:8080/api/ai/embedding \
-  -H "Content-Type: application/json" \
-  -d '{"text": "sample product description"}'
+chatgpt.api.key=sk-proj-your-key-here
 ```
 
-### Database Operations
-```bash
-# Connect to PostgreSQL container
-docker-compose exec db psql -U sungho -d app
+## Architecture
 
-# Check vector extension
-docker-compose exec db psql -U sungho -d app -c "SELECT * FROM pg_extension WHERE extname = 'vector';"
+### Core AI Flow
+1. User sends message → `RecommendationTestController`
+2. Message processing → `ConversationalRecommendationService`
+3. AI embedding generation → `EmbeddingApiClient`
+4. Vector similarity search → PostgreSQL pgvector
+5. Product recommendations returned
 
-# View product vectors
-docker-compose exec db psql -U sungho -d app -c "SELECT number, name, description_vector IS NOT NULL as has_vector FROM product LIMIT 5;"
-```
+### Key Components
 
-### Monitoring and Health Checks
-```bash
-# Application health
-curl http://localhost:8080/actuator/health
+**EmbeddingApiClient** (`src/main/java/com/example/crud/ai/embedding/EmbeddingApiClient.java`)
+- Generates 1536-dimensional vectors using OpenAI text-embedding-3-small
+- Handles API failures with proper exception handling
 
-# Application metrics
-curl http://localhost:8080/actuator/metrics
+**ConversationalRecommendationService** (`src/main/java/com/example/crud/ai/recommendation/application/ConversationalRecommendationService.java`)
+- Main orchestrator for AI recommendations
+- Stores user messages and AI responses
+- Generates contextual product recommendations
 
-# Redis connection
-docker-compose exec redis redis-cli ping
+**RecommendationEngine** (`src/main/java/com/example/crud/ai/recommendation/application/RecommendationEngine.java`)
+- Core recommendation logic using vector similarity
+- PostgreSQL pgvector cosine similarity search
 
-# Check embedding service status
-curl http://localhost:8080/actuator/health | grep embedding
-```
-
-## Architecture Overview
-
-### High-Level System Flow
-The system follows a **simplified AI-powered architecture** with the following data flow:
-
-1. **User Interaction** → Spring Boot Controllers
-2. **Conversation Processing** → ConversationService → Database Storage
-3. **AI Integration**:
-   - **Embedding Generation** → SimpleEmbeddingService → OpenAI/HuggingFace APIs
-   - **Preference Analysis** → ChatGPT API Integration
-   - **Vector Search** → pgvector similarity search
-4. **Caching Strategy** → Redis for performance optimization
-
-### Key Architectural Patterns
-
-**API-First AI Integration**: Direct integration with external AI services
-- `EmbeddingApiClient` handles OpenAI and HuggingFace API calls with try-catch fallback
-- Fallback to keyword-based embeddings when APIs unavailable
-- Configurable timeout and retry mechanisms
-
-**Circuit Breaker Pattern**: Protects against cascade failures
-- `ResilienceConfig` defines service-specific circuit breakers
-- ChatGPT Service: configurable failure threshold and timeout
-- External API fallbacks prevent complete service disruption
-
-**Multi-Layer Caching Strategy**:
-- **L1 Cache**: In-memory embedding cache (ConcurrentHashMap)
-- **L2 Cache**: Redis distributed cache for recommendations and preferences
-- **Application Cache**: Spring `@Cacheable` for frequently accessed data
-
-**Vector Similarity Search**:
-- Products stored with 384-dimensional embeddings in `product.description_vector`
-- Real-time similarity search using pgvector with cosine similarity
-- Hybrid scoring combines vector similarity + preference matching + trending factors
-
-### Core Domain Services
-
-**ConversationService**: Manages user interactions and message flow
-- `ConversationCommandService`: Creates conversations and messages
-- Conversation history management through domain repositories
-
-**RecommendationService**: Orchestrates the recommendation pipeline
-- `ConversationalRecommendationService`: Main conversational recommendation orchestrator
-- `RecommendationEngine`: Core recommendation logic and vector similarity search
-- `RecommendationCacheService`: Multi-tier caching strategy
-
-**EmbeddingService**: Direct API integration for vector embeddings
-- `EmbeddingApiClient`: Handles OpenAI, HuggingFace, and fallback embeddings with multi-tier fallback
-- `ProductEmbeddingService`: Batch processing for product embeddings
-- In-memory caching with configurable size limits
-
-**AI/ML Integration**:
-- Direct OpenAI GPT-4 API integration for preference analysis and conversational AI
-- HuggingFace API for embedding generation (sentence-transformers models)
-- Keyword-based fallback embedding system for offline operation
-
-### Database Schema Key Points
-
-**PostgreSQL Tables**:
-- `product`: Core product data with `description_vector vector(384)` for similarity search
-- `conversation` + `conversation_message`: Chat history with vector embeddings
-- `user_preference`: JSONB storage for dynamic preference learning
-- `outbox`: Event store for reliable message publishing
-
-**Redis Structure**:
-- DB 0: Java application cache (recommendations, preferences, sessions)
-- Distributed caching for performance optimization
-- TTL-based cache expiration strategies
+### Database Schema
+- `product.description_vector`: Vector(1536) for product embeddings
+- `conversation` + `conversation_message`: Chat history
+- `user_preference`: JSONB user preferences
 
 ## Development Guidelines
 
-### Running the Complete System
-**IMPORTANT**: Always start Docker services before the Spring Boot application:
+### Running the System
+1. Start Docker services: `docker-compose up -d`
+2. Wait 30 seconds for services to be healthy
+3. Configure OpenAI API key in `application-secrets.properties`
+4. Run application: `./gradlew bootRun`
 
-1. `docker-compose up -d` (wait ~30 seconds for all services to be healthy)
-2. Verify services: `docker-compose ps` 
-3. Configure AI API keys in `application-secrets.properties`
-4. `./gradlew bootRun`
+### AI API Testing
+```bash
+# Test embedding generation
+curl -X POST http://localhost:8080/api/test/recommendation/embedding \
+  -H "Content-Type: application/json" \
+  -d '{"text": "sample product description"}'
 
-The application **cannot start** without PostgreSQL and Redis. AI features require OpenAI or HuggingFace API keys.
-
-### Configuration Management
-- **Local Development**: `application.properties` 
-- **Docker Environment**: `application-docker.properties` (activated by `SPRING_PROFILES_ACTIVE=docker`)
-- **Secrets**: `application-secrets.properties` (contains API keys, not in version control)
-
-### Key Configuration Properties
-```properties
-# OpenAI API Integration (primary)
-openai.api.key=sk-proj-...  # In secrets file
-
-# HuggingFace API Integration (fallback)
-huggingface.api.key=hf_...  # In secrets file
-
-# ChatGPT Integration
-chatgpt.api.key=sk-proj-...  # Same as OpenAI key
-chatgpt.model=gpt-4o
-chatgpt.timeout-sec=6
-chatgpt.rate-limit-per-sec=8
-
-# Redis Configuration
-spring.data.redis.host=localhost
-spring.data.redis.port=6379
-spring.data.redis.database=0
-spring.data.redis.timeout=2000ms
+# Test recommendations
+curl -X POST http://localhost:8080/api/test/recommendation/text \
+  -H "Content-Type: application/json" \
+  -d '{"query": "blue shirt"}'
 ```
 
-### Testing Strategy
-- **Unit Tests**: Mock external dependencies (OpenAI API, HuggingFace API, ChatGPT API)
-- **Integration Tests**: Use `@SpringBootTest` with test containers
-- **Embedding Tests**: Test fallback mechanisms and similarity calculations
-
-### Common Development Scenarios
-
-**Adding New Embedding Sources**:
-1. Extend `EmbeddingApiClient` with new API integration
-2. Add configuration properties for new service
-3. Update fallback chain in `generateEmbedding()` method
-
-**Modifying Recommendation Algorithms**:
-1. Update `IntegratedRecommendationService` with new scoring logic
-2. Modify vector similarity calculations in recommendation services
-3. Update cache keys and TTL settings if needed
-
-**Adding New AI Features**:
-1. Extend ChatGPT integration with new prompts and models
-2. Add new endpoints in AI-related controllers
-3. Update circuit breaker configurations for new external services
-
-### Performance Monitoring
-- **Application Metrics**: http://localhost:8080/actuator/metrics
-- **Application Health**: http://localhost:8080/actuator/health
-- **Embedding Cache Stats**: Monitor hit rates and cache size in EmbeddingApiClient logs
-- **API Rate Limiting**: Monitor ChatGPT and external API usage
-
-### Troubleshooting Common Issues
-
-**OpenAI API Connection Failures**:
-- Verify API key is set in `application-secrets.properties`
-- Check rate limits: ChatGPT has 8 requests/second limit
-- Monitor application logs for API timeout errors
-- System falls back to HuggingFace API or keyword embedding
-
-**HuggingFace API Issues**:
-- Verify API key configuration
-- Check if inference endpoint is available
-- Monitor timeout settings (10 seconds default)
-- System falls back to keyword-based embedding
-
-**Vector Search Performance**:
-- Verify pgvector index exists: `\d+ product` in PostgreSQL
-- Monitor query performance in application metrics
-- Check if embeddings are generated for products: `SELECT COUNT(*) FROM product WHERE description_vector IS NOT NULL;`
-
-**Cache Issues**:
-- Check Redis connectivity: `docker-compose exec redis redis-cli ping`
-- Monitor embedding cache size in EmbeddingApiClient logs
-- Clear Redis cache: `docker-compose exec redis redis-cli FLUSHDB`
-- Clear in-memory embedding cache: restart application
-
-## Core AI System Reading Guide
-
-For understanding the core operations "사용자 메시지 → AI 추천", read in this sequence:
-
-### 1. Entry Point - Message Processing
-**ConversationController.sendMessage()** (`src/main/java/com/example/crud/ai/conversation/interfaces/ConversationController.java:26`)
-- Receives user messages via REST API
-- Delegates to ConversationalRecommendationService
-
-### 2. Main Orchestration
-**ConversationalRecommendationService.processUserMessage()** (`src/main/java/com/example/crud/ai/recommendation/application/ConversationalRecommendationService.java:27`)
-- Core workflow orchestrator
-- Coordinates message storage, AI analysis, and recommendation generation
-
-### 3. Message Storage
-**ConversationCommandService.addMessage()** (`src/main/java/com/example/crud/ai/conversation/application/command/ConversationCommandService.java:23`)
-- Stores user messages in database
-- Publishes Spring events for async processing
-
-### 4. AI Integration - Embeddings
-**EmbeddingApiClient.generateEmbedding()** (`src/main/java/com/example/crud/ai/embedding/EmbeddingApiClient.java:38`)
-- Multi-tier fallback: OpenAI → HuggingFace → Keyword-based
-- 384-dimensional vector generation with caching
-
-### 5. AI Integration - Recommendations
-**RecommendationEngine.getRecommendations()** (`src/main/java/com/example/crud/ai/recommendation/application/RecommendationEngine.java:34`)
-- Main recommendation algorithm coordinator
-- PostgreSQL pgvector similarity search
-- Cosine similarity calculation with hybrid scoring
-
-This sequence covers the complete "User Message → AI Recommendation" pipeline.
+### Common Issues
+- **OpenAI API failures**: Check API key in `application-secrets.properties`
+- **Vector search issues**: Verify pgvector extension: `docker-compose exec db psql -U sungho -d app -c "SELECT * FROM pg_extension WHERE extname = 'vector';"`
+- **Redis connection**: Test with `docker-compose exec redis redis-cli ping`

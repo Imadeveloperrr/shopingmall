@@ -60,7 +60,9 @@
       "Bash(java:*)",
       "Bash(Remove-Item -Recurse -Force $env:USERPROFILE.gradlecaches8.3)",
       "Bash(findstr:*)",
-      "Bash(cmd.exe:*)"
+      "Bash(cmd.exe:*)",
+      "Bash(grep:*)",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []

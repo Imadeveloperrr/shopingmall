@@ -90,22 +90,50 @@ public class ConversationalRecommendationService {
         if (recommendations.isEmpty()) {
             return "죄송합니다. 현재 조건에 맞는 상품을 찾을 수 없습니다. 다른 검색어를 시도해 주세요.";
         }
-        StringBuilder sb = new StringBuilder();
-        sb.append(String.format("총 %d 개의 상품을 찾았습니다.", recommendations.size()));
 
-        if (recommendations.size() <= 3) {
-            sb.append(" 상위 3개의 상품을 소개합니다:\n");
+        StringBuilder sb = new StringBuilder();
+        int productCount = recommendations.size();
+
+        // 상품 개수에 따른 맞춤형 메시지
+        if (productCount == 1) {
+            sb.append("검색 조건에 맞는 상품을 찾았습니다!");
         } else {
-            sb.append(" 다음 상품들을 소개합니다:\n");
+            sb.append(String.format("총 %d개의 상품을 찾았습니다.", productCount));
         }
 
-        // 상위 3개 상품에 대한 간단한 설명 추가
+        // 상품 소개 문구 개선
+        if (productCount == 1) {
+            sb.append(" 추천 상품을 소개해드릴게요:\n");
+        } else if (productCount <= 3) {
+            sb.append(" 모든 상품을 소개해드릴게요:\n");
+        } else {
+            sb.append(" 상위 3개 상품을 소개해드릴게요:\n");
+        }
+
+        // 상품 목록 표시 (최대 3개)
         recommendations.stream()
                 .limit(3)
-                .forEach(product -> sb.append(String.format("\n• %s (%.1f%% 일치)",
-                        product.name(), product.score() * 100)));
+                .forEach(product -> {
+                    double percentage = product.score() * 100;
+                    if (percentage >= 50.0) {
+                        sb.append(String.format("\n• %s (%.1f%% 일치 - 높은 관련성)",
+                                product.name(), percentage));
+                    } else if (percentage >= 20.0) {
+                        sb.append(String.format("\n• %s (%.1f%% 일치)",
+                                product.name(), percentage));
+                    } else {
+                        sb.append(String.format("\n• %s (%.1f%% 일치 - 참고용)",
+                                product.name(), percentage));
+                    }
+                });
 
-        sb.append("\n\n더 자세한 정보나 다른 상품을 원하시면 언제든 말씀해 주세요!");
+        // 맞춤형 마무리 메시지
+        if (productCount == 1) {
+            sb.append("\n\n이 상품에 대해 더 자세히 알고 싶으시거나 다른 검색어로 찾아보고 싶으시면 언제든 말씀해 주세요!");
+        } else {
+            sb.append(String.format("\n\n%s더 자세한 정보나 다른 상품을 원하시면 언제든 말씀해 주세요!",
+                    productCount > 3 ? "다른 상품들도 있습니다. " : ""));
+        }
 
         return sb.toString();
     }
