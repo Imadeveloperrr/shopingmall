@@ -67,10 +67,9 @@ public class Product {
     }
 
 
-    // 상품 설명 임베딩 (1536차원 - text-embedding-3-small 모델) - pgvector
-    @Column(name = "description_vector", columnDefinition = "vector(1536)", nullable = true)
-    @JdbcTypeCode(SqlTypes.JAVA_OBJECT)
-    private float[] descriptionVector;
+    // 상품 설명 임베딩 (1536차원 - text-embedding-3-small 모델) - TEXT로 저장 후 검색시 CAST
+    @Column(name = "description_vector", columnDefinition = "TEXT", nullable = true)
+    private String descriptionVector;
 
     public String getMemberEmail() {
         return member.getEmail();

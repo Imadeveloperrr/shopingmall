@@ -1,6 +1,8 @@
 package com.example.crud.data.product.service.impl;
 
 import com.example.crud.ai.embedding.application.ProductEmbeddingService;
+import com.example.crud.ai.embedding.event.ProductCreatedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import com.example.crud.common.exception.BaseException;
 import com.example.crud.common.exception.ErrorCode;
 import com.example.crud.data.product.dto.ProductDto;
@@ -45,6 +47,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
     private final ProductOptionRepository productOptionRepository;
     private final ProductEmbeddingService embeddingService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -118,10 +121,13 @@ public class ProductServiceImpl implements ProductService {
                 product.setProductOptions(productOptionList);
             }
 
+            // 벡터 필드를 null로 설정하여 타입 오류 방지
+            product.setDescriptionVector(null);
+
             try {
                 Product savedProduct = productRepository.save(product);
-                // 임베딩 비동기 생성 (응답 지연 방지)
-                embeddingService.createAndSaveEmbeddingAsync(savedProduct.getNumber());
+                // 트랜잭션 커밋 후 임베딩 생성하기 위한 이벤트 발행
+                eventPublisher.publishEvent(new ProductCreatedEvent(savedProduct.getNumber()));
 
                 return convertToProductResponseDTO(savedProduct);
             } catch (Exception e) {
