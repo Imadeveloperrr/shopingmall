@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#f0f0f0"/>
+  <g fill="#ccc">
+    <rect x="140" y="90" width="120" height="120" rx="4"/>
+    <circle cx="170" cy="120" r="8"/>
+    <path d="M140 170 l60 -40 l30 20 l30 -30 v50z"/>
+  </g>
+  <text x="200" y="240" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#999">
+    상품 이미지
+  </text>
+</svg>

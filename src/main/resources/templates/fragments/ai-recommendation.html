@@ -191,7 +191,7 @@
                 // Add AI response message
                 this.addMessage(data.aiResponse, 'ai');
 
-                // Add recommendations if available
+                // Add recommendations if available - recommendedProducts 우선 사용
                 const products = data.recommendedProducts || data.recommendations || [];
                 if (products.length > 0) {
                     this.addRecommendations(products);
@@ -238,9 +238,9 @@
 
                 // ProductResponseDto 또는 ProductMatch 형태 처리
                 const productId = product.number || product.id;
-                const productName = product.name;
+                const productName = product.name || '상품명 없음';
                 const productPrice = product.price || '';
-                const productImage = product.imageUrl || '/img/placeholder-product.jpg';
+                const productImage = product.imageUrl || '/img/placeholder-product.svg';
                 const productScore = product.relevance || product.score || 0;
 
                 card.href = `/product/detail/${productId}`;
@@ -248,10 +248,10 @@
 
                 card.innerHTML = `
                     <img src="${productImage}" alt="${productName}" class="recommendation-image"
-                         onerror="this.src='/img/placeholder-product.jpg'">
+                         onerror="this.src='/img/placeholder-product.svg'">
                     <div class="recommendation-info">
-                        <div class="recommendation-name">${productName}</div>
-                        ${productPrice ? `<div class="recommendation-price">${productPrice}</div>` : ''}
+                        <div class="recommendation-name">${this.escapeHtml(productName)}</div>
+                        ${productPrice ? `<div class="recommendation-price">${this.escapeHtml(productPrice)}</div>` : ''}
                         <div class="recommendation-score">
                             <i class="fas fa-star"></i> 매칭도 ${Math.round(productScore * 100)}%
                         </div>
@@ -259,6 +259,15 @@
                 `;
 
                 return card;
+            }
+
+            escapeHtml(unsafe) {
+                return String(unsafe)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
             }
 
             showLoading() {
