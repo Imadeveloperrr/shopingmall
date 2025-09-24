@@ -1,3 +1,6 @@
+<img width="1912" height="3555" alt="Image" src="https://github.com/user-attachments/assets/e5784e83-efc6-46ba-b924-dbc6a6c760cb" />
+<img width="1912" height="1029" alt="Image" src="https://github.com/user-attachments/assets/0920bfd6-4c87-4094-90d7-0001c8548351" />
+
 # 🛍️ AI 쇼핑몰 - 대화형 상품 추천 시스템
 
 > **OpenAI GPT와 벡터 유사도 검색을 활용한 지능형 쇼핑몰 플랫폼**
