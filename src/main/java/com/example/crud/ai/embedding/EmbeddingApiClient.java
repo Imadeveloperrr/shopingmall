@@ -66,15 +66,33 @@ public class EmbeddingApiClient {
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                .timeout(Duration.ofSeconds(3))
-                .block(); // 나중에 비동기 처리로 전부다 업데이트.
+                .timeout(Duration.ofSeconds(3)) // 병목지점
+                .block(); // 나중에 비동기 처리로 전부다 업데이트. 병목지점
 
-        List<Map<String, Object>> data = (List<Map<String, Object>>) response.get("data");
-        List<Double> embedding = (List<Double>) data.get(0).get("embedding");
+        // 안전한 타입 변환으로 ClassCastException 방지
+        Object dataObj = response.get("data");
+        if (!(dataObj instanceof List<?> dataList) || dataList.isEmpty()) {
+            throw new RuntimeException("OpenAI API 응답에서 데이터를 찾을 수 없습니다.");
+        }
 
-        float[] result = new float[embedding.size()];
-        for (int i = 0; i < embedding.size(); i++) {
-            result[i] = embedding.get(i).floatValue();
+        Object firstItem = dataList.get(0);
+        if (!(firstItem instanceof Map<?, ?> firstMap)) {
+            throw new RuntimeException("OpenAI API 응답의 데이터 형식이 올바르지 않습니다.");
+        }
+
+        Object embeddingObj = firstMap.get("embedding");
+
+        if (!(embeddingObj instanceof List<?> rawList)) {
+            throw new RuntimeException("OpenAI API 응답 형식이 올바르지 않습니다.");
+        }
+
+        float[] result = new float[rawList.size()];
+        for (int i = 0; i < rawList.size(); i++) {
+            if (rawList.get(i) instanceof Number number) {
+                result[i] = number.floatValue();
+            } else {
+                throw new RuntimeException("임베딩 벡터 요소가 숫자가 아닙니다: " + rawList.get(i));
+            }
         }
         return result;
 
