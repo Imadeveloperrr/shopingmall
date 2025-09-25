@@ -3,7 +3,6 @@ package com.example.crud.ai.recommendation.application;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService.ProductSimilarity;
 import com.example.crud.ai.recommendation.domain.dto.ProductMatch;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -21,11 +20,14 @@ import java.util.stream.Collectors;
  *  추가 개선할 사항 -> 캐싱 구현.
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class RecommendationEngine {
 
     private final ProductVectorService vectorService;
+
+    public RecommendationEngine(ProductVectorService vectorService) {
+        this.vectorService = vectorService;
+    }
 
     public List<ProductMatch> getRecommendations(String message, int limit) {
         if (message == null || message.trim().isEmpty()) {
@@ -41,10 +43,10 @@ public class RecommendationEngine {
             List<ProductSimilarity> vectorMatches = vectorService.findSimilarProducts(message, limit);
 
             return vectorMatches.stream()
-                    .map( s -> new ProductMatch(
+                    .map(s -> new ProductMatch(
                             s.productId(),
                             s.productName(),
-                            s.similarity() // ProductMatch로 변환 -> description 긴 설명 텍스트를 제외 ( 메모리절약 -> 네트워크 전송량 감소)
+                            s.similarity()
                     ))
                     .collect(Collectors.toList());
 

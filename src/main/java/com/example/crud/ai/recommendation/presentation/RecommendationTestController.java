@@ -5,6 +5,7 @@ import com.example.crud.ai.recommendation.infrastructure.ProductVectorService;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService.ProductSimilarity;
 import com.example.crud.ai.embedding.EmbeddingApiClient;
 import com.example.crud.ai.embedding.application.ProductEmbeddingService;
+import com.example.crud.ai.embedding.application.DescriptionRefinementService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,7 @@ public class RecommendationTestController {
     private final ProductVectorService vectorService;
     private final EmbeddingApiClient embeddingApiClient;
     private final ProductEmbeddingService productEmbeddingService;
+    private final DescriptionRefinementService refinementService;
 
     /**
      * 텍스트 기반 상품 추천 테스트
@@ -243,6 +245,51 @@ public class RecommendationTestController {
         }
     }
 
+
+    /**
+     * 상품 설명 정제 테스트
+     */
+    @PostMapping("/refine-description")
+    public ResponseEntity<Map<String, Object>> testDescriptionRefinement(
+            @RequestBody Map<String, String> request) {
+
+        try {
+            String description = request.get("description");
+            if (description == null || description.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(
+                    Map.of("error", "description은 필수입니다")
+                );
+            }
+
+            log.info("상품 설명 정제 테스트 시작: 길이={}", description.length());
+
+            long startTime = System.currentTimeMillis();
+            String refinedDescription = refinementService.refineProductDescription(description);
+            long endTime = System.currentTimeMillis();
+
+            Map<String, Object> response = Map.of(
+                "originalDescription", description,
+                "refinedDescription", refinedDescription,
+                "originalLength", description.length(),
+                "refinedLength", refinedDescription.length(),
+                "lengthReduction", description.length() - refinedDescription.length(),
+                "processingTimeMs", endTime - startTime,
+                "timestamp", System.currentTimeMillis()
+            );
+
+            log.info("상품 설명 정제 완료: 원본={}자, 정제={}자, 감소={}자",
+                    description.length(), refinedDescription.length(),
+                    description.length() - refinedDescription.length());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("상품 설명 정제 테스트 실패", e);
+            return ResponseEntity.status(500).body(
+                Map.of("error", "정제 서비스 오류: " + e.getMessage())
+            );
+        }
+    }
 
     /**
      * 벡터 노름 계산

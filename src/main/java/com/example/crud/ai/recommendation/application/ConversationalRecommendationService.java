@@ -63,7 +63,6 @@ public class ConversationalRecommendationService {
         try {
             // ★ 유저 매시지 저장과, AI 응답 메시지 저장이 서로 동기임. 비동기로 최적화 가능.
 
-
             // 유저 대화 저장
             commandService.addMessage(id, MessageType.USER, message);
 
@@ -108,9 +107,9 @@ public class ConversationalRecommendationService {
 
         // 상품 개수에 따른 맞춤형 메시지
         if (productCount == 1) {
-            sb.append("검색 조건에 맞는 상품을 찾았습니다!");
+            sb.append("검색 조건에 맞는 상품을 찾았습니다! ");
         } else {
-            sb.append(String.format("총 %d개의 상품을 찾았습니다.", productCount));
+            sb.append(String.format("총 %d개의 상품을 찾았습니다. ", productCount));
         }
 
         // 상품 소개 문구 개선

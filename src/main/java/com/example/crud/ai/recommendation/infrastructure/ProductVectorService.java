@@ -236,6 +236,85 @@ public class ProductVectorService {
         throw new IllegalArgumentException(fieldName + "이 숫자가 아닙니다: " + value.getClass());
     }
 
+    /**
+     * 카테고리별 유사 상품 검색
+     */
+    public List<ProductSimilarity> findSimilarProductsByCategory(String queryText, String category, int limit) {
+        log.info("🔍 카테고리별 상품 검색 시작: 쿼리='{}', 카테고리='{}', limit={}", queryText, category, limit);
+
+        try {
+            float[] queryVector = embeddingApiClient.generateEmbedding(queryText);
+            String vectorString = formatVectorForPostgreSQL(queryVector);
+
+            // 카테고리별 임계값 조정 (카테고리 내 검색은 더 낮은 임계값 사용)
+            double[] thresholds = {0.3, 0.2, 0.1, 0.05};
+
+            for (double threshold : thresholds) {
+                List<Object[]> results = productRepository.findSimilarProductsByVectorAndCategory(
+                    vectorString, category, threshold, limit
+                );
+
+                if (!results.isEmpty()) {
+                    log.info("✅ 카테고리 {} 임계값 {}에서 {}개 상품 발견", category, threshold, results.size());
+                    return convertToSimilarities(results);
+                }
+            }
+
+            log.warn("⚠️ 카테고리 {}에서 유사 상품 찾기 실패", category);
+            return Collections.emptyList();
+
+        } catch (Exception e) {
+            log.error("카테고리별 검색 오류: category={}", category, e);
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * 다중 카테고리 검색 (멀티서치)
+     */
+    public Map<String, List<ProductSimilarity>> findSimilarProductsMultiCategory(
+            String queryText, List<String> categories, int limitPerCategory) {
+
+        log.info("🔍 다중 카테고리 검색: 쿼리='{}', 카테고리={}", queryText, categories);
+        Map<String, List<ProductSimilarity>> results = new HashMap<>();
+
+        for (String category : categories) {
+            List<ProductSimilarity> categoryResults = findSimilarProductsByCategory(
+                queryText, category, limitPerCategory
+            );
+            if (!categoryResults.isEmpty()) {
+                results.put(category, categoryResults);
+            }
+        }
+
+        log.info("✅ 다중 카테고리 검색 완료: {}개 카테고리에서 결과 발견", results.size());
+        return results;
+    }
+
+    /**
+     * Object[] 결과를 ProductSimilarity 리스트로 변환
+     */
+    private List<ProductSimilarity> convertToSimilarities(List<Object[]> results) {
+        List<ProductSimilarity> similarities = new ArrayList<>();
+
+        for (Object[] row : results) {
+            try {
+                Long productId = extractLong(row[0], "productId");
+                String productName = extractString(row[1], "productName");
+                String description = extractString(row[2], "description");
+                Double similarity = extractDouble(row[3], "similarity");
+
+                similarities.add(new ProductSimilarity(
+                    productId, similarity, productName, description
+                ));
+            } catch (Exception e) {
+                log.warn("상품 데이터 변환 실패: {}", Arrays.toString(row), e);
+            }
+        }
+
+        return similarities;
+    }
+
     public record ProductSimilarity(
             Long productId,
             double similarity,

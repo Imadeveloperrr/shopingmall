@@ -28,6 +28,7 @@ public class ProductEmbeddingService {
 
     private final EmbeddingApiClient embeddingApiClient;
     private final ProductRepository productRepository;
+    private final DescriptionRefinementService refinementService;
 
     // PostgreSQL 벡터 포맷용 DecimalFormat
     private static final DecimalFormat VECTOR_FORMAT;
@@ -80,26 +81,50 @@ public class ProductEmbeddingService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void createAndSaveEmbedding(Product product) {
         try {
-            // 상품 설명 텍스트 생성
-            String productText = buildProductText(product);
-            
+            // 원본 설명 백업
+            String originalDescription = product.getDescription();
+
+            // 상품 설명을 정제 (임베딩용 텍스트 생성에도 사용됨)
+            String refinedDescription = null;
+            if (originalDescription != null && !originalDescription.trim().isEmpty()) {
+                refinedDescription = refinementService.refineProductDescription(originalDescription);
+                log.info("상품 설명 정제: productId={}, 원본={}자 -> 정제={}자",
+                        product.getNumber(), originalDescription.length(), refinedDescription.length());
+            }
+
+            // 정제된 설명으로 상품 텍스트 생성
+            String productText = buildProductText(product, refinedDescription);
+
             // 임베딩 벡터 생성
             float[] embedding = embeddingApiClient.generateEmbedding(productText);
 
-            // 상품에 임베딩 벡터 업데이트 (native query로 직접 업데이트)
+            // 벡터 업데이트
             String vectorString = formatVectorForPostgreSQL(embedding);
-            log.info("벡터 업데이트 시도: productId={}, vectorLength={}", product.getNumber(), vectorString.length());
+            int vectorUpdateCount = productRepository.updateDescriptionVector(product.getNumber(), vectorString);
 
-            int updateCount = productRepository.updateDescriptionVector(product.getNumber(), vectorString);
-
-            if (updateCount == 0) {
+            if (vectorUpdateCount == 0) {
                 log.error("벡터 업데이트 실패: productId={} - 0개 행 업데이트됨", product.getNumber());
                 throw new RuntimeException("벡터 업데이트 실패 - 상품을 찾을 수 없음");
             }
 
-            log.info("상품 임베딩 생성 완료: productId={}, textLength={}, vectorSize={}, updateCount={}",
-                     product.getNumber(), productText.length(), embedding.length, updateCount);
-            
+            // 원본 설명을 정제된 설명으로 교체 (API 응답시 정제된 설명이 반환되도록)
+            log.debug("설명 업데이트 조건 체크: productId={}, refinedDescription!=null:{}, originalLength:{}, refinedLength:{}",
+                     product.getNumber(), refinedDescription != null,
+                     originalDescription != null ? originalDescription.length() : 0,
+                     refinedDescription != null ? refinedDescription.length() : 0);
+
+            if (refinedDescription != null && !originalDescription.equals(refinedDescription)) {
+                int descUpdateCount = productRepository.updateDescription(product.getNumber(), refinedDescription);
+                log.info("상품 설명 업데이트: productId={}, updateCount={}", product.getNumber(), descUpdateCount);
+            } else {
+                log.debug("설명 업데이트 건너뜀: productId={}, refinedDescription==null:{}, equals:{}",
+                         product.getNumber(), refinedDescription == null,
+                         refinedDescription != null ? originalDescription.equals(refinedDescription) : "N/A");
+            }
+
+            log.info("상품 임베딩 및 설명 정제 완료: productId={}, textLength={}, vectorSize={}, vectorUpdate={}",
+                     product.getNumber(), productText.length(), embedding.length, vectorUpdateCount);
+
         } catch (Exception e) {
             log.error("상품 임베딩 생성 실패: productId={}", product.getNumber(), e);
             throw new RuntimeException("임베딩 생성 실패", e);
@@ -170,34 +195,42 @@ public class ProductEmbeddingService {
      * 상품 정보를 텍스트로 변환
      */
     private String buildProductText(Product product) {
+        return buildProductText(product, null);
+    }
+
+    /**
+     * 상품 정보를 텍스트로 변환 (정제된 설명 사용)
+     */
+    private String buildProductText(Product product, String refinedDescription) {
         StringBuilder text = new StringBuilder();
-        
+
         // 상품명
         if (product.getName() != null) {
             text.append(product.getName()).append(" ");
         }
-        
+
         // 카테고리
         if (product.getCategory() != null) {
             text.append(product.getCategory().name()).append(" ");
         }
-        
-        // 상품 설명
-        if (product.getDescription() != null) {
-            text.append(product.getDescription()).append(" ");
+
+        // 상품 설명 (정제된 설명 우선 사용, 없으면 원본 사용)
+        String description = refinedDescription != null ? refinedDescription : product.getDescription();
+        if (description != null) {
+            text.append(description).append(" ");
         }
-        
+
         // 브랜드
         if (product.getBrand() != null) {
             text.append(product.getBrand()).append(" ");
         }
-        
+
         // 가격대 정보
         if (product.getPrice() != null) {
             String priceRange = getPriceRange(product.getPrice());
             text.append(priceRange).append(" ");
         }
-        
+
         return text.toString().trim();
     }
     
