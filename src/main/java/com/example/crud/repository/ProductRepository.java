@@ -55,6 +55,27 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("limit") int limit
     );
 
+    // 카테고리별 벡터 유사도 검색 (Intent Classification용)
+    @Query(value = """
+        SELECT
+            p.number as productId,
+            p.name as productName,
+            p.description as description,
+            (1 - (CAST(p.description_vector AS vector) <=> CAST(:queryVector AS vector))) as similarity
+        FROM product p
+        WHERE p.description_vector IS NOT NULL
+        AND p.category = :category
+        AND (1 - (CAST(p.description_vector AS vector) <=> CAST(:queryVector AS vector))) > :threshold
+        ORDER BY (CAST(p.description_vector AS vector) <=> CAST(:queryVector AS vector))
+        LIMIT :limit
+        """, nativeQuery = true)
+    List<Object[]> findSimilarProductsByVectorAndCategory(
+            @Param("queryVector") String queryVector,
+            @Param("category") String category,
+            @Param("threshold") double threshold,
+            @Param("limit") int limit
+    );
+
     // 벡터 업데이트를 위한 네이티브 쿼리 - TEXT로 저장
     @Modifying(clearAutomatically = true)
     @Query(value = """
@@ -63,6 +84,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         WHERE number = :productId
         """, nativeQuery = true)
     int updateDescriptionVector(@Param("productId") Long productId, @Param("vectorString") String vectorString);
+
+    // 상품 설명 업데이트 (정제된 설명으로 교체)
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+        UPDATE product
+        SET description = :refinedDescription
+        WHERE number = :productId
+        """, nativeQuery = true)
+    int updateDescription(@Param("productId") Long productId, @Param("refinedDescription") String refinedDescription);
 
     // 이메일로 조회
     List<Product> findByMember_Email(String email);
