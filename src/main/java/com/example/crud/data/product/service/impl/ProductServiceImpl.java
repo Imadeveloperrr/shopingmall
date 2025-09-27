@@ -31,6 +31,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
@@ -85,6 +89,7 @@ public class ProductServiceImpl implements ProductService {
                 .collect(Collectors.toList());
     }
 
+    // 상품추가.
     @Override
     @Transactional
     public ProductResponseDto getAddProduct(ProductDto productDto, MultipartFile image) {
@@ -228,17 +233,44 @@ public class ProductServiceImpl implements ProductService {
 
         List<ProductOption> existingOptions = product.getProductOptions();
 
-        // 기존 옵션 모두 제거 (orphanRemoval로 자동 삭제됨)
-        existingOptions.clear();
+        // 새 옵션들을 Map으로 변환 (color+size를 key로)
+        Map<String, ProductOptionDto> newOptionsMap = newOptions.stream()
+                .collect(Collectors.toMap(
+                        dto -> dto.getColor() + "_" + dto.getSize(),
+                        dto -> dto,
+                        (dto1, dto2) -> dto1  // 중복 시 첫번째 것 사용
+                ));
 
-        // 새로운 옵션들 추가
-        for (ProductOptionDto optionDto : newOptions) {
-            ProductOption newOption = ProductOption.builder()
-                    .color(optionDto.getColor())
-                    .size(optionDto.getSize())
-                    .stock(optionDto.getStock())
-                    .build();
-            product.addProductOption(newOption);  // 양방향 관계 설정
+        // 기존 옵션들을 Map으로 변환
+        Map<String, ProductOption> existingOptionsMap = new HashMap<>();
+        Iterator<ProductOption> iterator = existingOptions.iterator();
+
+        while (iterator.hasNext()) {
+            ProductOption existingOption = iterator.next();
+            String key = existingOption.getColor() + "_" + existingOption.getSize();
+
+            if (newOptionsMap.containsKey(key)) {
+                // 기존 옵션을 업데이트
+                ProductOptionDto dto = newOptionsMap.get(key);
+                existingOption.setStock(dto.getStock());
+                existingOptionsMap.put(key, existingOption);
+            } else {
+                // 새 옵션에 없으면 삭제
+                iterator.remove();
+            }
+        }
+
+        // 새로 추가할 옵션들 처리
+        for (Map.Entry<String, ProductOptionDto> entry : newOptionsMap.entrySet()) {
+            if (!existingOptionsMap.containsKey(entry.getKey())) {
+                ProductOptionDto optionDto = entry.getValue();
+                ProductOption newOption = ProductOption.builder()
+                        .color(optionDto.getColor())
+                        .size(optionDto.getSize())
+                        .stock(optionDto.getStock())
+                        .build();
+                product.addProductOption(newOption);
+            }
         }
     }
 

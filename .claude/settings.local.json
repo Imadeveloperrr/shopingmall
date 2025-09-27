@@ -70,7 +70,14 @@
       "Bash(/bashes)",
       "Bash(del \"C:\\Users\\sungho\\IdeaProjects\\shopingmall\\src\\main\\java\\com\\example\\crud\\ai\\recommendation\\application\\IntentClassificationService.java\")",
       "Bash(del \"C:\\Users\\sungho\\IdeaProjects\\shopingmall\\src\\main\\java\\com\\example\\crud\\ai\\config\\RecommendationConfig.java\")",
-      "Bash(Stop-Process -Id 38352 -Force)"
+      "Bash(Stop-Process -Id 38352 -Force)",
+      "WebSearch",
+      "Bash(chcp:*)",
+      "Bash(powershell:*)",
+      "Bash(javac:*)",
+      "Bash(echo $SPRING_REDIS_HOST)",
+      "Bash(echo $SPRING_PROFILES_ACTIVE)",
+      "Bash(set)"
     ],
     "deny": [],
     "ask": []

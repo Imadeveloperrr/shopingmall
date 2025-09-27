@@ -58,7 +58,7 @@ public class ProductVectorService {
                     similarities.add(new ProductSimilarity(
                         productId, similarity, productName, description
                     ));
-                    log.debug("🎯 상품 매칭: id={}, 유사도={:.4f}, 상품명='{}'", productId, similarity, productName);
+                    log.debug("🎯 상품 매칭: id={}, 유사도={}, 상품명='{}'", productId, String.format("%.4f", similarity), productName);
                 } catch (Exception e) {
                     log.warn("상품 데이터 변환 실패, 해당 상품 건너뜀: {}", Arrays.toString(row), e);
                     // 해당 상품만 건너뛰고 계속 진행
@@ -111,9 +111,9 @@ public class ProductVectorService {
                 throw new IllegalArgumentException("대상 상품에 임베딩 벡터가 없습니다.");
             }
 
-            // PostgreSQL에서 직접 유사도 검색 수행
+            // PostgreSQL에서 직접 유사도 검색 수행 (더 높은 임계값 사용)
             List<Object[]> results = productRepository.findSimilarProductsByVector(
-                vectorString, 0.3, limit
+                vectorString, 0.4, limit
             );
 
             List<ProductSimilarity> similarities = new ArrayList<>();
@@ -145,36 +145,31 @@ public class ProductVectorService {
 
     /**
      * 동적 임계값으로 상품 검색 (높은 품질부터 낮은 품질 순으로 시도)
-     * 단일 상품 시나리오에 최적화: 더 낮은 임계값까지 확장하여 결과 보장
      */
     private List<Object[]> findWithDynamicThreshold(String vectorString, int limit) {
-        // 확장된 임계값: 단일 상품에서도 결과를 찾을 수 있도록 더 낮은 값 포함
-        double[] thresholds = {0.4, 0.3, 0.2, 0.1, 0.05, 0.02, 0.01};
+        // 더 높은 품질의 추천을 위한 임계값 (0.3 = 30% 이상)
+        double[] thresholds = {0.5, 0.4, 0.3};
 
-        log.info("🎯 동적 임계값 검색 시작: 최대 {}개 상품 검색", limit);
+        log.debug("동적 임계값 검색 시작: 최대 {}개 상품 검색", limit);
 
         for (double threshold : thresholds) {
             List<Object[]> results = productRepository.findSimilarProductsByVector(
                 vectorString, threshold, limit
             );
-            log.info("📊 임계값 {} 결과: {}개 상품 발견", threshold, results.size());
 
             if (!results.isEmpty()) {
-                log.info("✅ 임계값 {}에서 {}개 상품 추천 성공!", threshold, results.size());
+                log.info("임계값 {}에서 {}개 상품 발견", threshold, results.size());
                 return results;
             }
         }
 
-        // 모든 임계값 실패 시: 임계값 제거하고 유사도 순으로 상위 N개 반환
-        log.warn("⚠️ 모든 임계값({} ~ {})에서 결과 없음!", thresholds[0], thresholds[thresholds.length-1]);
-        log.info("🔄 최후 수단: 임계값 없이 유사도 순으로 상위 {}개 반환", limit);
+        // 임계값 실패 시: 최소 임계값(0.25)으로 재시도
+        log.warn("표준 임계값에서 결과 없음. 최소 임계값 0.25로 재시도");
 
-        List<Object[]> finalResults = productRepository.findSimilarProductsByVector(vectorString, 0.0, limit);
+        List<Object[]> finalResults = productRepository.findSimilarProductsByVector(vectorString, 0.25, limit);
 
         if (finalResults.isEmpty()) {
-            log.error("❌ 치명적 오류: 임계값 0.0에서도 결과 없음 (데이터 또는 벡터 문제 의심)");
-        } else {
-            log.info("✅ 최후 수단 성공: {}개 상품 반환 (임계값 무시)", finalResults.size());
+            log.warn("유사 상품을 찾을 수 없습니다. (임계값 0.25 이상)");
         }
 
         return finalResults;

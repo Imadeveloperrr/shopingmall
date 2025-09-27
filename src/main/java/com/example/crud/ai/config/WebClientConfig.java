@@ -33,7 +33,7 @@ public class WebClientConfig {
     @Bean("embeddingWebClient")
     public WebClient embeddingWebClient() {
         HttpClient http = HttpClient.create()
-                .responseTimeout(Duration.ofSeconds(10))
+                .responseTimeout(Duration.ofSeconds(60))  // GPT API 호출을 위해 60초로 증가
                 .compress(true);
 
         return WebClient.builder()
