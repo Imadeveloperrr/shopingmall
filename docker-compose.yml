@@ -84,7 +84,7 @@ services:
 
 
       # Redis
-      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_HOST: localhost
       SPRING_REDIS_PORT: 6379
 
 

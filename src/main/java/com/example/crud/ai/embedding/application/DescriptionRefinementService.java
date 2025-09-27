@@ -57,16 +57,18 @@ public class DescriptionRefinementService {
      */
     private String callGPTForRefinement(String description) {
         String prompt = String.format("""
-            이 상품 설명에서 다른 상품 이름이 언급된 부분을 완전히 제거해주세요.
+            이 상품 설명에서 다른 상품과의 조합이나 코디 제안 부분만 제거해주세요.
 
             제거해야 할 내용:
-            - "니트", "셔츠", "후드", "블라우스", "코트", "자켓" 등 다른 상품 이름이 포함된 문장이나 구문
-            - 코디나 스타일링 제안에서 다른 상품과의 조합을 설명하는 부분
-            - "~와 함께", "~와 매치", "~와 어울림" 등으로 다른 상품을 언급하는 모든 표현
+            - "~와 함께", "~와 매치", "~와 어울림" 등으로 다른 상품과의 조합을 설명하는 부분
+            - "셔츠와 함께", "바지와 매치", "코트 안에" 등 구체적인 다른 상품과의 스타일링 제안
+            - 레이어드나 코디 제안에서 다른 상품을 언급하는 부분
 
             반드시 보존해야 할 내용:
+            - 이 상품 자체의 카테고리명 (니트, 셔츠, 바지 등)
             - 이 상품만의 소재, 핏, 실루엣, 디자인, 색상, 사이즈감 등
             - 착용감, 품질, 제작 방식 등 상품 자체 특성
+            - 상품의 고유한 특징과 장점
 
             상품 설명:
             "%s"
@@ -94,7 +96,7 @@ public class DescriptionRefinementService {
                 .retrieve()
                 .bodyToMono(Map.class)
                 .timeout(Duration.ofSeconds(30))
-                .block();
+                .block(); // non-block 개선필요.
 
             return parseGPTResponse(response);
 

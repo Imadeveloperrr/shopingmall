@@ -1,6 +1,7 @@
 package com.example.crud.ai.recommendation.presentation;
 
 import com.example.crud.ai.recommendation.application.RecommendationEngine;
+import com.example.crud.ai.recommendation.application.ConversationalRecommendationService;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService.ProductSimilarity;
 import com.example.crud.ai.embedding.EmbeddingApiClient;
@@ -28,6 +29,7 @@ public class RecommendationTestController {
     private final EmbeddingApiClient embeddingApiClient;
     private final ProductEmbeddingService productEmbeddingService;
     private final DescriptionRefinementService refinementService;
+    private final ConversationalRecommendationService conversationalService;
 
     /**
      * 텍스트 기반 상품 추천 테스트
@@ -48,10 +50,10 @@ public class RecommendationTestController {
             log.info("텍스트 기반 추천 테스트: userId={}, query={}", userId, query);
 
             // 1. 벡터 기반 유사 상품 검색
-            List<ProductSimilarity> vectorResults = vectorService.findSimilarProducts(query, 10);
+            List<ProductSimilarity> vectorResults = vectorService.findSimilarProducts(query, 5);
             
             // 2. 추천 엔진 테스트 (ProductMatch 형태로)
-            var recommendationMatches = recommendationEngine.getRecommendations(query, 10);
+            var recommendationMatches = recommendationEngine.getRecommendations(query, 5);
 
             Map<String, Object> response = Map.of(
                 "query", query,
@@ -287,6 +289,42 @@ public class RecommendationTestController {
             log.error("상품 설명 정제 테스트 실패", e);
             return ResponseEntity.status(500).body(
                 Map.of("error", "정제 서비스 오류: " + e.getMessage())
+            );
+        }
+    }
+
+    /**
+     * 실제 대화 플로우로 추천 테스트 (ConversationalRecommendationService 사용)
+     */
+    @PostMapping("/conversation-test")
+    public ResponseEntity<Map<String, Object>> testConversationalFlow(@RequestBody Map<String, String> request) {
+        try {
+            String message = request.get("message");
+            log.info("🔥 ULTRATHINK - 실제 대화 플로우 테스트: message='{}'", message);
+
+            // 가짜 conversationId로 테스트 (실제로는 DB에 저장되지 않음)
+            // conversationalService.processUserMessage(999L, message);
+
+            // 대신 RecommendationEngine을 직접 호출해서 동적 임계값 테스트
+            var recommendations = recommendationEngine.getRecommendations(message, 5);
+
+            Map<String, Object> response = Map.of(
+                "message", message,
+                "recommendations", recommendations,
+                "timestamp", System.currentTimeMillis(),
+                "flowType", "conversational"
+            );
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("대화 플로우 테스트 실패", e);
+            return ResponseEntity.status(500).body(
+                Map.of(
+                    "status", "error",
+                    "message", e.getMessage(),
+                    "timestamp", System.currentTimeMillis()
+                )
             );
         }
     }

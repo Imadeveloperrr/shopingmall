@@ -94,6 +94,7 @@ public class ProductEmbeddingService {
 
             // 정제된 설명으로 상품 텍스트 생성
             String productText = buildProductText(product, refinedDescription);
+            log.info("ProductEmbeddingService \n정제된 상품 텍스트 : {}", productText);
 
             // 임베딩 벡터 생성
             float[] embedding = embeddingApiClient.generateEmbedding(productText);
@@ -107,20 +108,8 @@ public class ProductEmbeddingService {
                 throw new RuntimeException("벡터 업데이트 실패 - 상품을 찾을 수 없음");
             }
 
-            // 원본 설명을 정제된 설명으로 교체 (API 응답시 정제된 설명이 반환되도록)
-            log.debug("설명 업데이트 조건 체크: productId={}, refinedDescription!=null:{}, originalLength:{}, refinedLength:{}",
-                     product.getNumber(), refinedDescription != null,
-                     originalDescription != null ? originalDescription.length() : 0,
-                     refinedDescription != null ? refinedDescription.length() : 0);
-
-            if (refinedDescription != null && !originalDescription.equals(refinedDescription)) {
-                int descUpdateCount = productRepository.updateDescription(product.getNumber(), refinedDescription);
-                log.info("상품 설명 업데이트: productId={}, updateCount={}", product.getNumber(), descUpdateCount);
-            } else {
-                log.debug("설명 업데이트 건너뜀: productId={}, refinedDescription==null:{}, equals:{}",
-                         product.getNumber(), refinedDescription == null,
-                         refinedDescription != null ? originalDescription.equals(refinedDescription) : "N/A");
-            }
+            // 원본 상품 설명은 유지, 벡터만 정제된 버전으로 업데이트
+            log.info("⚠️  상품 설명은 원본 유지, 벡터만 정제된 버전으로 업데이트됨: productId={}", product.getNumber());
 
             log.info("상품 임베딩 및 설명 정제 완료: productId={}, textLength={}, vectorSize={}, vectorUpdate={}",
                      product.getNumber(), productText.length(), embedding.length, vectorUpdateCount);
