@@ -1,14 +1,30 @@
 package com.example.crud.repository;
 
-import com.example.crud.data.product.dto.ProductResponseDto;
 import com.example.crud.entity.Product;
-import com.example.crud.enums.Category;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+
+/*
+
+  1. 코사인 유사도 (Cosine Similarity)
+
+  범위: -1 ~ 1
+  1에 가까울수록 = 더 유사함
+  0 = 관련없음
+  -1 = 완전히 반대
+
+  2. 코사인 거리 (Cosine Distance)
+
+  범위: 0 ~ 2
+  0에 가까울수록 = 더 유사함  ← 이게 핵심!
+  1 = 관련없음
+  2 = 완전히 반대
+
+ */
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByMember_Number(Long number);
