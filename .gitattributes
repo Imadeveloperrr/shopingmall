@@ -1,5 +1,5 @@
 # Exclude specific paths from GitHub language statistics and contributions
 *.md linguist-generated=true
 
-# Claude 관련 커밋 메시지 자동 생성 비활성화
+# AI 기여자 표시 방지 설정
 * -co-authored-by
