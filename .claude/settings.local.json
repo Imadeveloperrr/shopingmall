@@ -77,7 +77,8 @@
       "Bash(javac:*)",
       "Bash(echo $SPRING_REDIS_HOST)",
       "Bash(echo $SPRING_PROFILES_ACTIVE)",
-      "Bash(set)"
+      "Bash(set)",
+      "WebFetch(domain:careers.kakaoent.com)"
     ],
     "deny": [],
     "ask": []
