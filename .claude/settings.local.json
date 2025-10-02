@@ -78,7 +78,14 @@
       "Bash(echo $SPRING_REDIS_HOST)",
       "Bash(echo $SPRING_PROFILES_ACTIVE)",
       "Bash(set)",
-      "WebFetch(domain:careers.kakaoent.com)"
+      "WebFetch(domain:careers.kakaoent.com)",
+      "Bash(git stash:*)",
+      "Bash(git remote:*)",
+      "Read(//c/Users/sungho/IdeaProjects/shopingmall-backup/**)",
+      "Bash(git rev-list:*)",
+      "Read(//tmp/shopingmall-backup-check/**)",
+      "Bash(awk:*)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []

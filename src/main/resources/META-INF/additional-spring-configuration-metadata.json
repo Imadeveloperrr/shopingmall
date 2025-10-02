@@ -21,16 +21,6 @@
       "description": "Description for chatgpt.api.url."
     },
     {
-      "name": "hf.api.url",
-      "type": "java.lang.String",
-      "description": "Description for hf.api.url."
-    },
-    {
-      "name": "hf.api.key",
-      "type": "java.lang.String",
-      "description": "Description for hf.api.key."
-    },
-    {
       "name": "chatgpt.model",
       "type": "java.lang.String",
       "description": "Description for chatgpt.model."

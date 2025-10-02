@@ -28,7 +28,6 @@ public class ProductEmbeddingService {
 
     private final EmbeddingApiClient embeddingApiClient;
     private final ProductRepository productRepository;
-    private final DescriptionRefinementService refinementService;
 
     // PostgreSQL 벡터 포맷용 DecimalFormat
     private static final DecimalFormat VECTOR_FORMAT;
@@ -81,20 +80,9 @@ public class ProductEmbeddingService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void createAndSaveEmbedding(Product product) {
         try {
-            // 원본 설명 백업
-            String originalDescription = product.getDescription();
-
-            // 상품 설명을 정제 (임베딩용 텍스트 생성에도 사용됨)
-            String refinedDescription = null;
-            if (originalDescription != null && !originalDescription.trim().isEmpty()) {
-                refinedDescription = refinementService.refineProductDescription(originalDescription);
-                log.info("상품 설명 정제: productId={}, 원본={}자 -> 정제={}자",
-                        product.getNumber(), originalDescription.length(), refinedDescription.length());
-            }
-
-            // 정제된 설명으로 상품 텍스트 생성
-            String productText = buildProductText(product, refinedDescription);
-            log.info("ProductEmbeddingService \n정제된 상품 텍스트 : {}", productText);
+            // 원본 설명으로 상품 텍스트 생성 (정제화 제거)
+            String productText = buildProductText(product);
+            log.info("ProductEmbeddingService 상품 텍스트: {}", productText);
 
             // 임베딩 벡터 생성
             float[] embedding = embeddingApiClient.generateEmbedding(productText);
@@ -108,10 +96,7 @@ public class ProductEmbeddingService {
                 throw new RuntimeException("벡터 업데이트 실패 - 상품을 찾을 수 없음");
             }
 
-            // 원본 상품 설명은 유지, 벡터만 정제된 버전으로 업데이트
-            log.info("⚠️  상품 설명은 원본 유지, 벡터만 정제된 버전으로 업데이트됨: productId={}", product.getNumber());
-
-            log.info("상품 임베딩 및 설명 정제 완료: productId={}, textLength={}, vectorSize={}, vectorUpdate={}",
+            log.info("상품 임베딩 생성 완료: productId={}, textLength={}, vectorSize={}, vectorUpdate={}",
                      product.getNumber(), productText.length(), embedding.length, vectorUpdateCount);
 
         } catch (Exception e) {
@@ -181,16 +166,9 @@ public class ProductEmbeddingService {
     }
     
     /**
-     * 상품 정보를 텍스트로 변환
+     * 상품 정보를 텍스트로 변환 (원본 설명 사용)
      */
     private String buildProductText(Product product) {
-        return buildProductText(product, null);
-    }
-
-    /**
-     * 상품 정보를 텍스트로 변환 (정제된 설명 사용)
-     */
-    private String buildProductText(Product product, String refinedDescription) {
         StringBuilder text = new StringBuilder();
 
         // 상품명
@@ -203,10 +181,9 @@ public class ProductEmbeddingService {
             text.append(product.getCategory().name()).append(" ");
         }
 
-        // 상품 설명 (정제된 설명 우선 사용, 없으면 원본 사용)
-        String description = refinedDescription != null ? refinedDescription : product.getDescription();
-        if (description != null) {
-            text.append(description).append(" ");
+        // 상품 설명 (원본 사용)
+        if (product.getDescription() != null) {
+            text.append(product.getDescription()).append(" ");
         }
 
         // 브랜드

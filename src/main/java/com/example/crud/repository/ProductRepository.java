@@ -101,15 +101,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         """, nativeQuery = true)
     int updateDescriptionVector(@Param("productId") Long productId, @Param("vectorString") String vectorString);
 
-    // 상품 설명 업데이트 (정제된 설명으로 교체)
-    @Modifying(clearAutomatically = true)
-    @Query(value = """
-        UPDATE product
-        SET description = :refinedDescription
-        WHERE number = :productId
-        """, nativeQuery = true)
-    int updateDescription(@Param("productId") Long productId, @Param("refinedDescription") String refinedDescription);
-
     // 이메일로 조회
     List<Product> findByMember_Email(String email);
 
