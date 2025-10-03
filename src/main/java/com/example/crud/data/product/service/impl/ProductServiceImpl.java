@@ -126,9 +126,6 @@ public class ProductServiceImpl implements ProductService {
                 product.setProductOptions(productOptionList);
             }
 
-            // 벡터 필드를 null로 설정하여 타입 오류 방지
-            product.setDescriptionVector(null);
-
             try {
                 Product savedProduct = productRepository.save(product);
                 // 트랜잭션 커밋 후 임베딩 생성하기 위한 이벤트 발행
