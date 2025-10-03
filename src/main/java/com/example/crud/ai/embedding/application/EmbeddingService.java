@@ -1,0 +1,128 @@
+package com.example.crud.ai.embedding.application;
+
+import com.example.crud.ai.common.VectorFormatter;
+import com.example.crud.ai.embedding.EmbeddingApiClient;
+import com.example.crud.ai.embedding.domain.ProductTextBuilder;
+import com.example.crud.entity.Product;
+import com.example.crud.repository.ProductRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+/**
+ * 상품 임베딩 생성 및 저장 서비스
+ */
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class EmbeddingService {
+
+    private final ProductRepository productRepository;
+    private final EmbeddingApiClient embeddingApiClient;
+    private final ProductTextBuilder productTextBuilder;
+
+    /**
+     * 단일 상품의 임베딩 생성 및 저장
+     * @param productId 임베딩을 생성할 상품 ID
+     * @throws IllegalArgumentException 상품을 찾을 수 없는 경우
+     * @throws RuntimeException 임베딩 생성 또는 저장 실패
+     */
+    @Transactional
+    public void createAndSaveEmbedding(Long productId) {
+        try {
+            // 1. Product 조회
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Product not found: " + productId));
+
+            // 2. Product → 텍스트 변환
+            String productText = productTextBuilder.buildProductText(product);
+            log.info("Product 텍스트 생성: productId={}, textLength={}",
+                    productId, productText.length());
+
+            // 3. 텍스트 → 임베딩 벡터 생성
+            float[] embedding = embeddingApiClient.generateEmbedding(productText);
+            log.debug("임베딩 벡터 생성 완료: productId={}, dimension={}",
+                    productId, embedding.length);
+
+            // 4. 벡터 → PostgreSQL 형식 변환
+            String vectorString = VectorFormatter.formatForPostgreSQL(embedding);
+
+            // 5. DB 업데이트
+            int updateCount = productRepository.updateDescriptionVector(productId, vectorString);
+
+            if (updateCount == 0) {
+                log.error("벡터 업데이트 실패: productId={} - 0개 행 업데이트됨", productId);
+                throw new RuntimeException("벡터 업데이트 실패 - 상품을 찾을 수 없음");
+            }
+
+            log.info("상품 임베딩 저장 완료: productId={}, vectorSize={}",
+                    productId, embedding.length);
+
+        } catch (IllegalArgumentException e) {
+            // Product 못 찾은 경우 (정상적인 예외)
+            throw e;
+        } catch (Exception e) {
+            log.error("상품 임베딩 생성 실패: productId={}", productId, e);
+            throw new RuntimeException("임베딩 생성 실패: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 여러 상품의 임베딩을 배치로 생성
+     *
+     * @param productIds 임베딩을 생성할 상품 ID 목록
+     * @return 성공한 상품 개수
+     */
+    @Transactional
+    public int createBatchEmbeddings(List<Long> productIds) {
+        log.info("배치 임베딩 생성 시작: {} 개 상품", productIds.size());
+
+        int successCount = 0;
+        int failCount = 0;
+
+        for (Long productId : productIds) {
+            try {
+                createAndSaveEmbedding(productId);
+                successCount++;
+
+                // 진행 상황 로깅 (100개마다)
+                if (successCount % 100 == 0) {
+                    log.info("배치 처리 진행: {}/{} 완료",
+                            successCount, productIds.size());
+                }
+
+            } catch (Exception e) {
+                log.error("배치 임베딩 처리 실패: productId={}", productId, e);
+                failCount++;
+            }
+        }
+
+        log.info("배치 임베딩 생성 완료: 성공={}, 실패={}", successCount, failCount);
+        return successCount;
+    }
+
+    /**
+     * 임베딩이 누락된 모든 상품의 임베딩 생성
+     *
+     * @return 생성된 임베딩 개수
+     */
+    @Transactional
+    public int createMissingEmbeddings() {
+        List<Product> productsWithoutEmbedding = productRepository.findProductsWithoutEmbedding();
+
+        if (productsWithoutEmbedding.isEmpty()) {
+            log.info("누락된 임베딩 없음");
+            return 0;
+        }
+
+        log.info("누락된 임베딩 생성 시작: {} 개 상품", productsWithoutEmbedding.size());
+
+        List<Long> productIds = productsWithoutEmbedding.stream()
+                .map(Product::getNumber)
+                .toList();
+
+        return createBatchEmbeddings(productIds);
+    }
+}

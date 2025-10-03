@@ -6,11 +6,10 @@ import com.example.crud.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
+import com.example.crud.ai.common.VectorFormatter;
 import java.util.*;
-import java.util.Locale;
+
+import static com.example.crud.common.utility.NativeQueryResultExtractor.*;
 
 /**
  * 벡터 기반 상품 매칭 서비스 - 간소화된 버전
@@ -24,14 +23,6 @@ public class ProductVectorService {
     private final ProductRepository productRepository;
     private final EmbeddingApiClient embeddingApiClient;
 
-    // PostgreSQL 벡터 포맷용 DecimalFormat (성능상 static으로 한 번만 생성)
-    private static final DecimalFormat VECTOR_FORMAT;
-    static {
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
-        VECTOR_FORMAT = new DecimalFormat("0.########", symbols); // 소수점 8자리, 과학적 표기법 없음
-        VECTOR_FORMAT.setGroupingUsed(false);
-    }
-
     public List<ProductSimilarity> findSimilarProducts(String queryText, int limit) {
         log.info("🔍 상품 유사도 검색 시작: 쿼리='{}', limit={}, threshold=0.3", queryText, limit);
 
@@ -41,7 +32,7 @@ public class ProductVectorService {
             log.info("✅ 임베딩 벡터 생성 성공: 차원={}", queryVector.length);
 
             // 벡터를 PostgreSQL 형식으로 변환
-            String vectorString = formatVectorForPostgreSQL(queryVector);
+            String vectorString = VectorFormatter.formatForPostgreSQL(queryVector);
             log.debug("🔄 벡터 문자열 변환 완료: 길이={}", vectorString.length());
 
             // 동적 임계값으로 유연한 검색 (높은 품질부터 시도)
@@ -176,62 +167,6 @@ public class ProductVectorService {
     }
 
     /**
-     * float[] 배열을 PostgreSQL vector 형식 문자열로 변환
-     * - 과학적 표기법 방지 (1.234E-5 → 0.00001234)
-     * - 고정 소수점 8자리 정밀도
-     * - 성능 최적화를 위한 DecimalFormat 재사용
-     */
-    private String formatVectorForPostgreSQL(float[] vector) {
-        StringBuilder sb = new StringBuilder(vector.length * 12); // 성능 최적화: 예상 크기로 초기화
-        sb.append("[");
-        for (int i = 0; i < vector.length; i++) {
-            if (i > 0) sb.append(",");
-            sb.append(VECTOR_FORMAT.format(vector[i])); // 고정 소수점 형식으로 변환
-        }
-        sb.append("]");
-        return sb.toString();
-    }
-
-    /**
-     * Object[] 결과를 안전하게 Long으로 변환
-     */
-    private Long extractLong(Object value, String fieldName) {
-        if (value == null) {
-            throw new IllegalArgumentException(fieldName + "이 null입니다.");
-        }
-        if (value instanceof Number number) {
-            return number.longValue();
-        }
-        throw new IllegalArgumentException(fieldName + "이 숫자가 아닙니다: " + value.getClass());
-    }
-
-    /**
-     * Object[] 결과를 안전하게 String으로 변환
-     */
-    private String extractString(Object value, String fieldName) {
-        if (value == null) {
-            return null; // description은 null일 수 있음
-        }
-        if (value instanceof String string) {
-            return string;
-        }
-        return value.toString(); // 문자열 변환 시도
-    }
-
-    /**
-     * Object[] 결과를 안전하게 Double로 변환
-     */
-    private Double extractDouble(Object value, String fieldName) {
-        if (value == null) {
-            throw new IllegalArgumentException(fieldName + "이 null입니다.");
-        }
-        if (value instanceof Number number) {
-            return number.doubleValue();
-        }
-        throw new IllegalArgumentException(fieldName + "이 숫자가 아닙니다: " + value.getClass());
-    }
-
-    /**
      * 카테고리별 유사 상품 검색
      */
     public List<ProductSimilarity> findSimilarProductsByCategory(String queryText, String category, int limit) {
@@ -239,7 +174,7 @@ public class ProductVectorService {
 
         try {
             float[] queryVector = embeddingApiClient.generateEmbedding(queryText);
-            String vectorString = formatVectorForPostgreSQL(queryVector);
+            String vectorString = VectorFormatter.formatForPostgreSQL(queryVector);
 
             // 카테고리별 임계값 조정 (카테고리 내 검색은 더 낮은 임계값 사용)
             double[] thresholds = {0.3, 0.2, 0.1, 0.05};

@@ -1,6 +1,6 @@
 package com.example.crud.data.product.service.impl;
 
-import com.example.crud.ai.embedding.application.ProductEmbeddingService;
+import com.example.crud.ai.embedding.application.EmbeddingService;
 import com.example.crud.ai.embedding.event.ProductCreatedEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import com.example.crud.common.exception.BaseException;
@@ -50,7 +50,7 @@ public class ProductServiceImpl implements ProductService {
     private final MemberRepository memberRepository;
     private final ProductMapper productMapper;
     private final ProductOptionRepository productOptionRepository;
-    private final ProductEmbeddingService embeddingService;
+    private final EmbeddingService embeddingService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
@@ -188,7 +188,7 @@ public class ProductServiceImpl implements ProductService {
             Product savedProduct = productRepository.save(existingProduct);
 
             // 상품 업데이트 후 임베딩 재생성
-            embeddingService.createAndSaveEmbeddingAsync(savedProduct.getNumber());
+            embeddingService.createAndSaveEmbedding(savedProduct.getNumber());
 
             return convertToProductResponseDTO(savedProduct);
         } catch (BaseException e) {

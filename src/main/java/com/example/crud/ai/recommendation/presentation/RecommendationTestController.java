@@ -1,11 +1,11 @@
 package com.example.crud.ai.recommendation.presentation;
 
+import com.example.crud.ai.embedding.application.EmbeddingService;
 import com.example.crud.ai.recommendation.application.RecommendationEngine;
 import com.example.crud.ai.recommendation.application.ConversationalRecommendationService;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService.ProductSimilarity;
 import com.example.crud.ai.embedding.EmbeddingApiClient;
-import com.example.crud.ai.embedding.application.ProductEmbeddingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +26,7 @@ public class RecommendationTestController {
     private final RecommendationEngine recommendationEngine;
     private final ProductVectorService vectorService;
     private final EmbeddingApiClient embeddingApiClient;
-    private final ProductEmbeddingService productEmbeddingService;
+    private final EmbeddingService productEmbeddingService;
     private final ConversationalRecommendationService conversationalService;
 
     /**
@@ -219,7 +219,7 @@ public class RecommendationTestController {
             log.info("상품 임베딩 재생성: productId={}", productId);
 
             long startTime = System.currentTimeMillis();
-            productEmbeddingService.createAndSaveEmbeddingAsync(productId);
+            productEmbeddingService.createAndSaveEmbedding(productId);
             long endTime = System.currentTimeMillis();
 
             Map<String, Object> response = Map.of(

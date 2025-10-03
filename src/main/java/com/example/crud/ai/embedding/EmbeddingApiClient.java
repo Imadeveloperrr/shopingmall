@@ -99,34 +99,4 @@ public class EmbeddingApiClient {
     }
 
 
-    public double calculateSimilarity(float[] vector1, float[] vector2) {
-        if (vector1.length != vector2.length) {
-            return 0.0;
-        }
-
-        double dotProduct = 0.0;
-        double norm1 = 0.0;
-        double norm2 = 0.0;
-
-        // 소폭 개선: int 변수로 length 캐싱 (배열 접근 최소화)
-        final int length = vector1.length;
-
-        for (int i = 0; i < length; i++) {
-            // 소폭 개선: 임시 변수로 중복 접근 방지
-            final float v1 = vector1[i];
-            final float v2 = vector2[i];
-
-            dotProduct += v1 * v2;
-            norm1 += v1 * v1;
-            norm2 += v2 * v2;
-        }
-
-        // 기존과 동일
-        if (norm1 == 0.0 || norm2 == 0.0) {
-            return 0.0;
-        }
-
-        return dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
-    }
-
 }
