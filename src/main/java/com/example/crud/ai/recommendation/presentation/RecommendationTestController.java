@@ -177,37 +177,88 @@ public class RecommendationTestController {
     }
 
     /**
-     * 누락된 상품 임베딩 생성
+     * 누락된 상품 임베딩 생성 (동기 처리 - 성능 개선 전)
      */
-    @PostMapping("/generate-missing-embeddings")
-    public ResponseEntity<Map<String, Object>> generateMissingEmbeddings() {
+    @PostMapping("/generate-embeddings-sync")
+    public ResponseEntity<Map<String, Object>> generateEmbeddingsSync() {
         try {
-            log.info("누락된 임베딩 생성 시작");
+            log.info("=== [동기 처리] 임베딩 생성 시작 ===");
 
             long startTime = System.currentTimeMillis();
-            productEmbeddingService.createMissingEmbeddings();
+            int count = productEmbeddingService.createMissingEmbeddings();
             long endTime = System.currentTimeMillis();
+            long processingTime = endTime - startTime;
 
             Map<String, Object> response = Map.of(
                 "status", "success",
-                "message", "누락된 임베딩 생성 완료",
-                "processingTimeMs", endTime - startTime,
+                "method", "SYNC (개선 전)",
+                "processedCount", count,
+                "processingTimeMs", processingTime,
+                "processingTimeSec", String.format("%.2f", processingTime / 1000.0),
                 "timestamp", System.currentTimeMillis()
             );
 
-            log.info("누락된 임베딩 생성 완료: {}ms", endTime - startTime);
+            log.info("=== [동기 처리] 완료: {}개, {}ms ===", count, processingTime);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("누락된 임베딩 생성 실패", e);
+            log.error("[동기 처리] 임베딩 생성 실패", e);
             return ResponseEntity.status(500).body(
                 Map.of(
                     "status", "error",
-                    "message", "임베딩 생성 실패: " + e.getMessage(),
+                    "method", "SYNC",
+                    "message", e.getMessage(),
                     "timestamp", System.currentTimeMillis()
                 )
             );
         }
+    }
+
+    /**
+     * 누락된 상품 임베딩 생성 (비동기 병렬 처리 - 성능 개선 후)
+     */
+    @PostMapping("/generate-embeddings-async")
+    public ResponseEntity<Map<String, Object>> generateEmbeddingsAsync() {
+        try {
+            log.info("=== [비동기 병렬 처리] 임베딩 생성 시작 ===");
+
+            long startTime = System.currentTimeMillis();
+            int count = productEmbeddingService.createMissingEmbeddingsAsync().join();
+            long endTime = System.currentTimeMillis();
+            long processingTime = endTime - startTime;
+
+            Map<String, Object> response = Map.of(
+                "status", "success",
+                "method", "ASYNC (개선 후)",
+                "processedCount", count,
+                "processingTimeMs", processingTime,
+                "processingTimeSec", String.format("%.2f", processingTime / 1000.0),
+                "timestamp", System.currentTimeMillis()
+            );
+
+            log.info("=== [비동기 병렬 처리] 완료: {}개, {}ms ===", count, processingTime);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("[비동기 병렬 처리] 임베딩 생성 실패", e);
+            return ResponseEntity.status(500).body(
+                Map.of(
+                    "status", "error",
+                    "method", "ASYNC",
+                    "message", e.getMessage(),
+                    "timestamp", System.currentTimeMillis()
+                )
+            );
+        }
+    }
+
+    /**
+     * 누락된 상품 임베딩 생성 (하위 호환성을 위한 기본 엔드포인트)
+     */
+    @PostMapping("/generate-missing-embeddings")
+    public ResponseEntity<Map<String, Object>> generateMissingEmbeddings() {
+        // 기본적으로 동기 처리 호출
+        return generateEmbeddingsSync();
     }
 
     /**
