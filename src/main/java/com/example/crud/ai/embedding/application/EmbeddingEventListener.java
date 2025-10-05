@@ -16,7 +16,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Slf4j
 public class EmbeddingEventListener {
 
-    private final EmbeddingService embeddingService;
+    private final ProductEmbeddingCommandService embeddingService;
 
     /**
     * 상품 생성 이벤트 처리

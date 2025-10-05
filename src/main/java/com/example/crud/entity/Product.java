@@ -67,8 +67,8 @@ public class Product {
     }
 
 
-    // 상품 설명 임베딩 (1536차원 - text-embedding-3-small 모델) - TEXT로 저장 후 검색시 CAST
-    @Column(name = "description_vector", columnDefinition = "TEXT", nullable = true)
+    // 상품 설명 임베딩 (1536차원 - text-embedding-3-small 모델)
+    @Column(name = "description_vector", columnDefinition = "vector(1536)", nullable = true)
     private String descriptionVector;
 
     public String getMemberEmail() {

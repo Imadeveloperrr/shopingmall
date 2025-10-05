@@ -16,6 +16,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import java.text.NumberFormat;
 import java.util.Locale;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 /*
  응답 메시지도 저장하는 이유.
@@ -150,10 +151,17 @@ public class ConversationalRecommendationService {
     }
 
     private List<ProductResponseDto> convertToProductResponseDtos(List<ProductMatch> matches) {
+
+        List<Long> productIds = matches.stream().map(ProductMatch::id).toList();
+
+        Map<Long, Product> productMap = productRepository.findAllById(productIds)
+                .stream()
+                .collect(Collectors.toMap(Product::getNumber, Function.identity()));
+
         return matches.stream()
                 .map(match -> {
                     // Product 엔티티 조회
-                    Product product = productRepository.findById(match.id()).orElse(null);
+                    Product product = productMap.get(match.id());
                     if (product == null) {
                         // Product를 찾을 수 없는 경우 기본 DTO 반환
                         ProductResponseDto dto = new ProductResponseDto();

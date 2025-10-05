@@ -38,31 +38,35 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         return findByDescriptionVectorIsNull();
     }
 
-    // 카테고리별 유사 상품 검색을 위한 네이티브 쿼리
-    @Query(value = """
-        SELECT p.* FROM product p
-        WHERE p.category = :category
-        AND p.description_vector IS NOT NULL
-        ORDER BY CAST(p.description_vector AS vector) <#> CAST(:queryVector AS vector)
-        LIMIT :limit
-        """, nativeQuery = true)
-    List<Product> findSimilarProductsByCategory(
-            @Param("category") String category,
-            @Param("queryVector") String queryVector,
-            @Param("limit") int limit
-    );
+    // docker compose exec test-db psql -U sungho -d app_test
 
+    /**
+     *
+     * @param queryVector
+     * @param threshold
+     * @param limit
+     * @return
+     *
+     * CREATE INDEX product_vector_ivfflat_idx
+     * ON product
+     * USING ivfflat (description_vector vector_cosine_ops)
+     * WITH (lists = 100);
+     * IVFFlat 인덱스 추가.
+     * Full Scan: 5초
+     * IVFFlat: 50ms (100배 빠름)
+     * HNSW: 100ms (50배 빠름
+     */
     // 벡터 유사도 검색을 위한 네이티브 쿼리 (코사인 유사도) - TEXT에서 vector로 CAST
     @Query(value = """
-        SELECT
+            SELECT
             p.number as productId,
             p.name as productName,
             p.description as description,
-            (1 - (CAST(p.description_vector AS vector) <=> CAST(:queryVector AS vector))) as similarity
+            (1 - (p.description_vector <=> :queryVector::vector)) as similarity
         FROM product p
         WHERE p.description_vector IS NOT NULL
-        AND (1 - (CAST(p.description_vector AS vector) <=> CAST(:queryVector AS vector))) > :threshold
-        ORDER BY (CAST(p.description_vector AS vector) <=> CAST(:queryVector AS vector))
+        AND (p.description_vector <=> :queryVector::vector) < (1 - :threshold)
+        ORDER BY p.description_vector <=> :queryVector::vector
         LIMIT :limit
         """, nativeQuery = true)
     List<Object[]> findSimilarProductsByVector(
@@ -71,32 +75,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("limit") int limit
     );
 
-    // 카테고리별 벡터 유사도 검색 (Intent Classification용)
-    @Query(value = """
-        SELECT
-            p.number as productId,
-            p.name as productName,
-            p.description as description,
-            (1 - (CAST(p.description_vector AS vector) <=> CAST(:queryVector AS vector))) as similarity
-        FROM product p
-        WHERE p.description_vector IS NOT NULL
-        AND p.category = :category
-        AND (1 - (CAST(p.description_vector AS vector) <=> CAST(:queryVector AS vector))) > :threshold
-        ORDER BY (CAST(p.description_vector AS vector) <=> CAST(:queryVector AS vector))
-        LIMIT :limit
-        """, nativeQuery = true)
-    List<Object[]> findSimilarProductsByVectorAndCategory(
-            @Param("queryVector") String queryVector,
-            @Param("category") String category,
-            @Param("threshold") double threshold,
-            @Param("limit") int limit
-    );
-
-    // 벡터 업데이트를 위한 네이티브 쿼리 - TEXT로 저장
+    // 벡터 업데이트를 위한 네이티브 쿼리 -
     @Modifying(clearAutomatically = true)
     @Query(value = """
         UPDATE product
-        SET description_vector = :vectorString
+        SET description_vector = :vectorString::vector
         WHERE number = :productId
         """, nativeQuery = true)
     int updateDescriptionVector(@Param("productId") Long productId, @Param("vectorString") String vectorString);

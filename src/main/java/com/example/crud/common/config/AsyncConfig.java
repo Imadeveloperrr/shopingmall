@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * 비동기 처리 및 스케줄링 설정
@@ -32,9 +33,12 @@ public class AsyncConfig implements AsyncConfigurer {
     @Bean(name = "embeddingTaskExecutor")
     public TaskExecutor embeddingTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(10);
+        executor.setCorePoolSize(20); // 2 -> 20
+        executor.setMaxPoolSize(50); // 10 -> 50
         executor.setQueueCapacity(100);
+        executor.setThreadNamePrefix("Embedding-");
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.initialize();
         return executor;
     }
 }

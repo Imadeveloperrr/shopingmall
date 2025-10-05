@@ -1,6 +1,7 @@
 package com.example.crud.ai.recommendation.presentation;
 
 import com.example.crud.ai.embedding.application.EmbeddingService;
+import com.example.crud.ai.embedding.application.ProductEmbeddingCommandService;
 import com.example.crud.ai.recommendation.application.RecommendationEngine;
 import com.example.crud.ai.recommendation.application.ConversationalRecommendationService;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService;
@@ -26,8 +27,8 @@ public class RecommendationTestController {
     private final RecommendationEngine recommendationEngine;
     private final ProductVectorService vectorService;
     private final EmbeddingApiClient embeddingApiClient;
+    private final ProductEmbeddingCommandService productEmbeddingCommandService;
     private final EmbeddingService productEmbeddingService;
-    private final ConversationalRecommendationService conversationalService;
 
     /**
      * 텍스트 기반 상품 추천 테스트
@@ -36,7 +37,8 @@ public class RecommendationTestController {
     public ResponseEntity<Map<String, Object>> recommendByText(
             @RequestParam(required = false) Long userId,
             @RequestBody Map<String, String> request) {
-        
+            long startTime = System.currentTimeMillis();
+
         try {
             String query = request.get("query");
             if (query == null || query.trim().isEmpty()) {
@@ -53,13 +55,17 @@ public class RecommendationTestController {
             // 2. 추천 엔진 테스트 (ProductMatch 형태로)
             var recommendationMatches = recommendationEngine.getRecommendations(query, 5);
 
+            long endTime = System.currentTimeMillis();
+            long processingTime = endTime - startTime;
+
             Map<String, Object> response = Map.of(
-                "query", query,
-                "vectorResults", vectorResults,
-                "vectorResultCount", vectorResults.size(),
-                "recommendationMatches", recommendationMatches,
-                "recommendationCount", recommendationMatches.size(),
-                "timestamp", System.currentTimeMillis()
+                    "query", query,
+                    "vectorResults", vectorResults,
+                    "vectorResultCount", vectorResults.size(),
+                    "recommendationMatches", recommendationMatches,
+                    "recommendationCount", recommendationMatches.size(),
+                    "processingTimeMs", processingTime,
+                    "processingTimeSec", String.format("%.2f", processingTime / 1000.0)
             );
 
             return ResponseEntity.ok(response);
@@ -270,7 +276,7 @@ public class RecommendationTestController {
             log.info("상품 임베딩 재생성: productId={}", productId);
 
             long startTime = System.currentTimeMillis();
-            productEmbeddingService.createAndSaveEmbedding(productId);
+            productEmbeddingCommandService.createAndSaveEmbedding(productId);
             long endTime = System.currentTimeMillis();
 
             Map<String, Object> response = Map.of(

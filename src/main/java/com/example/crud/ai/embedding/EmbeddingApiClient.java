@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.retry.annotation.CircuitBreaker;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -31,8 +33,7 @@ public class EmbeddingApiClient {
         this.webClient = webClient;
     }
 
-    // 임시로 캐시 비활성화 (Redis 연결 문제로 인해)
-    // @Cacheable(value = "embeddings", key = "#text.trim().toLowerCase().hashCode()")
+    @Cacheable(value = "embeddings", key = "#text.trim().toLowerCase().hashCode()")
     public float[] generateEmbedding(String text) {
         if (text == null || text.trim().isEmpty()) {
             throw new NullPointerException("임베딩 생성할 텍스트가 없습니다.");
@@ -50,6 +51,24 @@ public class EmbeddingApiClient {
         } catch (Exception e) {
             log.error("임베딩 생성 실패 {}", e.getMessage());
             throw new EmbeddingServiceException("서비스를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요.");
+        }
+    }
+
+    //@CircuitBreaker(name = "openai", fallbackMethod = "getDefaultEmbeddingAsync")
+    @Async("embeddingTaskExecutor")
+    @Cacheable(value = "embeddings", key = "#text.trim().toLowerCase().hashCode()")
+    public CompletableFuture<float[]> generateEmbeddingAsync(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return CompletableFuture.failedFuture(
+                    new NullPointerException("임베딩 생성할 텍스트가 없습니다.")
+            );
+        }
+
+        try {
+            float[] result = generateEmbedding(text); // 기존 메서드 사용
+            return CompletableFuture.completedFuture(result);
+        } catch (Exception e) {
+            return CompletableFuture.failedFuture(e);
         }
     }
 

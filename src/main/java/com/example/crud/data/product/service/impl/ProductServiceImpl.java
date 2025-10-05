@@ -1,6 +1,7 @@
 package com.example.crud.data.product.service.impl;
 
 import com.example.crud.ai.embedding.application.EmbeddingService;
+import com.example.crud.ai.embedding.application.ProductEmbeddingCommandService;
 import com.example.crud.ai.embedding.event.ProductCreatedEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import com.example.crud.common.exception.BaseException;
@@ -50,7 +51,7 @@ public class ProductServiceImpl implements ProductService {
     private final MemberRepository memberRepository;
     private final ProductMapper productMapper;
     private final ProductOptionRepository productOptionRepository;
-    private final EmbeddingService embeddingService;
+    private final ProductEmbeddingCommandService embeddingService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
