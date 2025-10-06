@@ -3,11 +3,9 @@ package com.example.crud.ai.recommendation.presentation;
 import com.example.crud.ai.embedding.application.EmbeddingService;
 import com.example.crud.ai.embedding.application.ProductEmbeddingCommandService;
 import com.example.crud.ai.recommendation.application.RecommendationEngine;
-import com.example.crud.ai.recommendation.application.ConversationalRecommendationService;
 import com.example.crud.ai.recommendation.domain.dto.ProductMatch;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService.ProductSimilarity;
-import com.example.crud.ai.embedding.EmbeddingApiClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +26,6 @@ public class RecommendationTestController {
 
     private final RecommendationEngine recommendationEngine;
     private final ProductVectorService vectorService;
-    private final EmbeddingApiClient embeddingApiClient;
     private final ProductEmbeddingCommandService productEmbeddingCommandService;
     private final EmbeddingService productEmbeddingService;
 
@@ -86,54 +83,13 @@ public class RecommendationTestController {
     }
 
     /**
-     * 임베딩 생성 테스트
-     */
-    @PostMapping("/embedding")
-    public ResponseEntity<Map<String, Object>> testEmbedding(
-            @RequestBody Map<String, String> request) {
-        
-        try {
-            String text = request.get("text");
-            if (text == null || text.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(
-                    Map.of("error", "text는 필수입니다")
-                );
-            }
-
-            long startTime = System.currentTimeMillis();
-            float[] embedding = embeddingApiClient.generateEmbedding(text);
-            long endTime = System.currentTimeMillis();
-
-            Map<String, Object> response = Map.of(
-                "text", text,
-                "embeddingDimension", embedding.length,
-                "processingTimeMs", endTime - startTime,
-                "embeddingPreview", List.of(
-                    embedding[0], embedding[1], embedding[2], 
-                    embedding[3], embedding[4]
-                ),
-                "embeddingNorm", calculateNorm(embedding),
-                "timestamp", System.currentTimeMillis()
-            );
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("임베딩 테스트 실패", e);
-            return ResponseEntity.status(500).body(
-                Map.of("error", "임베딩 생성 오류: " + e.getMessage())
-            );
-        }
-    }
-
-    /**
      * 상품간 유사도 테스트
      */
     @GetMapping("/similarity/{productId}")
     public ResponseEntity<Map<String, Object>> testProductSimilarity(
             @PathVariable Long productId,
             @RequestParam(defaultValue = "5") int limit) {
-        
+
         try {
             log.info("상품 유사도 테스트: productId={}, limit={}", productId, limit);
 
@@ -157,45 +113,12 @@ public class RecommendationTestController {
     }
 
     /**
-     * 시스템 상태 체크
-     */
-    @GetMapping("/health")
-    public ResponseEntity<Map<String, Object>> healthCheck() {
-        try {
-            // 간단한 임베딩 테스트
-            long startTime = System.currentTimeMillis();
-            float[] testEmbedding = embeddingApiClient.generateEmbedding("테스트");
-            long endTime = System.currentTimeMillis();
-
-            Map<String, Object> response = Map.of(
-                "status", "healthy",
-                "embeddingApiClient", "working",
-                "embeddingDimension", testEmbedding.length,
-                "responseTimeMs", endTime - startTime,
-                "timestamp", System.currentTimeMillis()
-            );
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("헬스 체크 실패", e);
-            return ResponseEntity.status(500).body(
-                Map.of(
-                    "status", "unhealthy",
-                    "error", e.getMessage(),
-                    "timestamp", System.currentTimeMillis()
-                )
-            );
-        }
-    }
-
-    /**
-     * 누락된 상품 임베딩 생성 (동기 처리 - 성능 개선 전)
+     * 누락된 상품 임베딩 생성 (동기 처리)
      */
     @PostMapping("/generate-embeddings-sync")
     public ResponseEntity<Map<String, Object>> generateEmbeddingsSync() {
         try {
-            log.info("=== [동기 처리] 임베딩 생성 시작 ===");
+            log.info("=== [동기 순차 처리] 임베딩 생성 시작 ===");
 
             long startTime = System.currentTimeMillis();
             int count = productEmbeddingService.createMissingEmbeddings();
@@ -204,18 +127,18 @@ public class RecommendationTestController {
 
             Map<String, Object> response = Map.of(
                 "status", "success",
-                "method", "SYNC (개선 전)",
+                "method", "SYNC (순차 처리)",
                 "processedCount", count,
                 "processingTimeMs", processingTime,
                 "processingTimeSec", String.format("%.2f", processingTime / 1000.0),
                 "timestamp", System.currentTimeMillis()
             );
 
-            log.info("=== [동기 처리] 완료: {}개, {}ms ===", count, processingTime);
+            log.info("=== [동기 순차 처리] 완료: {}개, {}ms ===", count, processingTime);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("[동기 처리] 임베딩 생성 실패", e);
+            log.error("[동기 순차 처리] 임베딩 생성 실패", e);
             return ResponseEntity.status(500).body(
                 Map.of(
                     "status", "error",
@@ -228,50 +151,40 @@ public class RecommendationTestController {
     }
 
     /**
-     * 누락된 상품 임베딩 생성 (비동기 병렬 처리 - 성능 개선 후)
+     * 누락된 상품 임베딩 생성 (비동기 병렬 처리)
      */
     @PostMapping("/generate-embeddings-async")
-    public ResponseEntity<Map<String, Object>> generateEmbeddingsAsync() {
-        try {
-            log.info("=== [비동기 병렬 처리] 임베딩 생성 시작 ===");
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> generateEmbeddingsAsync() {
+        log.info("=== [비동기 병렬 처리] 임베딩 생성 시작 ===");
+        long startTime = System.currentTimeMillis();
 
-            long startTime = System.currentTimeMillis();
-            int count = productEmbeddingService.createMissingEmbeddingsAsync().join();
-            long endTime = System.currentTimeMillis();
-            long processingTime = endTime - startTime;
+        return productEmbeddingService.createMissingEmbeddingsAsync()
+                .thenApply(count -> {
+                    long processingTime = System.currentTimeMillis() - startTime;
 
-            Map<String, Object> response = Map.of(
-                "status", "success",
-                "method", "ASYNC (개선 후)",
-                "processedCount", count,
-                "processingTimeMs", processingTime,
-                "processingTimeSec", String.format("%.2f", processingTime / 1000.0),
-                "timestamp", System.currentTimeMillis()
-            );
+                    Map<String, Object> response = Map.of(
+                        "status", "success",
+                        "method", "ASYNC (비동기 병렬)",
+                        "processedCount", count,
+                        "processingTimeMs", processingTime,
+                        "processingTimeSec", String.format("%.2f", processingTime / 1000.0),
+                        "timestamp", System.currentTimeMillis()
+                    );
 
-            log.info("=== [비동기 병렬 처리] 완료: {}개, {}ms ===", count, processingTime);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("[비동기 병렬 처리] 임베딩 생성 실패", e);
-            return ResponseEntity.status(500).body(
-                Map.of(
-                    "status", "error",
-                    "method", "ASYNC",
-                    "message", e.getMessage(),
-                    "timestamp", System.currentTimeMillis()
-                )
-            );
-        }
-    }
-
-    /**
-     * 누락된 상품 임베딩 생성 (하위 호환성을 위한 기본 엔드포인트)
-     */
-    @PostMapping("/generate-missing-embeddings")
-    public ResponseEntity<Map<String, Object>> generateMissingEmbeddings() {
-        // 기본적으로 동기 처리 호출
-        return generateEmbeddingsSync();
+                    log.info("=== [비동기 병렬 처리] 완료: {}개, {}ms ===", count, processingTime);
+                    return ResponseEntity.ok(response);
+                })
+                .exceptionally(e -> {
+                    log.error("[비동기 병렬 처리] 임베딩 생성 실패", e);
+                    return ResponseEntity.status(500).body(
+                        Map.of(
+                            "status", "error",
+                            "method", "ASYNC",
+                            "message", e.getMessage(),
+                            "timestamp", System.currentTimeMillis()
+                        )
+                    );
+                });
     }
 
     /**
@@ -289,7 +202,7 @@ public class RecommendationTestController {
             Map<String, Object> response = Map.of(
                 "status", "success",
                 "productId", productId,
-                "message", "상품 임베딩 재생성 요청 완료",
+                "message", "상품 임베딩 재생성 완료",
                 "processingTimeMs", endTime - startTime,
                 "timestamp", System.currentTimeMillis()
             );
@@ -308,8 +221,6 @@ public class RecommendationTestController {
             );
         }
     }
-
-
 
     /**
      * 실제 대화 플로우로 추천 테스트 (ConversationalRecommendationService 사용)
@@ -345,16 +256,5 @@ public class RecommendationTestController {
                 )
             );
         }
-    }
-
-    /**
-     * 벡터 노름 계산
-     */
-    private double calculateNorm(float[] vector) {
-        double sum = 0.0;
-        for (float value : vector) {
-            sum += value * value;
-        }
-        return Math.sqrt(sum);
     }
 }
