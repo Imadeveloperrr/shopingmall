@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 추천 시스템 테스트용 컨트롤러
@@ -50,10 +51,10 @@ public class RecommendationTestController {
             log.info("텍스트 기반 추천 테스트: userId={}, query={}", userId, query);
 
             // 1. 벡터 기반 유사 상품 검색
-            List<ProductSimilarity> vectorResults = vectorService.findSimilarProducts(query, 5);
+            List<ProductSimilarity> vectorResults = vectorService.findSimilarProducts(query, 5).join();
             
             // 2. 추천 엔진 테스트 (ProductMatch 형태로)
-            var recommendationMatches = recommendationEngine.getRecommendations(query, 5);
+            var recommendationMatches = recommendationEngine.getRecommendations(query, 5).join();
 
             long endTime = System.currentTimeMillis();
             long processingTime = endTime - startTime;

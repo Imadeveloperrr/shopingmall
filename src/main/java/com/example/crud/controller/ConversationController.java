@@ -8,6 +8,7 @@ import com.example.crud.ai.recommendation.domain.dto.UserMessageRequestDto;
 import com.example.crud.data.member.service.MemberService;
 import com.example.crud.entity.Member;
 import com.example.crud.enums.ConversationStatus;
+import io.reactivex.Completable;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/conversation")
@@ -58,25 +60,35 @@ public class ConversationController {
      * 사용자 메시지 처리 및 추천
      */
     @PostMapping("/{conversationId}/message")
-    public ResponseEntity<RecommendationResponseDto> sendMessage(@PathVariable Long conversationId,
-                                                                 @Valid @RequestBody UserMessageRequestDto requestDto,
-                                                                 Authentication auth) {
+    public CompletableFuture<ResponseEntity<RecommendationResponseDto>> sendMessage(@PathVariable Long conversationId,
+                                                                                    @Valid @RequestBody UserMessageRequestDto requestDto,
+                                                                                    Authentication auth) {
         try {
             Conversation conv = cRepository.findById(conversationId)
                     .orElseThrow(() -> new IllegalArgumentException("대화를 찾을 수 없습니다."));
 
             if (!conv.getMember().getEmail().equals(auth.getName())) {
-                return ResponseEntity.ok(errorResponse(conversationId, "권한이 없습니다."));
+                return CompletableFuture.completedFuture(
+                        ResponseEntity.ok(errorResponse(conversationId, "권한이 없습니다."))
+                );
             }
 
             if (conv.getStatus() != ConversationStatus.ACTIVE) {
-                return ResponseEntity.ok(errorResponse(conversationId, "비활성화된 대화입니다."));
+                return CompletableFuture.completedFuture(
+                        ResponseEntity.ok(errorResponse(conversationId, "비활성화된 대화입니다."))
+                );
             }
 
-            RecommendationResponseDto responseDto = crService.processUserMessage(conversationId, requestDto.getMessage());
-            return ResponseEntity.ok(responseDto);
+            return crService.processUserMessage(conversationId, requestDto.getMessage())
+                    .thenApply(ResponseEntity::ok)
+                    .exceptionally(e -> {
+                        log.error("Controller 메시지 처리 실패", e);
+                        return ResponseEntity.ok(errorResponse(conversationId, "죄송합니다. 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요."));
+                    });
         } catch (Exception e) {
-            return ResponseEntity.ok(errorResponse(conversationId, "죄송합니다. 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요."));
+            return CompletableFuture.completedFuture(
+                    ResponseEntity.ok(errorResponse(conversationId, "죄송합니다. 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요."))
+            );
         }
     }
 

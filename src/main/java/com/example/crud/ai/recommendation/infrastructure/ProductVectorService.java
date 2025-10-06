@@ -24,77 +24,60 @@ public class ProductVectorService {
     private final ProductRepository productRepository;
     private final EmbeddingApiClient embeddingApiClient;
 
-    public List<ProductSimilarity> findSimilarProducts(String queryText, int limit) {
+    public CompletableFuture<List<ProductSimilarity>> findSimilarProducts(String queryText, int limit) {
         log.info("🔍 상품 유사도 검색 시작: 쿼리='{}', limit={}, threshold=0.3", queryText, limit);
+        // embeddingApiClient에서 널값 예외처리.
+        // Tomcat 스레드가 아닌 별도 embedding 스레드 풀에서 API 호출이 실행. Tomcat 스레드 풀 고갈 방지.
+        return embeddingApiClient.generateEmbeddingAsync(queryText)
+                .thenApply(queryVector -> {
+                    log.info("✅ 임베딩 벡터 생성 성공: 차원={}", queryVector.length);
+                    // 벡터를 PostgreSQL 형식으로 변환
+                    String vectorString = VectorFormatter.formatForPostgreSQL(queryVector);
+                    log.debug("🔄 벡터 문자열 변환 완료: 길이={}", vectorString.length());
+                    return vectorString;
+                })
+                .thenApply(vectorString -> {
+                    // 인덱스 사용으로 0.3 고정시키고 쿼리문 한번만 날림
+                    List<Object[]> results = productRepository.findSimilarProductsByVector(
+                            vectorString, 0.3, limit);
+                    return results;
+                })
+                .thenApply(results -> {
+                    List<ProductSimilarity> similarities = new ArrayList<>();
+                    for (Object[] row : results) {
+                        try {
+                            Long productId = extractLong(row[0], "productId");
+                            String productName = extractString(row[1], "productName");
+                            String description = extractString(row[2], "description");
+                            Double similarity = extractDouble(row[3], "similarity");
 
-        try {
-            // embeddingApiClient에서 널값 예외처리.
-            // Tomcat 스레드가 아닌 별도 embedding 스레드 풀에서 API 호출이 실행. Tomcat 스레드 풀 고갈 방지.
-            CompletableFuture<float[]> embeddingFuture = embeddingApiClient.generateEmbeddingAsync(queryText);
-            float[] queryVector = embeddingFuture.join();
-            log.info("✅ 임베딩 벡터 생성 성공: 차원={}", queryVector.length);
-
-            // 벡터를 PostgreSQL 형식으로 변환
-            String vectorString = VectorFormatter.formatForPostgreSQL(queryVector);
-            log.debug("🔄 벡터 문자열 변환 완료: 길이={}", vectorString.length());
-
-            // 인덱스 사용으로 0.3 고정시키고 쿼리문 한번만 날림
-            List<Object[]> results = productRepository.findSimilarProductsByVector(
-                    vectorString, 0.3, limit
-            );
-
-            List<ProductSimilarity> similarities = new ArrayList<>();
-            for (Object[] row : results) {
-                try {
-                    Long productId = extractLong(row[0], "productId");
-                    String productName = extractString(row[1], "productName");
-                    String description = extractString(row[2], "description");
-                    Double similarity = extractDouble(row[3], "similarity");
-
-                    similarities.add(new ProductSimilarity(
-                        productId, similarity, productName, description
-                    ));
-                    log.debug("🎯 상품 매칭: id={}, 유사도={}, 상품명='{}'", productId, String.format("%.4f", similarity), productName);
-                } catch (Exception e) {
-                    log.warn("상품 데이터 변환 실패, 해당 상품 건너뜀: {}", Arrays.toString(row), e);
-                    // 해당 상품만 건너뛰고 계속 진행
-                }
-            }
-
-            // 결과 분석 및 로깅
-            if (similarities.isEmpty()) {
-                log.warn("⚠️ 빈 결과 발생! 원인 분석:");
-                log.warn("  - 쿼리: '{}'", queryText);
-                log.warn("  - 임계값: 0.3 (30% 이상 유사도)");
-                log.warn("  - SQL 결과 개수: {}", results.size());
-                log.warn("  💡 해결방안: 임계값을 낮추거나 상품 데이터 확인 필요");
-            } else {
-                double maxSimilarity = similarities.stream().mapToDouble(ProductSimilarity::similarity).max().orElse(0.0);
-                double minSimilarity = similarities.stream().mapToDouble(ProductSimilarity::similarity).min().orElse(0.0);
-                log.info("✅ 추천 완료: {}개 상품, 유사도 범위 {:.4f}~{:.4f}", similarities.size(), minSimilarity, maxSimilarity);
-            }
-
-            return similarities;
-
-        } catch (NullPointerException e) {
-            log.error("검색어가 null입니다: {}", queryText, e);
-            throw new IllegalArgumentException("검색어가 비어있습니다.", e);
-        } catch (org.springframework.web.reactive.function.client.WebClientException e) {
-            log.error("OpenAI API 호출 실패: {}", e.getMessage(), e);
-            throw new RuntimeException("AI 서비스에 일시적 문제가 발생했습니다. 잠시 후 다시 시도해주세요.", e);
-        } catch (org.springframework.dao.DataAccessException e) {
-            log.error("데이터베이스 접근 오류: {}", e.getMessage(), e);
-            throw new RuntimeException("데이터 조회 중 문제가 발생했습니다. 관리자에게 문의해주세요.", e);
-        } catch (NumberFormatException e) {
-            log.error("벡터 데이터 변환 오류: {}", e.getMessage(), e);
-            throw new RuntimeException("상품 데이터 형식에 문제가 있습니다.", e);
-        } catch (IllegalArgumentException e) {
-            // 이미 처리된 예외는 다시 던지기
-            throw e;
-        } catch (Exception e) {
-            log.error("예상치 못한 오류 발생 - 쿼리: '{}', 상세: {}", queryText, e.getMessage(), e);
-            throw new RuntimeException("상품 추천 중 예상치 못한 오류가 발생했습니다: " + e.getMessage(), e);
-        }
+                            similarities.add(new ProductSimilarity(
+                                    productId, similarity, productName, description
+                            ));
+                            log.debug("🎯 상품 매칭: id={}, 유사도={}, 상품명='{}'", productId, String.format("%.4f", similarity), productName);
+                        } catch (Exception e) {
+                            log.warn("상품 데이터 변환 실패, 해당 상품 건너뜀: {}", Arrays.toString(row), e);
+                            // 해당 상품만 건너뛰고 계속 진행
+                        }
+                    }
+                    // 결과 분석 및 로깅
+                    if (similarities.isEmpty()) {
+                        log.warn("⚠️ 빈 결과 발생! 원인 분석:");
+                        log.warn("  - 쿼리: '{}'", queryText);
+                        log.warn("  - 임계값: 0.3 (30% 이상 유사도)");
+                        log.warn("  - SQL 결과 개수: {}", results.size());
+                        log.warn("  💡 해결방안: 임계값을 낮추거나 상품 데이터 확인 필요");
+                    } else {
+                        double maxSimilarity = similarities.stream().mapToDouble(ProductSimilarity::similarity).max().orElse(0.0);
+                        double minSimilarity = similarities.stream().mapToDouble(ProductSimilarity::similarity).min().orElse(0.0);
+                        log.info("✅ 추천 완료: {}개 상품, 유사도 범위 {:.4f}~{:.4f}", similarities.size(), minSimilarity, maxSimilarity);
+                    }
+                    return similarities;
+                })
+                .exceptionally(e -> {
+                    log.error("추천 생성 실패: {}", e.getMessage(), e);
+                    return List.of();  // 빈 리스트 반환
+                });
     }
 
     public List<ProductSimilarity> findSimilarProductsByProduct(Long productId, int limit) {

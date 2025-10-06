@@ -3,10 +3,12 @@ package com.example.crud.ai.recommendation.application;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService.ProductSimilarity;
 import com.example.crud.ai.recommendation.domain.dto.ProductMatch;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -21,15 +23,12 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class RecommendationEngine {
 
     private final ProductVectorService vectorService;
 
-    public RecommendationEngine(ProductVectorService vectorService) {
-        this.vectorService = vectorService;
-    }
-
-    public List<ProductMatch> getRecommendations(String message, int limit) {
+    public CompletableFuture<List<ProductMatch>> getRecommendations(String message, int limit) {
         if (message == null || message.trim().isEmpty()) {
             log.warn("빈 메시지로 추천 생성 요청됨.");
             throw new IllegalArgumentException("추천 생성할 메시지가 없습니다.");
@@ -39,20 +38,19 @@ public class RecommendationEngine {
             throw new IllegalArgumentException("추천 개수는 1~10 사이여야 합니다.");
         }
 
-        try {
-            List<ProductSimilarity> vectorMatches = vectorService.findSimilarProducts(message, limit);
-
-            return vectorMatches.stream()
-                    .map(s -> new ProductMatch(
-                            s.productId(),
-                            s.productName(),
-                            s.similarity()
-                    ))
-                    .collect(Collectors.toList());
-
-        } catch (Exception e) {
-            log.error("추천 생성 중 오류 발생: message={}, limit={}", message, limit, e);
-            throw new RuntimeException("추천 생성에 실패했습니다.", e);
-        }
+        return vectorService.findSimilarProducts(message, limit)
+                .thenApply(vectorMatches ->
+                    vectorMatches.stream()
+                            .map(s -> new ProductMatch(
+                                    s.productId(),
+                                    s.productName(),
+                                    s.similarity()
+                            ))
+                            .collect(Collectors.toList())
+                )
+                .exceptionally(e -> {
+                    log.error("추천 생성 중 오류 발생: message={}, limit={}", message, limit, e);
+                    return List.of();
+                });
     }
 }
