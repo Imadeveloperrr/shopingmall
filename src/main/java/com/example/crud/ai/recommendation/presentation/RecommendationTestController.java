@@ -4,6 +4,7 @@ import com.example.crud.ai.embedding.application.EmbeddingService;
 import com.example.crud.ai.embedding.application.ProductEmbeddingCommandService;
 import com.example.crud.ai.recommendation.application.RecommendationEngine;
 import com.example.crud.ai.recommendation.application.ConversationalRecommendationService;
+import com.example.crud.ai.recommendation.domain.dto.ProductMatch;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService.ProductSimilarity;
 import com.example.crud.ai.embedding.EmbeddingApiClient;
@@ -35,48 +36,53 @@ public class RecommendationTestController {
      * 텍스트 기반 상품 추천 테스트
      */
     @PostMapping("/text")
-    public ResponseEntity<Map<String, Object>> recommendByText(
+    public CompletableFuture<ResponseEntity<Map<String, Object>>> recommendByText(
             @RequestParam(required = false) Long userId,
             @RequestBody Map<String, String> request) {
-            long startTime = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
 
-        try {
-            String query = request.get("query");
-            if (query == null || query.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(
+        String query = request.get("query");
+        if (query == null || query.trim().isEmpty()) {
+            return CompletableFuture.completedFuture(ResponseEntity.badRequest().body(
                     Map.of("error", "query는 필수입니다")
-                );
-            }
-
-            log.info("텍스트 기반 추천 테스트: userId={}, query={}", userId, query);
-
-            // 1. 벡터 기반 유사 상품 검색
-            List<ProductSimilarity> vectorResults = vectorService.findSimilarProducts(query, 5).join();
-            
-            // 2. 추천 엔진 테스트 (ProductMatch 형태로)
-            var recommendationMatches = recommendationEngine.getRecommendations(query, 5).join();
-
-            long endTime = System.currentTimeMillis();
-            long processingTime = endTime - startTime;
-
-            Map<String, Object> response = Map.of(
-                    "query", query,
-                    "vectorResults", vectorResults,
-                    "vectorResultCount", vectorResults.size(),
-                    "recommendationMatches", recommendationMatches,
-                    "recommendationCount", recommendationMatches.size(),
-                    "processingTimeMs", processingTime,
-                    "processingTimeSec", String.format("%.2f", processingTime / 1000.0)
-            );
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("추천 테스트 실패", e);
-            return ResponseEntity.status(500).body(
-                Map.of("error", "추천 시스템 오류: " + e.getMessage())
-            );
+            ));
         }
+
+        log.info("텍스트 기반 추천 테스트: userId={}, query={}", userId, query);
+
+        // 1. 벡터 기반 유사 상품 검색
+        CompletableFuture<List<ProductSimilarity>> vectorResultsFuture = vectorService.findSimilarProducts(query, 5);
+
+        // 2. 추천 엔진 테스트 (ProductMatch 형태로)
+        CompletableFuture<List<ProductMatch>> recommendationMatchesFuture = recommendationEngine.getRecommendations(query, 5);
+
+        return CompletableFuture.allOf(vectorResultsFuture, recommendationMatchesFuture)
+                .thenApply(v -> {
+
+                    List<ProductMatch> recommendationMatches = recommendationMatchesFuture.join();
+                    List<ProductSimilarity> vectorResults = vectorResultsFuture.join();
+
+                    long endTime = System.currentTimeMillis();
+                    long processingTime = endTime - startTime;
+
+                    Map<String, Object> response = Map.of(
+                            "query", query,
+                            "vectorResults", vectorResults,
+                            "vectorResultCount", vectorResults.size(),
+                            "recommendationMatches", recommendationMatches,
+                            "recommendationCount", recommendationMatches.size(),
+                            "processingTimeMs", processingTime,
+                            "processingTimeSec", String.format("%.2f", processingTime / 1000.0)
+                    );
+
+                    return ResponseEntity.ok(response);
+                })
+                .exceptionally(e -> {
+                    log.error("추천 테스트 실패", e);
+                    return ResponseEntity.status(500).body(
+                            Map.of("error", "추천 시스템 오류: " + e.getMessage())
+                    );
+                });
     }
 
     /**
