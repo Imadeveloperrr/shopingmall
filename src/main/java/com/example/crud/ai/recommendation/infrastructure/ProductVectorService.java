@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.example.crud.ai.common.VectorFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import static com.example.crud.common.utility.NativeQueryResultExtractor.*;
 
@@ -23,6 +24,7 @@ public class ProductVectorService {
 
     private final ProductRepository productRepository;
     private final EmbeddingApiClient embeddingApiClient;
+    private final Executor dbTaskExecutor;
 
     public CompletableFuture<List<ProductSimilarity>> findSimilarProducts(String queryText, int limit) {
         log.info("🔍 상품 유사도 검색 시작: 쿼리='{}', limit={}, threshold=0.3", queryText, limit);
@@ -36,12 +38,12 @@ public class ProductVectorService {
                     log.debug("🔄 벡터 문자열 변환 완료: 길이={}", vectorString.length());
                     return vectorString;
                 })
-                .thenApply(vectorString -> {
+                .thenApplyAsync(vectorString -> {
                     // 인덱스 사용으로 0.3 고정시키고 쿼리문 한번만 날림
                     List<Object[]> results = productRepository.findSimilarProductsByVector(
                             vectorString, 0.3, limit);
                     return results;
-                })
+                }, dbTaskExecutor)
                 .thenApply(results -> {
                     List<ProductSimilarity> similarities = new ArrayList<>();
                     for (Object[] row : results) {

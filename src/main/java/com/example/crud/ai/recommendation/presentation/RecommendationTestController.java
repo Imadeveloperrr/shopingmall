@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 /**
@@ -36,6 +37,7 @@ public class RecommendationTestController {
     private final ProductEmbeddingCommandService productEmbeddingCommandService;
     private final EmbeddingService productEmbeddingService;
     private final ProductRepository productRepository;
+    private final Executor dbTaskExecutor;
 
     /**
      * 텍스트 기반 상품 추천 테스트
@@ -58,7 +60,7 @@ public class RecommendationTestController {
 
         // RecommendationEngine만 호출 (중복 호출 제거)
         return recommendationEngine.getRecommendations(query, 5)
-                .thenApply(recommendations -> {
+                .thenApplyAsync(recommendations -> {
                     long endTime = System.currentTimeMillis();
                     long processingTime = endTime - startTime;
 
@@ -75,7 +77,7 @@ public class RecommendationTestController {
                     );
 
                     return ResponseEntity.ok(response);
-                })
+                }, dbTaskExecutor)
                 .exceptionally(e -> {
                     log.error("추천 테스트 실패", e);
                     return ResponseEntity.status(500).body(
