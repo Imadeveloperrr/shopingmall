@@ -3,7 +3,8 @@ package com.example.crud.ai.embedding;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -19,14 +20,17 @@ import java.util.concurrent.CompletionException;
 @Slf4j
 public class EmbeddingApiClient {
     private final WebClient webClient;
+    private final CacheManager cacheManager;
 
     @Value("${openai.api.key:}")
     private String openaiApiKey;
 
-    public EmbeddingApiClient(@Qualifier("embeddingWebClient") WebClient webClient) {
+    public EmbeddingApiClient(@Qualifier("embeddingWebClient") WebClient webClient, CacheManager cacheManager) {
         this.webClient = webClient;
+        this.cacheManager = cacheManager;
     }
 
+    // @Cacheable(value = "embedding", key = "#text.trim().toLowerCase().hashCode()") @Async랑 쓰면 프록시충돌.
     @Async("embeddingTaskExecutor")
     public CompletableFuture<float[]> generateEmbeddingAsync(String text) {
         log.info("=== generateEmbeddingAsync 시작: textLength={}", text != null ? text.length() : 0);
@@ -38,6 +42,30 @@ public class EmbeddingApiClient {
             log.error("OpenAI API 키가 설정되지 않았습니다");
             return CompletableFuture.failedFuture(new IllegalStateException("OpenAI API 키가 설정되지 않았습니다"));
         }
+
+        Cache cache = cacheManager.getCache("embeddings");
+
+        if (cache == null) {
+            log.info("Redis System Error, 캐시 없이 진행");
+        } else {
+            String cacheKey = String.valueOf(text.trim().toLowerCase().hashCode());
+            log.debug("Redis Cache Key Generate {}", cacheKey);
+
+            Cache.ValueWrapper wrapper = cache.get(cacheKey);
+            if (wrapper != null) {
+                Object cacheValue = wrapper.get();
+                if (cacheValue instanceof float[]) {
+                    float[] cachedEmbedding = (float[]) cacheValue;
+                    log.info("Redis Cache Hit Key {}", cacheKey);
+                    return CompletableFuture.completedFuture(cachedEmbedding);
+                } else {
+                    log.warn("Redis Cache Wrong Type {}", cacheValue != null ? cacheValue.getClass() : "null");
+                }
+            } else {
+                log.info("Redis Cache Miss {}", cacheKey);
+            }
+        }
+
 
         try {
             log.info("OpenAI API 호출 준비 중...");
@@ -67,7 +95,16 @@ public class EmbeddingApiClient {
                     .doOnError(error -> log.error("임베딩 API 호출 중 에러 발생", error))
                     .toFuture();
 
-            log.info("CompletableFuture 생성 완료, 반환");
+            if (cache != null) {
+                String cacheKey = String.valueOf(text.trim().toLowerCase().hashCode());
+
+                future = future.thenApply(result -> {
+                    cache.put(cacheKey, result);
+                    log.info("Redis : Cache Success Save {}", cacheKey);
+                    return result;
+                });
+            }
+
             return future;
         } catch (Exception e) {
             log.error("임베딩 요청 실패", e);
