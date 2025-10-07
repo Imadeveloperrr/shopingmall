@@ -10,18 +10,18 @@ import java.util.List;
 
 /*
 
-  1. 코사인 유사도 (Cosine Similarity)
+  1. 코사인 유사도(Cosine Similarity)
 
   범위: -1 ~ 1
-  1에 가까울수록 = 더 유사함
-  0 = 관련없음
+  1에 가까울수록 = 매우 유사
+  0 = 관계없음
   -1 = 완전히 반대
 
   2. 코사인 거리 (Cosine Distance)
 
   범위: 0 ~ 2
-  0에 가까울수록 = 더 유사함  ← 이게 핵심!
-  1 = 관련없음
+  0에 가까울수록 = 매우 유사 (가장 중요하게 생각!)
+  1 = 관계없음
   2 = 완전히 반대
 
  */
@@ -39,6 +39,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     }
 
     // docker compose exec test-db psql -U sungho -d app_test
+    // docker-compose exec test-db psql -U sungho -d app_test -c "UPDATE product SET description_vector = NULL;"
 
     /**
      *
@@ -54,7 +55,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * IVFFlat 인덱스 추가.
      * Full Scan: 5초
      * IVFFlat: 50ms (100배 빠름)
-     * HNSW: 100ms (50배 빠름
+     * HNSW: 100ms (50배 빠름)
      */
     // 벡터 유사도 검색을 위한 네이티브 쿼리 (코사인 유사도) - TEXT에서 vector로 CAST
     @Query(value = """
@@ -62,11 +63,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             p.number as productId,
             p.name as productName,
             p.description as description,
-            (1 - (p.description_vector <=> :queryVector::vector)) as similarity
+            (1 - (p.description_vector <=> CAST(:queryVector AS vector))) as similarity
         FROM product p
         WHERE p.description_vector IS NOT NULL
-        AND (p.description_vector <=> :queryVector::vector) < (1 - :threshold)
-        ORDER BY p.description_vector <=> :queryVector::vector
+        AND (p.description_vector <=> CAST(:queryVector AS vector)) < (1 - :threshold)
+        ORDER BY p.description_vector <=> CAST(:queryVector AS vector)
         LIMIT :limit
         """, nativeQuery = true)
     List<Object[]> findSimilarProductsByVector(
@@ -75,11 +76,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("limit") int limit
     );
 
-    // 벡터 업데이트를 위한 네이티브 쿼리 -
+    // 벡터 업데이트를 위한 네이티브 쿼리
     @Modifying(clearAutomatically = true)
     @Query(value = """
         UPDATE product
-        SET description_vector = :vectorString::vector
+        SET description_vector = CAST(:vectorString AS vector)
         WHERE number = :productId
         """, nativeQuery = true)
     int updateDescriptionVector(@Param("productId") Long productId, @Param("vectorString") String vectorString);

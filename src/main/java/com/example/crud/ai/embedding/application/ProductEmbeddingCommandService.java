@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 @Service
@@ -30,7 +31,19 @@ public class ProductEmbeddingCommandService {
             String productText = productTextBuilder.buildProductText(product);
             log.info("상품 텍스트 준비 완료: productId={}, textLength={}", productId, productText.length());
 
-            float[] embedding = embeddingApiClient.generateEmbeddingAsync(productText).join();
+            log.info("임베딩 API 호출 시작: productId={}", productId);
+            CompletableFuture<float[]> future = embeddingApiClient.generateEmbeddingAsync(productText);
+            log.info("CompletableFuture 받음: productId={}, future={}", productId, future);
+
+            log.info("join() 호출 전: productId={}", productId);
+            float[] embedding = future.join();
+            log.info("join() 호출 후: productId={}, embedding={}", productId, embedding);
+
+            if (embedding == null) {
+                log.error("임베딩 생성 결과가 null입니다: productId={}", productId);
+                throw new IllegalStateException("임베딩 생성 결과가 null입니다");
+            }
+
             log.debug("임베딩 생성 완료: productId={}, dimension={}", productId, embedding.length);
 
             String vectorString = VectorFormatter.formatForPostgreSQL(embedding);

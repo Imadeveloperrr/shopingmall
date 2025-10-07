@@ -6,14 +6,21 @@ import com.example.crud.ai.recommendation.application.RecommendationEngine;
 import com.example.crud.ai.recommendation.domain.dto.ProductMatch;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService.ProductSimilarity;
+import com.example.crud.data.product.dto.ProductResponseDto;
+import com.example.crud.entity.Product;
+import com.example.crud.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * 추천 시스템 테스트용 컨트롤러
@@ -28,9 +35,11 @@ public class RecommendationTestController {
     private final ProductVectorService vectorService;
     private final ProductEmbeddingCommandService productEmbeddingCommandService;
     private final EmbeddingService productEmbeddingService;
+    private final ProductRepository productRepository;
 
     /**
      * 텍스트 기반 상품 추천 테스트
+     * ConversationalRecommendationService와 동일한 로직으로 처리
      */
     @PostMapping("/text")
     public CompletableFuture<ResponseEntity<Map<String, Object>>> recommendByText(
@@ -47,27 +56,20 @@ public class RecommendationTestController {
 
         log.info("텍스트 기반 추천 테스트: userId={}, query={}", userId, query);
 
-        // 1. 벡터 기반 유사 상품 검색
-        CompletableFuture<List<ProductSimilarity>> vectorResultsFuture = vectorService.findSimilarProducts(query, 5);
-
-        // 2. 추천 엔진 테스트 (ProductMatch 형태로)
-        CompletableFuture<List<ProductMatch>> recommendationMatchesFuture = recommendationEngine.getRecommendations(query, 5);
-
-        return CompletableFuture.allOf(vectorResultsFuture, recommendationMatchesFuture)
-                .thenApply(v -> {
-
-                    List<ProductMatch> recommendationMatches = recommendationMatchesFuture.join();
-                    List<ProductSimilarity> vectorResults = vectorResultsFuture.join();
-
+        // RecommendationEngine만 호출 (중복 호출 제거)
+        return recommendationEngine.getRecommendations(query, 5)
+                .thenApply(recommendations -> {
                     long endTime = System.currentTimeMillis();
                     long processingTime = endTime - startTime;
 
+                    // ProductMatch를 ProductResponseDto로 변환
+                    List<ProductResponseDto> products = convertToProductResponseDtos(recommendations);
+
                     Map<String, Object> response = Map.of(
                             "query", query,
-                            "vectorResults", vectorResults,
-                            "vectorResultCount", vectorResults.size(),
-                            "recommendationMatches", recommendationMatches,
-                            "recommendationCount", recommendationMatches.size(),
+                            "recommendations", recommendations,
+                            "recommendationCount", recommendations.size(),
+                            "products", products,
                             "processingTimeMs", processingTime,
                             "processingTimeSec", String.format("%.2f", processingTime / 1000.0)
                     );
@@ -80,6 +82,50 @@ public class RecommendationTestController {
                             Map.of("error", "추천 시스템 오류: " + e.getMessage())
                     );
                 });
+    }
+
+    /**
+     * ProductMatch를 ProductResponseDto로 변환
+     * ConversationalRecommendationService.convertToProductResponseDtos()와 동일
+     */
+    private List<ProductResponseDto> convertToProductResponseDtos(List<ProductMatch> matches) {
+        List<Long> productIds = matches.stream().map(ProductMatch::id).toList();
+
+        Map<Long, Product> productMap = productRepository.findAllById(productIds)
+                .stream()
+                .collect(Collectors.toMap(Product::getNumber, p -> p));
+
+        return matches.stream()
+                .map(match -> {
+                    Product product = productMap.get(match.id());
+                    if (product == null) {
+                        ProductResponseDto dto = new ProductResponseDto();
+                        dto.setNumber(match.id());
+                        dto.setName(match.name());
+                        return dto;
+                    }
+
+                    ProductResponseDto dto = new ProductResponseDto();
+                    BeanUtils.copyProperties(product, dto);
+
+                    if (product.getPrice() != null) {
+                        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.KOREA);
+                        dto.setPrice(formatter.format(product.getPrice()) + "원");
+                    }
+
+                    if (product.getCategory() != null) {
+                        dto.setCategory(product.getCategory().name());
+                    }
+
+                    if (product.getDescription() != null) {
+                        dto.setDescription(product.getDescription().replace("\n", "<br>"));
+                    }
+
+                    dto.setRelevance(match.score());
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
     /**

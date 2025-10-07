@@ -28,32 +28,47 @@ public class EmbeddingApiClient {
     }
 
     @Async("embeddingTaskExecutor")
-    @Cacheable(value = "embeddings", key = "#text.trim().toLowerCase().hashCode()")
     public CompletableFuture<float[]> generateEmbeddingAsync(String text) {
+        log.info("=== generateEmbeddingAsync 시작: textLength={}", text != null ? text.length() : 0);
         if (text == null || text.trim().isEmpty()) {
             return CompletableFuture.failedFuture(new NullPointerException("임베딩 생성할 텍스트가 없습니다"));
         }
 
         if (openaiApiKey == null || openaiApiKey.trim().isEmpty()) {
+            log.error("OpenAI API 키가 설정되지 않았습니다");
             return CompletableFuture.failedFuture(new IllegalStateException("OpenAI API 키가 설정되지 않았습니다"));
         }
 
         try {
+            log.info("OpenAI API 호출 준비 중...");
             Map<String, Object> request = Map.of(
                     "input", text,
                     "model", "text-embedding-3-small"
             );
 
-            return webClient.post()
+            log.info("WebClient로 API 호출 시작");
+            CompletableFuture<float[]> future = webClient.post()
                     .uri("https://api.openai.com/v1/embeddings")
                     .header("Authorization", "Bearer " + openaiApiKey)
                     .header("Content-Type", "application/json")
                     .bodyValue(request)
                     .retrieve()
+                    .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+                            clientResponse -> clientResponse.bodyToMono(String.class)
+                                    .map(errorBody -> {
+                                        log.error("OpenAI API 에러 응답: status={}, body={}",
+                                                clientResponse.statusCode(), errorBody);
+                                        return new RuntimeException("OpenAI API 호출 실패: " +
+                                                clientResponse.statusCode() + " - " + errorBody);
+                                    }))
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .timeout(Duration.ofSeconds(10))
                     .map(this::parseEmbeddingResponse)
+                    .doOnError(error -> log.error("임베딩 API 호출 중 에러 발생", error))
                     .toFuture();
+
+            log.info("CompletableFuture 생성 완료, 반환");
+            return future;
         } catch (Exception e) {
             log.error("임베딩 요청 실패", e);
             return CompletableFuture.failedFuture(new EmbeddingServiceException("임베딩 서비스를 일시적으로 사용할 수 없습니다"));
