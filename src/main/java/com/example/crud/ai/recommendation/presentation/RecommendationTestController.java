@@ -11,7 +11,6 @@ import com.example.crud.entity.Product;
 import com.example.crud.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,6 +38,10 @@ public class RecommendationTestController {
     private final ProductRepository productRepository;
     private final Executor dbTaskExecutor;
 
+    // ThreadLocal NumberFormat for price formatting
+    private static final ThreadLocal<NumberFormat> PRICE_FORMATTER =
+        ThreadLocal.withInitial(() -> NumberFormat.getNumberInstance(Locale.KOREA));
+
     /**
      * 텍스트 기반 상품 추천 테스트
      * ConversationalRecommendationService와 동일한 로직으로 처리
@@ -60,7 +63,7 @@ public class RecommendationTestController {
 
         // RecommendationEngine만 호출 (중복 호출 제거)
         return recommendationEngine.getRecommendations(query, 5)
-                .thenApplyAsync(recommendations -> {
+                .thenApply(recommendations -> {
                     long endTime = System.currentTimeMillis();
                     long processingTime = endTime - startTime;
 
@@ -77,7 +80,7 @@ public class RecommendationTestController {
                     );
 
                     return ResponseEntity.ok(response);
-                }, dbTaskExecutor)
+                })
                 .exceptionally(e -> {
                     log.error("추천 테스트 실패", e);
                     return ResponseEntity.status(500).body(
@@ -108,11 +111,13 @@ public class RecommendationTestController {
                     }
 
                     ProductResponseDto dto = new ProductResponseDto();
-                    BeanUtils.copyProperties(product, dto);
+
+                    // Direct mapping (avoid reflection overhead from BeanUtils.copyProperties)
+                    dto.setNumber(product.getNumber());
+                    dto.setName(product.getName());
 
                     if (product.getPrice() != null) {
-                        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.KOREA);
-                        dto.setPrice(formatter.format(product.getPrice()) + "원");
+                        dto.setPrice(PRICE_FORMATTER.get().format(product.getPrice()) + "원");
                     }
 
                     if (product.getCategory() != null) {

@@ -10,13 +10,13 @@ import java.util.Locale;
  */
 public class VectorFormatter {
 
-    private static final DecimalFormat VECTOR_FORMAT;
-
-    static {
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
-        VECTOR_FORMAT = new DecimalFormat("0.########", symbols);
-        VECTOR_FORMAT.setGroupingUsed(false);
-    }
+    private static final ThreadLocal<DecimalFormat> VECTOR_FORMAT =
+            ThreadLocal.withInitial( () -> {
+                DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
+                DecimalFormat format = new DecimalFormat("0.########", symbols);
+                format.setGroupingUsed(false);
+                return format;
+            });
 
     // 인스턴스화 방지
     private VectorFormatter() {
@@ -37,7 +37,7 @@ public class VectorFormatter {
         sb.append("[");
         for (int i = 0; i < vector.length; i++) {
             if (i > 0) sb.append(",");
-            sb.append(VECTOR_FORMAT.format(vector[i]));
+            sb.append(VECTOR_FORMAT.get().format(vector[i]));
         }
         sb.append("]");
         return sb.toString();

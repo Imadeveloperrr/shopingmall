@@ -31,7 +31,7 @@ public class EmbeddingApiClient {
     }
 
     // @Cacheable(value = "embedding", key = "#text.trim().toLowerCase().hashCode()") @Async랑 쓰면 프록시충돌.
-    @Async("embeddingTaskExecutor")
+    //@Async("embeddingTaskExecutor")
     public CompletableFuture<float[]> generateEmbeddingAsync(String text) {
         log.info("=== generateEmbeddingAsync 시작: textLength={}", text != null ? text.length() : 0);
         if (text == null || text.trim().isEmpty()) {
@@ -69,34 +69,24 @@ public class EmbeddingApiClient {
 
         try {
             log.info("OpenAI API 호출 준비 중...");
+            String normalized = text.trim().toLowerCase();
             Map<String, Object> request = Map.of(
-                    "input", text,
+                    "input", normalized, // Cache Key와 동일한 정규화 텍스트를 API요청.
                     "model", "text-embedding-3-small"
             );
 
             log.info("WebClient로 API 호출 시작");
             CompletableFuture<float[]> future = webClient.post()
-                    .uri("https://api.openai.com/v1/embeddings")
-                    .header("Authorization", "Bearer " + openaiApiKey)
-                    .header("Content-Type", "application/json")
+                    .uri("/v1/embeddings")
                     .bodyValue(request)
                     .retrieve()
-                    .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
-                            clientResponse -> clientResponse.bodyToMono(String.class)
-                                    .map(errorBody -> {
-                                        log.error("OpenAI API 에러 응답: status={}, body={}",
-                                                clientResponse.statusCode(), errorBody);
-                                        return new RuntimeException("OpenAI API 호출 실패: " +
-                                                clientResponse.statusCode() + " - " + errorBody);
-                                    }))
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .timeout(Duration.ofSeconds(10))
                     .map(this::parseEmbeddingResponse)
-                    .doOnError(error -> log.error("임베딩 API 호출 중 에러 발생", error))
                     .toFuture();
 
             if (cache != null) {
-                String cacheKey = String.valueOf(text.trim().toLowerCase().hashCode());
+                String cacheKey = String.valueOf(normalized.hashCode());
 
                 future = future.thenApply(result -> {
                     cache.put(cacheKey, result);

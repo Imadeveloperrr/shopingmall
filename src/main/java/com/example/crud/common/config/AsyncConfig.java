@@ -30,18 +30,6 @@ public class AsyncConfig implements AsyncConfigurer {
         return executor;
     }
 
-    @Bean(name = "embeddingTaskExecutor")
-    public TaskExecutor embeddingTaskExecutor() {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(20); // 2 -> 20
-        executor.setMaxPoolSize(50); // 10 -> 50
-        executor.setQueueCapacity(100);
-        executor.setThreadNamePrefix("Embedding-");
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        executor.initialize();
-        return executor;
-    }
-
     @Bean(name = "dbTaskExecutor")
     public TaskExecutor dbTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
