@@ -3,24 +3,20 @@ package com.example.crud.ai.recommendation.presentation;
 import com.example.crud.ai.embedding.application.EmbeddingService;
 import com.example.crud.ai.embedding.application.ProductEmbeddingCommandService;
 import com.example.crud.ai.recommendation.application.RecommendationEngine;
+import com.example.crud.ai.recommendation.domain.converter.ProductResponseDtoConverter;
 import com.example.crud.ai.recommendation.domain.dto.ProductMatch;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService;
 import com.example.crud.ai.recommendation.infrastructure.ProductVectorService.ProductSimilarity;
 import com.example.crud.data.product.dto.ProductResponseDto;
-import com.example.crud.entity.Product;
-import com.example.crud.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.text.NumberFormat;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
 
 /**
  * 추천 시스템 테스트용 컨트롤러
@@ -35,12 +31,8 @@ public class RecommendationTestController {
     private final ProductVectorService vectorService;
     private final ProductEmbeddingCommandService productEmbeddingCommandService;
     private final EmbeddingService productEmbeddingService;
-    private final ProductRepository productRepository;
+    private final ProductResponseDtoConverter productResponseDtoConverter;
     private final Executor dbTaskExecutor;
-
-    // ThreadLocal NumberFormat for price formatting
-    private static final ThreadLocal<NumberFormat> PRICE_FORMATTER =
-        ThreadLocal.withInitial(() -> NumberFormat.getNumberInstance(Locale.KOREA));
 
     /**
      * 텍스트 기반 상품 추천 테스트
@@ -67,8 +59,8 @@ public class RecommendationTestController {
                     long endTime = System.currentTimeMillis();
                     long processingTime = endTime - startTime;
 
-                    // ProductMatch를 ProductResponseDto로 변환
-                    List<ProductResponseDto> products = convertToProductResponseDtos(recommendations);
+                    // ProductMatch를 ProductResponseDto로 변환 (Converter 사용)
+                    List<ProductResponseDto> products = productResponseDtoConverter.convertToProductResponseDtos(recommendations);
 
                     Map<String, Object> response = Map.of(
                             "query", query,
@@ -87,52 +79,6 @@ public class RecommendationTestController {
                             Map.of("error", "추천 시스템 오류: " + e.getMessage())
                     );
                 });
-    }
-
-    /**
-     * ProductMatch를 ProductResponseDto로 변환
-     * ConversationalRecommendationService.convertToProductResponseDtos()와 동일
-     */
-    private List<ProductResponseDto> convertToProductResponseDtos(List<ProductMatch> matches) {
-        List<Long> productIds = matches.stream().map(ProductMatch::id).toList();
-
-        Map<Long, Product> productMap = productRepository.findAllById(productIds)
-                .stream()
-                .collect(Collectors.toMap(Product::getNumber, p -> p));
-
-        return matches.stream()
-                .map(match -> {
-                    Product product = productMap.get(match.id());
-                    if (product == null) {
-                        ProductResponseDto dto = new ProductResponseDto();
-                        dto.setNumber(match.id());
-                        dto.setName(match.name());
-                        return dto;
-                    }
-
-                    ProductResponseDto dto = new ProductResponseDto();
-
-                    // Direct mapping (avoid reflection overhead from BeanUtils.copyProperties)
-                    dto.setNumber(product.getNumber());
-                    dto.setName(product.getName());
-
-                    if (product.getPrice() != null) {
-                        dto.setPrice(PRICE_FORMATTER.get().format(product.getPrice()) + "원");
-                    }
-
-                    if (product.getCategory() != null) {
-                        dto.setCategory(product.getCategory().name());
-                    }
-
-                    if (product.getDescription() != null) {
-                        dto.setDescription(product.getDescription().replace("\n", "<br>"));
-                    }
-
-                    dto.setRelevance(match.score());
-
-                    return dto;
-                })
-                .collect(Collectors.toList());
     }
 
     /**

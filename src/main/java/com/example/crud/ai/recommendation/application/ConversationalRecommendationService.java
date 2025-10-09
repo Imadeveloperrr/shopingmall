@@ -3,22 +3,16 @@ package com.example.crud.ai.recommendation.application;
 import java.util.*;
 
 import com.example.crud.ai.conversation.application.command.ConversationCommandService;
+import com.example.crud.ai.recommendation.domain.converter.ProductResponseDtoConverter;
 import com.example.crud.ai.recommendation.domain.dto.ProductMatch;
 import com.example.crud.ai.recommendation.domain.dto.RecommendationResponseDto;
 import com.example.crud.ai.recommendation.domain.dto.UserMessageRequestDto;
 import com.example.crud.data.product.dto.ProductResponseDto;
-import com.example.crud.entity.Product;
 import com.example.crud.enums.MessageType;
-import com.example.crud.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import java.text.NumberFormat;
-import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 /*
  응답 메시지도 저장하는 이유.
 
@@ -59,7 +53,7 @@ public class ConversationalRecommendationService {
 
     private final RecommendationEngine recommendationEngine;
     private final ConversationCommandService commandService;
-    private final ProductRepository productRepository;
+    private final ProductResponseDtoConverter productResponseDtoConverter;
 
     public CompletableFuture<RecommendationResponseDto> processUserMessage(Long id, String message) {
         try {
@@ -72,8 +66,8 @@ public class ConversationalRecommendationService {
             // 상품 추천 (비동기)
             return recommendationEngine.getRecommendations(message, 5)
                     .thenApply(recommendations -> {
-                        // ProductMatch를 ProductResponseDto로 변환
-                        List<ProductResponseDto> productResponseDtos = convertToProductResponseDtos(recommendations);
+                        // ProductMatch를 ProductResponseDto로 변환 (Converter 사용)
+                        List<ProductResponseDto> productResponseDtos = productResponseDtoConverter.convertToProductResponseDtos(recommendations);
 
                         // AI 응답 메시지
                         String AiResponse = generateAIResponse(recommendations);
@@ -164,53 +158,5 @@ public class ConversationalRecommendationService {
         }
 
         return sb.toString();
-    }
-
-    private List<ProductResponseDto> convertToProductResponseDtos(List<ProductMatch> matches) {
-
-        List<Long> productIds = matches.stream().map(ProductMatch::id).toList();
-
-        Map<Long, Product> productMap = productRepository.findAllById(productIds)
-                .stream()
-                .collect(Collectors.toMap(Product::getNumber, Function.identity()));
-
-        return matches.stream()
-                .map(match -> {
-                    // Product 엔티티 조회
-                    Product product = productMap.get(match.id());
-                    if (product == null) {
-                        // Product를 찾을 수 없는 경우 기본 DTO 반환
-                        ProductResponseDto dto = new ProductResponseDto();
-                        dto.setNumber(match.id());
-                        dto.setName(match.name());
-                        return dto;
-                    }
-
-                    // Product를 ProductResponseDto로 변환
-                    ProductResponseDto dto = new ProductResponseDto();
-                    BeanUtils.copyProperties(product, dto);
-
-                    // 가격 포맷팅
-                    if (product.getPrice() != null) {
-                        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.KOREA);
-                        dto.setPrice(formatter.format(product.getPrice()) + "원");
-                    }
-
-                    // 카테고리 설정
-                    if (product.getCategory() != null) {
-                        dto.setCategory(product.getCategory().name());
-                    }
-
-                    // 설명 줄바꿈 처리
-                    if (product.getDescription() != null) {
-                        dto.setDescription(product.getDescription().replace("\n", "<br>"));
-                    }
-
-                    // 매칭 점수 추가 (선택적)
-                    dto.setRelevance(match.score());
-
-                    return dto;
-                })
-                .collect(Collectors.toList());
     }
 }
