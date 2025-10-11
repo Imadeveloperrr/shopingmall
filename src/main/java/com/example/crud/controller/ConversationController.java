@@ -64,7 +64,7 @@ public class ConversationController {
                                                                                     @Valid @RequestBody UserMessageRequestDto requestDto,
                                                                                     Authentication auth) {
         try {
-            Conversation conv = cRepository.findById(conversationId)
+            Conversation conv = cRepository.findByIdWithMember(conversationId)
                     .orElseThrow(() -> new IllegalArgumentException("대화를 찾을 수 없습니다."));
 
             if (!conv.getMember().getEmail().equals(auth.getName())) {
@@ -95,7 +95,7 @@ public class ConversationController {
     @PostMapping("/{conversationId}/end")
     public ResponseEntity<Map<String, Object>> endConversation(@PathVariable Long conversationId, Authentication auth) {
         try {
-            Conversation conv = cRepository.findById(conversationId).orElseThrow(() -> new IllegalArgumentException("대화를 찾을 수 없습니다."));
+            Conversation conv = cRepository.findByIdWithMember(conversationId).orElseThrow(() -> new IllegalArgumentException("대화를 찾을 수 없습니다."));
             if (!conv.getMember().getEmail().equals(auth.getName())) {
                 return ResponseEntity.ok(Map.of("error", "권한이 없습니다."));
             }
