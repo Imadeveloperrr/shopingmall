@@ -6,15 +6,16 @@ import com.example.crud.data.payment.service.PaymentGatewayClient;
 import org.springframework.stereotype.Service;
 
 @Service
-public class DummyPaymentGatewayClient implements PaymentGatewayClient {
+public class TossPaymentsClient implements PaymentGatewayClient {
 
     @Override
     public PaymentGatewayResponse processPayment(PaymentDto paymentDto) {
-        // 실제 연동 시 PG사의 API를 호출하는 로직을 구현합니다.
-        // 여기서는 Dummy로 항상 성공 처리
+        // TODO: 토스페이먼츠 API 연동
+        // 현재는 임시로 성공 응답 반환
+        // 나중에 실제 API 키만 설정하면 됨
         PaymentGatewayResponse response = new PaymentGatewayResponse();
         response.setSuccess(true);
-        response.setTransactionId("DUMMY_TXN_" + System.currentTimeMillis());
+        response.setTransactionId("TOSS_TXN_" + System.currentTimeMillis());
         response.setErrorMessage(null);
         return response;
     }
