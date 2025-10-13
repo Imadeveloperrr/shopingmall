@@ -25,6 +25,8 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     @Query("select c from Conversation c where c.id = :id")
     Optional<Conversation> findByIdWithLock(@Param("id") @NonNull Long id);
 
+    @Override
     @EntityGraph(attributePaths = {"member"})
-    Optional<Conversation> findByIdWithMember(Long id);
+    @NonNull
+    Optional<Conversation> findById(@NonNull Long id);
 }
