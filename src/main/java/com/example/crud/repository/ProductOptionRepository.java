@@ -28,13 +28,17 @@ public interface ProductOptionRepository extends JpaRepository<ProductOption, Lo
 
     List<ProductOption> findByProduct_Number(Long productId);
 
-    /** 재고 차감 (원자적 업데이트)
+    /**
+     * 재고 차감 (원자적 업데이트)
      *
-     * @param id 상품 옵션 ID
+     * @param id       상품 옵션 ID
      * @param quantity 차감할 수량
      * @return 업데이트된 row 수 (0이면 재고 부족 또는 존재하지 않음)
      */
-
+    @Modifying
+    @Query(value = "UPDATE product_option SET stock = stock - :quantity " +
+                    "WHERE id = :id AND stock >= :quantity", nativeQuery = true)
+    int decreaseStock(@Param("id") Long id, @Param("quantity") int quantity);
 
     /**
      * 재고 복구 (주문 취소 시)
@@ -46,5 +50,5 @@ public interface ProductOptionRepository extends JpaRepository<ProductOption, Lo
     @Modifying
     @Query(value = "UPDATE product_option SET stock = stock + :quantity " +
                     "WHERE id = :id", nativeQuery = true)
-    int increaseStock(@Param("id") long id, @Param("quantity") int quantity);
+    int increaseStock(@Param("id") Long id, @Param("quantity") int quantity);
 }
