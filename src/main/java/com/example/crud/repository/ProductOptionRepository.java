@@ -33,7 +33,7 @@ public interface ProductOptionRepository extends JpaRepository<ProductOption, Lo
      *
      * @param id       상품 옵션 ID
      * @param quantity 차감할 수량
-     * @return 업데이트된 row 수 (0이면 재고 부족 또는 존재하지 않음)
+     * @return 업데이트된 row 수 (0이면 재고 부족 또는 존재하지 않음
      */
     @Modifying
     @Query(value = "UPDATE product_option SET stock = stock - :quantity " +
