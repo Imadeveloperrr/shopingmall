@@ -7,6 +7,7 @@ import com.example.crud.repository.ProductOptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 재고 검증 및 차감 공통 로직
@@ -33,6 +34,26 @@ public class StockValidator {
                     quantity
             );
         }
+    }
+
+    /**
+     * 재고 차감 (동시성 안전)
+     * Native Query로 원자적 업데이트
+     *
+     * @param productOptionId 상품 옵션 ID
+     * @param quantity        차감할 수량
+     * @throws BaseException 재고 부족 시
+     */
+    @Transactional
+    public void decreaseStock(Long productOptionId, int quantity) {
+        int updated = productOptionRepository.decreaseStock(productOptionId, quantity);
+
+        if (updated == 0) {
+            log.error("재고 차감 실패: productOptionId={}, quantity={}", productOptionId, quantity);
+            throw new BaseException(ErrorCode.ORDER_INSUFFICIENT_STOCK);
+        }
+
+        log.info("재고 차감 성공: productOptionId={}, quantity={}", productOptionId, quantity);
     }
 
 }
