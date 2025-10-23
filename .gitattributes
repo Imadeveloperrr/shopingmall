@@ -1,5 +1,1 @@
-# Exclude specific paths from GitHub language statistics and contributions
-*.md linguist-generated=true
-
-# AI 기여자 표시 방지 설정
-* -co-authored-by
+* text=auto eol=lf
