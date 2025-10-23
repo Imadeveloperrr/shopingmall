@@ -1,4 +1,4 @@
-package com.example.crud.common.utility.validator;
+package com.example.crud.common.validator;
 
 import com.example.crud.common.exception.BaseException;
 import com.example.crud.common.exception.ErrorCode;
@@ -16,18 +16,20 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class StockValidator {
+
     private final ProductOptionRepository productOptionRepository;
 
     /**
      * 재고 충분 여부 검증
      *
      * @param productOption 상품 옵션
-     * @param quantity      요청 수량
-     * @thorws BaseException 재고 부족 시
+     * @param quantity 요청 수량
+     * @throws BaseException 재고 부족 시
      */
     public void validateStock(ProductOption productOption, int quantity) {
         if (productOption.getStock() < quantity) {
-            log.warn("재고 부족: productOption={}, 현재재고={}, 요청수량={}", productOption.getId(), productOption.getStock(), quantity);
+            log.warn("재고 부족: productOption={}, 현재재고={}, 요청수량={}",
+                    productOption.getId(), productOption.getStock(), quantity);
             throw new BaseException(
                     ErrorCode.ORDER_INSUFFICIENT_STOCK,
                     productOption.getStock(),
@@ -41,19 +43,38 @@ public class StockValidator {
      * Native Query로 원자적 업데이트
      *
      * @param productOptionId 상품 옵션 ID
-     * @param quantity        차감할 수량
+     * @param quantity 차감할 수량
      * @throws BaseException 재고 부족 시
      */
     @Transactional
     public void decreaseStock(Long productOptionId, int quantity) {
-        int updated = productOptionRepository.decreaseStock(productOptionId, quantity);
-
-        if (updated == 0) {
-            log.error("재고 차감 실패: productOptionId={}, quantity={}", productOptionId, quantity);
-            throw new BaseException(ErrorCode.ORDER_INSUFFICIENT_STOCK);
-        }
-
-        log.info("재고 차감 성공: productOptionId={}, quantity={}", productOptionId, quantity);
+        validateStockUpdate(
+                productOptionRepository.decreaseStock(productOptionId, quantity),
+                ErrorCode.ORDER_INSUFFICIENT_STOCK
+        );
     }
 
+    /**
+     * 재고 복구 (주문 취소 시)
+     *
+     * @param productOptionId 상품 옵션 ID
+     * @param quantity 복구할 수량
+     */
+    @Transactional
+    public void increaseStock(Long productOptionId, int quantity) {
+        validateStockUpdate(
+                productOptionRepository.increaseStock(productOptionId, quantity),
+                ErrorCode.ORDER_STOCK_RESTORE_FAILED
+        );
+    }
+
+    /**
+     * 재고 업데이트 결과 검증
+     * - 로깅은 LoggingAspect에서 자동 처리 (AOP)
+     */
+    private void validateStockUpdate(int updatedRows, ErrorCode errorCode) {
+        if (updatedRows == 0) {
+            throw new BaseException(errorCode);
+        }
+    }
 }
