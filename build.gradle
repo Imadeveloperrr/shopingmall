@@ -41,6 +41,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
+    // AOP 의존성 추가 (Aspect 사용을 위해 필수)
+    implementation 'org.springframework.boot:spring-boot-starter-app'
+
     // MyBatis
     implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.3.1'
 
