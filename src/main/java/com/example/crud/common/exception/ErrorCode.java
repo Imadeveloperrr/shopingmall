@@ -5,6 +5,9 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public enum ErrorCode {
+    // Member Related Errors
+    INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "member.invalid.password"),
+
     // Authentication & Authorization
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "auth.invalid.refresh.token"),
     MISMATCH_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "auth.mismatch.refresh.token"),
@@ -19,20 +22,35 @@ public enum ErrorCode {
     PRODUCT_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "product.delete.failed"),
     IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "product.image.upload.failed"),
     UNAUTHORIZED_PRODUCT_ACCESS(HttpStatus.FORBIDDEN, "product.access.denied"),
-
-    // Order Related Errors
-    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "order.not.found"),
     PRODUCT_OPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "product.option.not.found"),
+
+    // Order Related Errors,
+    ORDER_STOCK_RESTORE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "order.stock.restore.failed"),
+    ORDER_ITEMS_EMPTY(HttpStatus.BAD_REQUEST, "order.items.empty"),
+    ORDER_CANNOT_CANCEL(HttpStatus.BAD_REQUEST, "order.cannot.cancel"),
+    ORDER_STATUS_CHANGE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "order.status.change.not.allowed"),
+    INVALID_ORDER_AMOUNT(HttpStatus.BAD_REQUEST, "order.invalid.amount"),
+
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "order.not.found"),
     ORDER_INSUFFICIENT_STOCK(HttpStatus.BAD_REQUEST, "order.insufficient.stock"),
     ORDER_STATUS_UPDATE_FAILED(HttpStatus.BAD_REQUEST, "order.status.update.failed"),
     ORDER_CANCEL_FAILED(HttpStatus.BAD_REQUEST, "order.cancel.failed"),
 
     // Cart Related Errors
+    CART_ACCESS_DENIED(HttpStatus.FORBIDDEN, "cart.access.denied"),
+    INVALID_QUANTITY(HttpStatus.BAD_REQUEST, "cart.invalid.quantity"),
+
     CART_NOT_FOUND(HttpStatus.NOT_FOUND, "cart.not.found"),
     CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "cart.item.not.found"),
     CART_INSUFFICIENT_QUANTITY(HttpStatus.BAD_REQUEST, "cart.insufficient.quantity"),
     CART_OPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "cart.option.not.found"),
     CART_INSUFFICIENT_STOCK(HttpStatus.BAD_REQUEST, "cart.insufficient.stock"),
+
+    // Payment Related Errors
+    INVALID_PAYMENT_AMOUNT(HttpStatus.BAD_REQUEST, "payment.invalid.amount"),
+    INVALID_PAYMENT_METHOD(HttpStatus.BAD_REQUEST, "payment.invalid.method"),
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "payment.amount.mismatch"),
+    PAYMENT_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "payment.already.processed"),
 
     // Business Validation
     INVALID_MEMBER_UPDATE(HttpStatus.BAD_REQUEST, "member.invalid.update"),
