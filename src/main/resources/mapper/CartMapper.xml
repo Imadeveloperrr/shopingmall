@@ -2,7 +2,14 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
+<!--
+    CartMapper - 장바구니 조회 전용 MyBatis Mapper
+    - 복잡한 조인 쿼리는 MyBatis로 처리 (성능 최적화)
+    - 단순 변환은 CartConverter 사용
+-->
 <mapper namespace="com.example.crud.common.mapper.CartMapper">
+
+    <!-- 장바구니 DTO 매핑 -->
     <resultMap id="CartResultMap" type="com.example.crud.data.cart.dto.CartDto">
         <id property="id" column="cart_id" />
         <collection property="cartItems" ofType="com.example.crud.data.cart.dto.CartItemDto">
@@ -17,6 +24,12 @@
         </collection>
     </resultMap>
 
+    <!--
+        회원 ID로 장바구니 조회
+        - Cart + CartItem + Product + ProductOption 조인
+        - N+1 문제 방지를 위해 MyBatis 사용
+        - 최신 추가 순으로 정렬
+    -->
     <select id="findCartByMemberId" parameterType="Long" resultMap="CartResultMap">
         SELECT
             c.id AS cart_id,
@@ -29,9 +42,10 @@
             ci.quantity AS quantity,
             p.image_url AS image_url
         FROM cart c
-                 LEFT JOIN cart_item ci ON c.id = ci.cart_id
-                 LEFT JOIN product p ON ci.product_id = p.number
-                 LEFT JOIN product_option po ON ci.product_option_id = po.id
+        LEFT JOIN cart_item ci ON c.id = ci.cart_id
+        LEFT JOIN product p ON ci.product_id = p.number
+        LEFT JOIN product_option po ON ci.product_option_id = po.id
         WHERE c.member_id = #{memberId}
+        ORDER BY ci.id DESC
     </select>
 </mapper>
