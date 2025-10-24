@@ -20,7 +20,7 @@ public class CollectionHelper {
      *
      * @param collection 검색할 컬렉션
      * @param predicate  검색 조건
-     * @param errorCOde  찾지 못했을 때 던질 에러 코드
+     * @param errorCode  찾지 못했을 때 던질 에러 코드
      * @param args       에러 메시지 파라미터
      * @return 찾은 요소
      * @throws BaseException 요소를 찾지 못한 경우
