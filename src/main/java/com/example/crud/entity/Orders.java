@@ -96,11 +96,6 @@ public class Orders {
             throw new IllegalStateException("이미 배송이 시작된 주문은 취소할 수 없습니다.");
         }
         this.status = OrderStatus.CANCELLED;
-
-        // 재고 원복
-        for (OrderItem orderItem : orderItems) {
-            orderItem.cancel();
-        }
     }
 
     // 총 주문 금액 계산 메서드
