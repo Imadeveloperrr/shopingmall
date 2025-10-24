@@ -2,6 +2,7 @@ package com.example.crud.common.security;
 
 import com.example.crud.common.exception.BaseException;
 import com.example.crud.common.exception.ErrorCode;
+import com.example.crud.common.helper.EntityHelper;
 import com.example.crud.entity.Member;
 import com.example.crud.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SecurityUtil {
 
-    private final MemberRepository memberRepository;
+    private final EntityHelper entityHelper; // Repository를 활용한 DB 조회시에만 활용
+
     /**
      * 로그인한 사용자의 Member Entity Search
      *
@@ -23,8 +25,7 @@ public class SecurityUtil {
      */
     public Member getCurrentMember() {
         String email = getCurrentUserEmail();
-        return memberRepository.findByEmail(email)
-                .orElseThrow(() -> new BaseException(ErrorCode.MEMBER_NOT_FOUND));
+        return entityHelper.getMemberByEmail(email);
     }
 
     /**
@@ -47,6 +48,7 @@ public class SecurityUtil {
         if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
             throw new BaseException(ErrorCode.INVALID_CREDENTIALS);
         }
+
         return authentication.getName();
     }
 
@@ -59,6 +61,6 @@ public class SecurityUtil {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication != null &&
                 authentication.isAuthenticated() &&
-                (authentication instanceof CustomUserDetails);
+                !(authentication instanceof AnonymousAuthenticationToken);
     }
 }
