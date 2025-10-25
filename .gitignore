@@ -54,3 +54,6 @@ PostgreSQL_Vector_Storage_Issue_Resolution.md
 
 ### System dump files ###
 *.stackdump
+
+### Git config files ###
+.gitattributes
