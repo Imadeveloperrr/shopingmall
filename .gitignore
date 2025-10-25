@@ -44,3 +44,13 @@ nul
 
 ### Claude Code ###
 .claude/settings.local.json
+AGENTS.md
+CLAUDE.md
+.mcp.json
+SINGLE_PRODUCT_OPTIMIZATION_COMPLETE.md
+START.md
+PAYMENT_SETUP_GUIDE.md
+PostgreSQL_Vector_Storage_Issue_Resolution.md
+
+### System dump files ###
+*.stackdump
