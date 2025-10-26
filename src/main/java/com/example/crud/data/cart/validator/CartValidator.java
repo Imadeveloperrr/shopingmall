@@ -3,33 +3,21 @@ package com.example.crud.data.cart.validator;
 import com.example.crud.common.exception.BaseException;
 import com.example.crud.common.exception.ErrorCode;
 import com.example.crud.entity.Cart;
-import com.example.crud.entity.CartItem;
-import com.example.crud.entity.Member;
 import com.example.crud.entity.ProductOption;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * 장바구니 관련 검증 로직
- * - 수량 유효성 검증
+ * 장바구니 관련 비즈니스 검증 로직
  * - 재고 충분 여부 검증
  * - 장바구니 소유자 검증
+ * - 장바구니 아이템 소속 검증
+ *
+ * 참고: 단순 형식 검증(quantity > 0 등)은 DTO의 Bean Validation으로 처리
  */
 @Component
 @RequiredArgsConstructor
 public class CartValidator {
-
-    /**
-     * 수량 유효성 검증
-     *
-     * @param quantity 수량
-     * @throws BaseException 수량이 0 이하인 경우
-     */
-    public void validateQuantity(int quantity) {
-        if (quantity <= 0) {
-            throw new BaseException(ErrorCode.INVALID_QUANTITY, quantity);
-        }
-    }
 
     /**
      * 재고 충분 여부 검증
@@ -57,7 +45,7 @@ public class CartValidator {
      */
     public void validateCartOwner(Cart cart, Long memberId) {
         if (!cart.getMember().getNumber().equals(memberId)) {
-            throw new BaseException(ErrorCode.FORBIDDEN);
+            throw new BaseException(ErrorCode.CART_ACCESS_DENIED);
         }
     }
 
