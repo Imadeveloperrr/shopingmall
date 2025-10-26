@@ -1,7 +1,6 @@
 package com.example.crud.data.cart.service.impl;
 
 import com.example.crud.common.security.SecurityUtil;
-import com.example.crud.data.cart.converter.CartConverter;
 import com.example.crud.data.cart.dto.CartDto;
 import com.example.crud.data.cart.dto.CartItemDto;
 import com.example.crud.data.cart.exception.CartItemNotFoundException;
@@ -23,10 +22,10 @@ import java.util.stream.Collectors;
 /**
  * 장바구니 서비스 구현
  * - 조회: MyBatis CartMapper 활용 (복잡한 조인 쿼리 성능 최적화)
- * - 변환: CartConverter 활용
+ * - 변환: CartDto.from() 활용
  * - 검증: CartValidator 활용
  * - 인증: SecurityUtil 활용
- * - 도메인 조회: ProductFindService 활용 (cheese10yun 방식)
+ * - 도메인 조회: ProductFindService 활용
  */
 @Service
 @RequiredArgsConstructor
@@ -36,7 +35,6 @@ public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final CartMapper cartMapper;
     private final CartValidator cartValidator;
-    private final CartConverter cartConverter;
     private final SecurityUtil securityUtil;
     private final ProductFindService productFindService;
 
@@ -52,7 +50,7 @@ public class CartServiceImpl implements CartService {
 
         if (cartDto == null) {
             createCart(memberId);
-            return cartConverter.toDto(null); // 빈 장바구니 반환
+            return CartDto.createEmpty(); // 빈 장바구니 반환
         }
 
         // MyBatis 조회 결과에 총 가격 설정
@@ -77,9 +75,6 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public void addCartItem(Long productId, String color, String size, int quantity) {
-        // 검증
-        cartValidator.validateQuantity(quantity);
-
         // 엔티티 조회
         Long memberId = securityUtil.getCurrentMemberId();
         Product product = productFindService.getProduct(productId);
@@ -178,14 +173,14 @@ public class CartServiceImpl implements CartService {
     }
 
     /**
-     * Cart Entity -> CartDto 변환 (CartConverter 사용)
+     * Cart Entity -> CartDto 변환
      *
      * @param cart 장바구니 엔티티
      * @return CartDto
      */
     @Override
     public CartDto convertToCartDto(Cart cart) {
-        return cartConverter.toDto(cart);
+        return CartDto.from(cart);
     }
 
     // ------------------------------- 주문 관련 -------------------------------
@@ -230,19 +225,9 @@ public class CartServiceImpl implements CartService {
      */
     @Override
     public CartDto getCartItems(List<Long> cartItemIds) {
-        CartDto fullCart = getCartByAuthenticateMember();
-
-        List<CartItemDto> selectedItems = fullCart.getCartItems().stream()
-                .filter(item -> cartItemIds.contains(item.getId()))
-                .collect(Collectors.toList());
-
-        return CartDto.builder()
-                .id(fullCart.getId())
-                .cartItems(selectedItems)
-                .totalPrice(selectedItems.stream()
-                        .mapToInt(item -> item.getPrice() * item.getQuantity())
-                        .sum())
-                .build();
+        Long memberId = securityUtil.getCurrentMemberId();
+        Cart cart = getCart(memberId);
+        return CartDto.fromSelectedItems(cart, cartItemIds);
     }
 
     /**
