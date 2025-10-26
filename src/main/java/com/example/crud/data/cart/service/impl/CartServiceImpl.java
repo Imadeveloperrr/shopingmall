@@ -1,14 +1,14 @@
 package com.example.crud.data.cart.service.impl;
 
-import com.example.crud.common.helper.EntityHelper;
 import com.example.crud.common.security.SecurityUtil;
 import com.example.crud.data.cart.converter.CartConverter;
 import com.example.crud.data.cart.dto.CartDto;
 import com.example.crud.data.cart.dto.CartItemDto;
+import com.example.crud.data.cart.exception.CartItemNotFoundException;
+import com.example.crud.data.cart.exception.CartNotFoundException;
 import com.example.crud.data.cart.service.CartService;
 import com.example.crud.data.cart.validator.CartValidator;
-import com.example.crud.common.exception.BaseException;
-import com.example.crud.common.exception.ErrorCode;
+import com.example.crud.data.product.service.ProductFindService;
 import com.example.crud.entity.*;
 import com.example.crud.common.mapper.CartMapper;
 import com.example.crud.repository.*;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  * - 변환: CartConverter 활용
  * - 검증: CartValidator 활용
  * - 인증: SecurityUtil 활용
- * - 조회: EntityHelper 활용
+ * - 도메인 조회: ProductFindService 활용 (cheese10yun 방식)
  */
 @Service
 @RequiredArgsConstructor
@@ -38,7 +38,7 @@ public class CartServiceImpl implements CartService {
     private final CartValidator cartValidator;
     private final CartConverter cartConverter;
     private final SecurityUtil securityUtil;
-    private final EntityHelper entityHelper;
+    private final ProductFindService productFindService;
 
     /**
      * 인증된 회원의 장바구니 조회 (MyBatis 활용)
@@ -82,8 +82,8 @@ public class CartServiceImpl implements CartService {
 
         // 엔티티 조회
         Long memberId = securityUtil.getCurrentMemberId();
-        Product product = entityHelper.getProduct(productId);
-        ProductOption productOption = entityHelper.getProductOption(productId, color, size);
+        Product product = productFindService.getProduct(productId);
+        ProductOption productOption = productFindService.getProductOption(productId, color, size);
 
         // 재고 검증
         cartValidator.validateStock(productOption, quantity);
@@ -261,7 +261,7 @@ public class CartServiceImpl implements CartService {
         CartItem cartItem = getCartItemFromCart(cart, cartItemId);
 
         // 새 옵션 조회
-        ProductOption newOption = entityHelper.getProductOption(
+        ProductOption newOption = productFindService.getProductOption(
                 cartItem.getProduct().getNumber(),
                 newColor,
                 newSize
@@ -289,7 +289,7 @@ public class CartServiceImpl implements CartService {
      */
     private Cart getCart(Long memberId) {
         return cartRepository.findByMemberNumber(memberId)
-                .orElseThrow(() -> new BaseException(ErrorCode.CART_NOT_FOUND, memberId));
+                .orElseThrow(() -> new CartNotFoundException(memberId));
     }
 
     /**
@@ -299,7 +299,7 @@ public class CartServiceImpl implements CartService {
         return cart.getCartItems().stream()
                 .filter(item -> item.getId().equals(cartItemId))
                 .findFirst()
-                .orElseThrow(() -> new BaseException(ErrorCode.CART_ITEM_NOT_FOUND, cartItemId));
+                .orElseThrow(() -> new CartItemNotFoundException(cartItemId));
     }
 
     /**
