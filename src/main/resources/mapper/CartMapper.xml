@@ -5,7 +5,7 @@
 <!--
     CartMapper - 장바구니 조회 전용 MyBatis Mapper
     - 복잡한 조인 쿼리는 MyBatis로 처리 (성능 최적화)
-    - 단순 변환은 CartConverter 사용
+    - 단순 변환은 CartDto.from() 사용
 -->
 <mapper namespace="com.example.crud.common.mapper.CartMapper">
 
