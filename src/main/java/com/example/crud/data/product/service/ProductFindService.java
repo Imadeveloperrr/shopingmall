@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Product 조회 전용 서비스
- * - cheese10yun 방식: 단일 책임 원칙에 따라 조회만 담당
+ * - 단일 책임 원칙에 따라 조회만 담당
  */
 @Service
 @RequiredArgsConstructor
