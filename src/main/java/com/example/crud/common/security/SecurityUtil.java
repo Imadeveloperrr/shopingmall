@@ -2,9 +2,8 @@ package com.example.crud.common.security;
 
 import com.example.crud.common.exception.BaseException;
 import com.example.crud.common.exception.ErrorCode;
-import com.example.crud.common.helper.EntityHelper;
+import com.example.crud.data.member.service.MemberFindService;
 import com.example.crud.entity.Member;
-import com.example.crud.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -15,7 +14,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SecurityUtil {
 
-    private final EntityHelper entityHelper; // Repository를 활용한 DB 조회시에만 활용
+    private final MemberFindService memberFindService;
 
     /**
      * 로그인한 사용자의 Member Entity Search
@@ -25,7 +24,7 @@ public class SecurityUtil {
      */
     public Member getCurrentMember() {
         String email = getCurrentUserEmail();
-        return entityHelper.getMemberByEmail(email);
+        return memberFindService.getMemberByEmail(email);
     }
 
     /**
