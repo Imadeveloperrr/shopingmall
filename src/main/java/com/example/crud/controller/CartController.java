@@ -1,9 +1,10 @@
 package com.example.crud.controller;
 
-import com.example.crud.data.cart.dto.CartDto;
+import com.example.crud.data.cart.dto.*;
 import com.example.crud.data.cart.service.CartService;
 import com.example.crud.data.product.dto.ProductOptionDto;
 import com.example.crud.data.product.service.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +14,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
@@ -33,14 +33,14 @@ public class CartController {
 
     @PostMapping("/add")
     @ResponseBody
-    public ResponseEntity<String> addToCart(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<String> addToCart(@Valid @RequestBody AddCartItemRequest request) {
         try {
-            Long productId = Long.parseLong(payload.get("productId").toString());
-            String color = payload.get("color").toString();  // 추가
-            String size = payload.get("size").toString();
-            int quantity = Integer.parseInt(payload.get("quantity").toString());
-
-            cartService.addCartItem(productId, color, size, quantity);  // 수정
+            cartService.addCartItem(
+                    request.getProductId(),
+                    request.getColor(),
+                    request.getSize(),
+                    request.getQuantity()
+            );
             return ResponseEntity.ok("장바구니에 추가되었습니다.");
         } catch (Exception e) {
             log.error("장바구니 추가 실패", e);
@@ -50,9 +50,12 @@ public class CartController {
 
     @PostMapping("/update/{itemId}")
     @ResponseBody
-    public ResponseEntity<String> updateCartItem(@PathVariable Long itemId, @RequestBody Map<String, Integer> payload) {
+    public ResponseEntity<String> updateCartItem(
+            @PathVariable Long itemId,
+            @Valid @RequestBody UpdateCartItemQuantityRequest request
+    ) {
         try {
-            cartService.updateCartItemQuantity(itemId, payload.get("quantity"));
+            cartService.updateCartItemQuantity(itemId, request.getQuantity());
             return ResponseEntity.ok("수량이 변경되었습니다.");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -74,12 +77,10 @@ public class CartController {
     @ResponseBody
     public ResponseEntity<String> updateCartItemOption(
             @PathVariable Long itemId,
-            @RequestBody Map<String, String> payload
+            @Valid @RequestBody UpdateCartItemOptionRequest request
     ) {
         try {
-            String newColor = payload.get("color");
-            String newSize = payload.get("size");
-            cartService.updateCartItemOption(itemId, newColor, newSize);
+            cartService.updateCartItemOption(itemId, request.getColor(), request.getSize());
             return ResponseEntity.ok("옵션이 변경되었습니다.");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
