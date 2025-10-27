@@ -2,22 +2,24 @@ package com.example.crud.controller;
 
 import com.example.crud.data.category.service.CategoryService;
 import com.example.crud.data.member.dto.MemberResponseDto;
-import com.example.crud.data.member.service.MemberService;
+import com.example.crud.data.member.service.find.MemberFindService;
 import com.example.crud.data.product.dto.ProductDto;
 import com.example.crud.data.product.dto.ProductResponseDto;
 import com.example.crud.data.product.service.ProductService;
-import com.example.crud.entity.Product;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.io.IOException;
 
 @Controller
 @RequestMapping("/product")
@@ -26,7 +28,7 @@ public class ProductController {
 
     private static final Logger log = LoggerFactory.getLogger(ProductController.class);
     private final ProductService productService;
-    private final MemberService memberService;
+    private final MemberFindService memberFindService;
     private final CategoryService categoryService;
 
     @GetMapping
@@ -93,7 +95,7 @@ public class ProductController {
         ProductResponseDto productResponseDto = productService.getProductById(id);
         model.addAttribute("product", productResponseDto);
 
-        MemberResponseDto memberResponseDto = memberService.getMember();
+        MemberResponseDto memberResponseDto = memberFindService.getCurrentMember();
         model.addAttribute("member", memberResponseDto);
         return "fragments/productDetail";
     }
