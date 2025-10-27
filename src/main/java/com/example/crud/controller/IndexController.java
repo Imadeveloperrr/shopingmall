@@ -1,12 +1,13 @@
 package com.example.crud.controller;
 
 import com.example.crud.common.exception.ValidationException;
+import com.example.crud.common.security.JwtToken;
 import com.example.crud.data.member.dto.MemberDto;
 import com.example.crud.data.member.dto.MemberResponseDto;
-import com.example.crud.data.member.service.MemberService;
+import com.example.crud.data.member.service.auth.MemberAuthService;
+import com.example.crud.data.member.service.signup.MemberSignUpService;
 import com.example.crud.data.product.dto.ProductResponseDto;
 import com.example.crud.data.product.service.ProductService;
-import com.example.crud.common.security.JwtToken;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -31,7 +32,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 public class IndexController {
-    private final MemberService memberService;
+    private final MemberAuthService memberAuthService;
+    private final MemberSignUpService memberSignUpService;
     private final ProductService productService;
 
     @GetMapping("/")
@@ -63,7 +65,7 @@ public class IndexController {
             @RequestBody @Valid MemberDto memberDto,
             HttpServletResponse response) {
 
-        JwtToken jwtToken = memberService.signIn(
+        JwtToken jwtToken = memberAuthService.signIn(
                 memberDto.getEmail(),
                 memberDto.getPassword(),
                 memberDto.isRememberMe()
@@ -111,6 +113,6 @@ public class IndexController {
             throw new ValidationException(bindingResult.getAllErrors());
         }
 
-        return ResponseEntity.ok(memberService.signUp(memberDto));
+        return ResponseEntity.ok(memberSignUpService.signUp(memberDto));
     }
 }
