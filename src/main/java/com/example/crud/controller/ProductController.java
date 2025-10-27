@@ -1,6 +1,7 @@
 package com.example.crud.controller;
 
-import com.example.crud.data.category.service.CategoryService;
+import com.example.crud.common.exception.BaseException;
+import com.example.crud.common.exception.ErrorCode;
 import com.example.crud.data.member.dto.MemberResponseDto;
 import com.example.crud.data.member.service.find.MemberFindService;
 import com.example.crud.data.product.dto.ProductDto;
@@ -29,7 +30,6 @@ public class ProductController {
     private static final Logger log = LoggerFactory.getLogger(ProductController.class);
     private final ProductService productService;
     private final MemberFindService memberFindService;
-    private final CategoryService categoryService;
 
     @GetMapping
     public String product() {
@@ -37,19 +37,14 @@ public class ProductController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<?> addProduct(@ModelAttribute ProductDto productDto, @RequestParam("imageFile") MultipartFile file) {
-        try {
-            log.info("Received product: {}", productDto);
-            if (file.isEmpty()) {
-                log.error("File is empty");
-                return ResponseEntity.badRequest().body("File is empty");
-            }
-            ProductResponseDto productResponseDto = productService.getAddProduct(productDto, file);
-            return ResponseEntity.ok().body(productResponseDto);
-        } catch (Exception e) {
-            log.error("Error while adding product", e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+    public ResponseEntity<ProductResponseDto> addProduct(@ModelAttribute ProductDto productDto,
+                                                         @RequestParam("imageFile") MultipartFile file) {
+        log.info("Received product: {}", productDto);
+        if (file == null || file.isEmpty()) {
+            throw new BaseException(ErrorCode.INVALID_INPUT, "product.image.required");
         }
+        ProductResponseDto response = productService.getAddProduct(productDto, file);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/delete/{id}")
@@ -72,22 +67,13 @@ public class ProductController {
     }
 
     @PostMapping("/update")
-    public ResponseEntity<?> updateProduct(
+    public ResponseEntity<ProductResponseDto> updateProduct(
             @ModelAttribute ProductDto productDto,
             @RequestParam(value = "imageUrl", required = false) MultipartFile file) {
-        try {
-            log.info("Updating product with ID: {}", productDto.getNumber());
-            log.info("Options count: {}",
-                    productDto.getProductOptions() != null ? productDto.getProductOptions().size() : 0);
-
-            ProductResponseDto response = productService.getUpdateProduct(productDto, file);
-            log.info("Product updated successfully. ID: {}", response.getNumber());
-
-            return ResponseEntity.ok().body(response);
-        } catch (Exception e) {
-            log.error("Failed to update product ID: " + productDto.getNumber(), e);
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        log.info("Updating product with ID: {}", productDto.getNumber());
+        ProductResponseDto response = productService.getUpdateProduct(productDto, file);
+        log.info("Product updated successfully. ID: {}", response.getNumber());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/detail/{id}")
