@@ -5,16 +5,19 @@ import com.example.crud.ai.conversation.domain.repository.ConversationRepository
 import com.example.crud.ai.recommendation.application.ConversationalRecommendationService;
 import com.example.crud.ai.recommendation.domain.dto.RecommendationResponseDto;
 import com.example.crud.ai.recommendation.domain.dto.UserMessageRequestDto;
-import com.example.crud.data.member.service.MemberService;
+import com.example.crud.data.member.service.find.MemberFindService;
 import com.example.crud.entity.Member;
 import com.example.crud.enums.ConversationStatus;
-import io.reactivex.Completable;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -29,13 +32,13 @@ import java.util.concurrent.CompletableFuture;
 public class ConversationController {
 
     private final ConversationalRecommendationService crService;
-    private final MemberService memberService;
+    private final MemberFindService memberFindService;
     private final ConversationRepository cRepository;
 
     @PostMapping("/start")
     public ResponseEntity<Map<String, Object>> startConversation(Authentication auth) {
         try {
-            Member member = memberService.getMemberEntity(auth.getName());
+            Member member = memberFindService.getMemberEntity(auth.getName());
 
             Conversation conv = Conversation.builder()
                     .member(member)
