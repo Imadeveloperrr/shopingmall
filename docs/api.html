@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation - AI Shopping Mall</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        nav {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        nav a {
+            color: #667eea;
+            text-decoration: none;
+            margin-right: 20px;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .api-section {
+            background: white;
+            padding: 30px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            color: #764ba2;
+            margin: 20px 0 10px 0;
+        }
+
+        .endpoint {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .method {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .method.post {
+            background: #28a745;
+            color: white;
+        }
+
+        .method.get {
+            background: #007bff;
+            color: white;
+        }
+
+        .method.put {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .method.delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        pre code {
+            background: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .required {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .optional {
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 API Documentation</h1>
+            <p>AI Shopping Mall REST API Reference</p>
+        </header>
+
+        <nav>
+            <a href="index.html">← 홈으로</a>
+            <a href="#auth">인증</a>
+            <a href="#recommendation">추천</a>
+            <a href="#products">상품</a>
+            <a href="#conversation">대화</a>
+        </nav>
+
+        <div class="api-section" id="auth">
+            <h2>🔐 인증 (Authentication)</h2>
+
+            <div class="endpoint">
+                <h3><span class="method post">POST</span> /api/auth/login</h3>
+                <p>사용자 로그인</p>
+
+                <h4>Request Body</h4>
+                <pre><code>{
+  "username": "user@example.com",
+  "password": "password123"
+}</code></pre>
+
+                <h4>Response</h4>
+                <pre><code>{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "userId": 1,
+  "username": "user@example.com"
+}</code></pre>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method post">POST</span> /api/auth/register</h3>
+                <p>신규 사용자 등록</p>
+
+                <h4>Request Body</h4>
+                <pre><code>{
+  "username": "newuser@example.com",
+  "password": "password123",
+  "name": "홍길동"
+}</code></pre>
+            </div>
+        </div>
+
+        <div class="api-section" id="recommendation">
+            <h2>🤖 AI 추천 (Recommendation)</h2>
+
+            <div class="endpoint">
+                <h3><span class="method post">POST</span> /api/test/recommendation/text</h3>
+                <p>텍스트 기반 상품 추천</p>
+
+                <h4>Request Body</h4>
+                <pre><code>{
+  "query": "파란색 셔츠 추천해줘"
+}</code></pre>
+
+                <h4>Response</h4>
+                <pre><code>{
+  "recommendations": [
+    {
+      "productId": 123,
+      "name": "슬림핏 블루 셔츠",
+      "price": 49000,
+      "similarity": 0.89,
+      "description": "고급 면 소재의 슬림핏 셔츠"
+    },
+    ...
+  ],
+  "totalCount": 10
+}</code></pre>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method post">POST</span> /api/test/recommendation/embedding</h3>
+                <p>텍스트를 벡터로 변환 (테스트용)</p>
+
+                <h4>Request Body</h4>
+                <pre><code>{
+  "text": "편안한 여름 옷"
+}</code></pre>
+
+                <h4>Response</h4>
+                <pre><code>{
+  "embedding": [0.123, -0.456, 0.789, ...],
+  "dimension": 1536
+}</code></pre>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method post">POST</span> /api/recommendation/chat</h3>
+                <p>대화형 추천 (GPT-4 활용)</p>
+
+                <h4>Request Body</h4>
+                <pre><code>{
+  "userId": 1,
+  "message": "여름에 입기 좋은 옷 추천해줘",
+  "conversationId": "conv_123" // optional
+}</code></pre>
+
+                <h4>Response</h4>
+                <pre><code>{
+  "conversationId": "conv_123",
+  "aiResponse": "여름철에는 시원한 린넨 소재의 옷을 추천드립니다...",
+  "recommendations": [...],
+  "timestamp": "2025-10-27T14:30:00"
+}</code></pre>
+            </div>
+        </div>
+
+        <div class="api-section" id="products">
+            <h2>🛍️ 상품 (Products)</h2>
+
+            <div class="endpoint">
+                <h3><span class="method get">GET</span> /api/products</h3>
+                <p>상품 목록 조회</p>
+
+                <h4>Query Parameters</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>page</td>
+                            <td>integer</td>
+                            <td class="optional">Optional</td>
+                            <td>페이지 번호 (기본값: 0)</td>
+                        </tr>
+                        <tr>
+                            <td>size</td>
+                            <td>integer</td>
+                            <td class="optional">Optional</td>
+                            <td>페이지 크기 (기본값: 20)</td>
+                        </tr>
+                        <tr>
+                            <td>category</td>
+                            <td>string</td>
+                            <td class="optional">Optional</td>
+                            <td>카테고리 필터</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>Response</h4>
+                <pre><code>{
+  "content": [
+    {
+      "id": 1,
+      "name": "블루 셔츠",
+      "price": 49000,
+      "category": "상의",
+      "description": "편안한 면 소재"
+    },
+    ...
+  ],
+  "totalElements": 100,
+  "totalPages": 5
+}</code></pre>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method get">GET</span> /api/products/{id}</h3>
+                <p>상품 상세 조회</p>
+
+                <h4>Response</h4>
+                <pre><code>{
+  "id": 1,
+  "name": "블루 셔츠",
+  "price": 49000,
+  "category": "상의",
+  "description": "편안한 면 소재의 슬림핏 셔츠",
+  "stock": 50,
+  "images": ["url1", "url2"]
+}</code></pre>
+            </div>
+        </div>
+
+        <div class="api-section" id="conversation">
+            <h2>💬 대화 히스토리 (Conversation)</h2>
+
+            <div class="endpoint">
+                <h3><span class="method get">GET</span> /api/conversations/{userId}</h3>
+                <p>사용자의 대화 히스토리 조회</p>
+
+                <h4>Response</h4>
+                <pre><code>{
+  "conversations": [
+    {
+      "conversationId": "conv_123",
+      "startedAt": "2025-10-27T14:00:00",
+      "messageCount": 5,
+      "lastMessage": "감사합니다!"
+    },
+    ...
+  ]
+}</code></pre>
+            </div>
+
+            <div class="endpoint">
+                <h3><span class="method get">GET</span> /api/conversations/{conversationId}/messages</h3>
+                <p>특정 대화의 메시지 조회</p>
+
+                <h4>Response</h4>
+                <pre><code>{
+  "messages": [
+    {
+      "role": "user",
+      "content": "파란색 셔츠 추천해줘",
+      "timestamp": "2025-10-27T14:00:00"
+    },
+    {
+      "role": "assistant",
+      "content": "이런 상품은 어떠세요?",
+      "timestamp": "2025-10-27T14:00:05"
+    },
+    ...
+  ]
+}</code></pre>
+            </div>
+        </div>
+
+        <div class="api-section">
+            <h2>⚠️ 에러 코드</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status Code</th>
+                        <th>Error Code</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>400</td>
+                        <td>INVALID_REQUEST</td>
+                        <td>잘못된 요청 파라미터</td>
+                    </tr>
+                    <tr>
+                        <td>401</td>
+                        <td>UNAUTHORIZED</td>
+                        <td>인증 실패</td>
+                    </tr>
+                    <tr>
+                        <td>404</td>
+                        <td>NOT_FOUND</td>
+                        <td>리소스를 찾을 수 없음</td>
+                    </tr>
+                    <tr>
+                        <td>500</td>
+                        <td>INTERNAL_ERROR</td>
+                        <td>서버 내부 오류</td>
+                    </tr>
+                    <tr>
+                        <td>503</td>
+                        <td>AI_SERVICE_UNAVAILABLE</td>
+                        <td>OpenAI API 응답 실패</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>에러 응답 형식</h4>
+            <pre><code>{
+  "error": "INVALID_REQUEST",
+  "message": "요청 파라미터가 올바르지 않습니다",
+  "timestamp": "2025-10-27T14:30:00"
+}</code></pre>
+        </div>
+
+        <div class="api-section">
+            <h2>🔧 개발 환경 설정</h2>
+
+            <h3>Base URL</h3>
+            <p>로컬: <code>http://localhost:8080</code></p>
+
+            <h3>인증 헤더</h3>
+            <pre><code>Authorization: Bearer {token}</code></pre>
+
+            <h3>Content-Type</h3>
+            <pre><code>Content-Type: application/json</code></pre>
+        </div>
+    </div>
+</body>
+</html>
