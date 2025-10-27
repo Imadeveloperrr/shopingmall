@@ -2,7 +2,7 @@ package com.example.crud.common.security;
 
 import com.example.crud.common.exception.BaseException;
 import com.example.crud.common.exception.ErrorCode;
-import com.example.crud.data.member.service.MemberFindService;
+import com.example.crud.data.member.service.find.MemberFindService;
 import com.example.crud.entity.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
