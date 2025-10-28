@@ -2,7 +2,7 @@ package com.example.crud.controller;
 
 import com.example.crud.common.exception.BaseException;
 import com.example.crud.common.exception.ErrorCode;
-import com.example.crud.data.member.dto.MemberResponseDto;
+import com.example.crud.data.member.dto.response.MemberResponse;
 import com.example.crud.data.member.service.find.MemberFindService;
 import com.example.crud.data.product.dto.ProductDto;
 import com.example.crud.data.product.dto.ProductResponseDto;
@@ -81,8 +81,8 @@ public class ProductController {
         ProductResponseDto productResponseDto = productService.getProductById(id);
         model.addAttribute("product", productResponseDto);
 
-        MemberResponseDto memberResponseDto = memberFindService.getCurrentMember();
-        model.addAttribute("member", memberResponseDto);
+        MemberResponse member = memberFindService.getCurrentMember();
+        model.addAttribute("member", member);
         return "fragments/productDetail";
     }
 }
