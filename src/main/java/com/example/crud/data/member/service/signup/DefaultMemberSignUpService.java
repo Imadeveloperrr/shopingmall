@@ -2,8 +2,8 @@ package com.example.crud.data.member.service.signup;
 
 import com.example.crud.common.exception.BaseException;
 import com.example.crud.common.exception.ErrorCode;
-import com.example.crud.data.member.dto.MemberDto;
-import com.example.crud.data.member.dto.MemberResponseDto;
+import com.example.crud.data.member.dto.request.SignUpRequest;
+import com.example.crud.data.member.dto.response.MemberResponse;
 import com.example.crud.entity.Member;
 import com.example.crud.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,12 +28,12 @@ public class DefaultMemberSignUpService implements MemberSignUpService {
 
     @Transactional
     @Override
-    public MemberResponseDto signUp(MemberDto memberDto) {
-        if (memberRepository.existsByEmail(memberDto.getEmail())) {
+    public MemberResponse signUp(SignUpRequest request) {
+        if (memberRepository.existsByEmail(request.getEmail())) {
             throw new BaseException(ErrorCode.DUPLICATE_EMAIL);
         }
 
-        if (memberRepository.existsByNickname(memberDto.getNickname())) {
+        if (memberRepository.existsByNickname(request.getNickname())) {
             throw new BaseException(ErrorCode.DUPLICATE_NICKNAME);
         }
 
@@ -41,22 +41,22 @@ public class DefaultMemberSignUpService implements MemberSignUpService {
         roles.add("ROLE_USER");
 
         Member member = Member.builder()
-                .email(memberDto.getEmail())
-                .name(memberDto.getName())
-                .password(passwordEncoder.encode(memberDto.getPassword()))
+                .email(request.getEmail())
+                .name(request.getName())
+                .password(passwordEncoder.encode(request.getPassword()))
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
-                .nickname(memberDto.getNickname())
+                .nickname(request.getNickname())
                 .roles(roles)
                 .build();
 
-        Member saveMember = memberRepository.save(member);
+        Member savedMember = memberRepository.save(member);
 
-        return MemberResponseDto.builder()
-                .number(saveMember.getNumber())
-                .email(saveMember.getEmail())
-                .name(saveMember.getName())
-                .nickname(saveMember.getNickname())
+        return MemberResponse.builder()
+                .number(savedMember.getNumber())
+                .email(savedMember.getEmail())
+                .name(savedMember.getName())
+                .nickname(savedMember.getNickname())
                 .build();
     }
 }
