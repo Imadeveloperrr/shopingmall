@@ -2,9 +2,10 @@ package com.example.crud.data.member.service.profile;
 
 import com.example.crud.common.exception.BaseException;
 import com.example.crud.common.exception.ErrorCode;
+import com.example.crud.common.security.SecurityUtil;
+import com.example.crud.data.member.converter.MemberConverter;
 import com.example.crud.data.member.dto.request.UpdateProfileRequest;
 import com.example.crud.data.member.dto.response.MemberResponse;
-import com.example.crud.data.member.service.find.MemberFindService;
 import com.example.crud.entity.Member;
 import com.example.crud.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 회원 프로필 수정 서비스
- * - 확장 가능성 없음 (구체 클래스)
  */
 @Service
 @RequiredArgsConstructor
@@ -21,44 +21,37 @@ import org.springframework.transaction.annotation.Transactional;
 public class UpdateMemberProfileService {
 
     private final MemberRepository memberRepository;
-    private final MemberFindService memberFindService;
+    private final SecurityUtil securityUtil;
+    private final MemberConverter memberConverter;
 
     @Transactional
     public MemberResponse updateMember(UpdateProfileRequest request) {
-        Member member = memberFindService.getCurrentMemberEntity();
+        // SecurityUtil 사용 (순환 참조 없음)
+        Member member = securityUtil.getCurrentMember();
 
+        // 닉네임 중복 검증
         validateNicknameUniqueness(member, request);
 
+        // 도메인 메서드로 업데이트
         member.updateProfile(
-            request.getName(),
-            request.getNickname(),
-            request.getPhoneNumber(),
-            request.getAddress(),
-            request.getIntroduction()
+            request.name(),
+            request.nickname(),
+            request.phoneNumber(),
+            request.address(),
+            request.introduction()
         );
 
-        Member savedMember = memberRepository.save(member);
+        // 변경 감지로 자동 저장 + @PreUpdate 자동 실행
 
-        return convertToResponse(savedMember);
+        // Converter로 통일
+        return memberConverter.toResponse(member);
     }
 
     private void validateNicknameUniqueness(Member member, UpdateProfileRequest request) {
-        if (request.getNickname() != null
-            && !member.getNickname().equals(request.getNickname())
-            && memberRepository.existsByNickname(request.getNickname())) {
+        if (request.nickname() != null
+            && !member.getNickname().equals(request.nickname())
+            && memberRepository.existsByNickname(request.nickname())) {
             throw new BaseException(ErrorCode.DUPLICATE_NICKNAME);
         }
-    }
-
-    private MemberResponse convertToResponse(Member member) {
-        return MemberResponse.builder()
-                .number(member.getNumber())
-                .email(member.getEmail())
-                .name(member.getName())
-                .nickname(member.getNickname())
-                .address(member.getAddress())
-                .phoneNumber(member.getPhoneNumber())
-                .introduction(member.getIntroduction())
-                .build();
     }
 }
