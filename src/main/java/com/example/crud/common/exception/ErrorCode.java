@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
     // Member Related Errors
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "member.invalid.password"),
+    PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "member.password.mismatch"),
 
     // Authentication & Authorization
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "auth.invalid.refresh.token"),
