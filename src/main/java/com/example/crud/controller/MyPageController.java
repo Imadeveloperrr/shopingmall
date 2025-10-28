@@ -1,7 +1,7 @@
 package com.example.crud.controller;
 
-import com.example.crud.data.member.dto.MemberDto;
-import com.example.crud.data.member.dto.MemberResponseDto;
+import com.example.crud.data.member.dto.request.UpdateProfileRequest;
+import com.example.crud.data.member.dto.response.MemberResponse;
 import com.example.crud.data.member.service.find.MemberFindService;
 import com.example.crud.data.member.service.profile.UpdateMemberProfileService;
 import com.example.crud.data.product.dto.ProductResponseDto;
@@ -31,8 +31,8 @@ public class MyPageController {
 
     @GetMapping
     public String mypage(Model model) {
-        MemberResponseDto memberResponseDto = memberFindService.getCurrentMember();
-        model.addAttribute("member", memberResponseDto);
+        MemberResponse member = memberFindService.getCurrentMember();
+        model.addAttribute("member", member);
 
         List<ProductResponseDto> productResponseDto = productService.getMyProducts();
         model.addAttribute("products", productResponseDto);
@@ -41,17 +41,17 @@ public class MyPageController {
 
     @GetMapping("/profileEdit")
     public String getProfileEdit(Model model) {
-        MemberResponseDto memberResponseDto = memberFindService.getCurrentMember();
-        model.addAttribute("member", memberResponseDto);
+        MemberResponse member = memberFindService.getCurrentMember();
+        model.addAttribute("member", member);
         return "fragments/profileEdit";
     }
 
     @PostMapping("/profileEdit")
-    public ResponseEntity<?> postProfileEdit(@RequestBody MemberDto memberDto) {
+    public ResponseEntity<?> postProfileEdit(@RequestBody UpdateProfileRequest request) {
         try {
-            log.info("프로필 업데이트 : {}", memberDto);
-            MemberResponseDto memberResponseDto = updateMemberProfileService.updateMember(memberDto);
-            return ResponseEntity.ok().body(memberResponseDto);
+            log.info("프로필 업데이트 : {}", request);
+            MemberResponse response = updateMemberProfileService.updateMember(request);
+            return ResponseEntity.ok().body(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
