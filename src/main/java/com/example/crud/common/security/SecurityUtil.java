@@ -2,35 +2,43 @@ package com.example.crud.common.security;
 
 import com.example.crud.common.exception.BaseException;
 import com.example.crud.common.exception.ErrorCode;
-import com.example.crud.data.member.service.find.MemberFindService;
 import com.example.crud.entity.Member;
+import com.example.crud.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+/**
+ * Spring Security 인증 정보 유틸리티
+ *
+ * 설계:
+ * - MemberRepository 직접 사용 (순환 참조 방지)
+ * - 인증 정보 조회 책임만 담당
+ */
 @Component
 @RequiredArgsConstructor
 public class SecurityUtil {
 
-    private final MemberFindService memberFindService;
+    private final MemberRepository memberRepository;
 
     /**
-     * 로그인한 사용자의 Member Entity Search
+     * 현재 로그인한 사용자의 Member Entity 조회
      *
      * @return Member
-     * @Throws BaseException
+     * @throws BaseException 인증 실패 또는 사용자 없음
      */
     public Member getCurrentMember() {
         String email = getCurrentUserEmail();
-        return memberFindService.getMemberByEmail(email);
+        return memberRepository.findByEmail(email)
+                .orElseThrow(() -> new BaseException(ErrorCode.MEMBER_NOT_FOUND));
     }
 
     /**
-     * 로그인한 사용자의 ID조회
+     * 현재 로그인한 사용자의 ID 조회
      *
-     * @return ID
+     * @return Member ID
      */
     public Long getCurrentMemberId() {
         return getCurrentMember().getNumber();
@@ -40,11 +48,14 @@ public class SecurityUtil {
      * 현재 로그인한 사용자의 이메일 조회
      *
      * @return Email
-     * @throws com.example.crud.common.exception.BaseException
+     * @throws BaseException 인증 실패
      */
     public String getCurrentUserEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
+
+        if (authentication == null
+            || !authentication.isAuthenticated()
+            || authentication instanceof AnonymousAuthenticationToken) {
             throw new BaseException(ErrorCode.INVALID_CREDENTIALS);
         }
 
@@ -54,12 +65,12 @@ public class SecurityUtil {
     /**
      * 인증된 사용자인지 확인
      *
-     * @return 인증여부
+     * @return 인증 여부
      */
     public boolean isAuthenticated() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication != null &&
-                authentication.isAuthenticated() &&
-                !(authentication instanceof AnonymousAuthenticationToken);
+        return authentication != null
+            && authentication.isAuthenticated()
+            && !(authentication instanceof AnonymousAuthenticationToken);
     }
 }
