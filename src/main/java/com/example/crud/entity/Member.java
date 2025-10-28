@@ -1,22 +1,28 @@
 package com.example.crud.entity;
 
-import com.example.crud.data.member.dto.MemberDto;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 회원 엔티티
+ *
+ * 설계 원칙:
+ * - @Setter 제거: 도메인 메서드로만 상태 변경
+ * - 타임스탬프 자동 관리: @PrePersist/@PreUpdate만 사용
+ * - Builder 패턴: 생성 시에만 사용
+ */
 @Entity
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 @Table(name = "member")
 public class Member {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long number;
@@ -30,35 +36,36 @@ public class Member {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
+    private String nickname;
+
     @Column(nullable = true)
     private String address;
 
     @Column(nullable = true)
-    private String phoneNumber; // 전화번호
+    private String phoneNumber;
 
     @Column(nullable = true)
-    private String mobileNumber; // 휴대폰 번호
+    private String mobileNumber;
 
     @Column(nullable = true)
     @Lob
     private String introduction;
 
-    @Column(nullable = false)
-    private String nickname;
-
     @Column(name = "create_at")
     private LocalDateTime createdAt;
+
     @Column(name = "update_at")
     private LocalDateTime updatedAt;
 
-    @ElementCollection(fetch = FetchType.EAGER) // 즉시 로딩 즉 데이터베이스에서 읽을때 이 컬렉션도 함께 로딩을 의미
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "member_roles", joinColumns = @JoinColumn(name = "member_id"))
     @Column(name = "role")
     @Builder.Default
     private List<String> roles = new ArrayList<>();
 
     /**
-     * 프로필 수정 (부분 갱신 지원)
+     * 프로필 정보 업데이트 (부분 갱신)
      *
      * @param name 이름 (null이면 변경 안 함)
      * @param nickname 닉네임 (null이면 변경 안 함)
@@ -67,7 +74,7 @@ public class Member {
      * @param introduction 소개 (null이면 변경 안 함)
      */
     public void updateProfile(String name, String nickname, String phoneNumber,
-                             String address, String introduction) {
+                              String address, String introduction) {
         if (name != null) {
             this.name = name;
         }
@@ -83,32 +90,31 @@ public class Member {
         if (introduction != null) {
             this.introduction = introduction;
         }
-        this.updatedAt = LocalDateTime.now();
     }
 
     /**
      * 비밀번호 변경
      *
-     * @param newPassword 새 비밀번호 (평문)
-     * @param passwordEncoder 암호화 도구
+     * @param encodedPassword 암호화된 비밀번호
      */
-    public void changePassword(String newPassword, PasswordEncoder passwordEncoder) {
-        this.password = passwordEncoder.encode(newPassword);
-        this.updatedAt = LocalDateTime.now();
+    public void changePassword(String encodedPassword) {
+        this.password = encodedPassword;
     }
 
     /**
-     * @deprecated DTO 의존성 제거를 위해 updateProfile 사용 권장
+     * 생성 시각 자동 설정
      */
-    @Deprecated
-    public void update(MemberDto memberDto, PasswordEncoder passwordEncoder) {
-        this.updatedAt = LocalDateTime.now();
-        this.name = memberDto.getName();
-        this.email = memberDto.getEmail();
-        this.nickname = memberDto.getNickname();
-        this.password = passwordEncoder.encode(memberDto.getPassword());
-        this.address = memberDto.getAddress();
-        this.introduction = memberDto.getIntroduction();
-        this.phoneNumber = memberDto.getPhoneNumber();
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 수정 시각 자동 갱신
+     */
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }
