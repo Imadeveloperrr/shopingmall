@@ -1,11 +1,14 @@
 package com.example.crud.controller;
 
+import com.example.crud.data.member.dto.request.ChangePasswordRequest;
 import com.example.crud.data.member.dto.request.UpdateProfileRequest;
 import com.example.crud.data.member.dto.response.MemberResponse;
 import com.example.crud.data.member.service.find.MemberFindService;
+import com.example.crud.data.member.service.password.ChangePasswordService;
 import com.example.crud.data.member.service.profile.UpdateMemberProfileService;
 import com.example.crud.data.product.dto.ProductResponseDto;
 import com.example.crud.data.product.service.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/mypage")
@@ -27,6 +31,7 @@ public class MyPageController {
     private static final Logger log = LoggerFactory.getLogger(MyPageController.class);
     private final MemberFindService memberFindService;
     private final UpdateMemberProfileService updateMemberProfileService;
+    private final ChangePasswordService changePasswordService;
     private final ProductService productService;
 
     @GetMapping
@@ -54,6 +59,18 @@ public class MyPageController {
             return ResponseEntity.ok().body(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/changePassword")
+    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        try {
+            log.info("비밀번호 변경 요청");
+            changePasswordService.changePassword(request);
+            return ResponseEntity.ok(Map.of("message", "비밀번호가 변경되었습니다."));
+        } catch (Exception e) {
+            log.error("비밀번호 변경 실패", e);
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 }
