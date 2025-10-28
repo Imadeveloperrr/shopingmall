@@ -2,8 +2,9 @@ package com.example.crud.controller;
 
 import com.example.crud.common.exception.ValidationException;
 import com.example.crud.common.security.JwtToken;
-import com.example.crud.data.member.dto.MemberDto;
-import com.example.crud.data.member.dto.MemberResponseDto;
+import com.example.crud.data.member.dto.request.LoginRequest;
+import com.example.crud.data.member.dto.request.SignUpRequest;
+import com.example.crud.data.member.dto.response.MemberResponse;
 import com.example.crud.data.member.service.auth.MemberAuthService;
 import com.example.crud.data.member.service.signup.MemberSignUpService;
 import com.example.crud.data.token.TokenRequestDto;
@@ -30,19 +31,19 @@ public class AuthController {
 
     @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, String>> login(
-            @RequestBody @Valid MemberDto memberDto,
+            @RequestBody @Valid LoginRequest request,
             HttpServletResponse response) {
 
         JwtToken jwtToken = memberAuthService.signIn(
-                memberDto.getEmail(),
-                memberDto.getPassword(),
-                memberDto.isRememberMe()
+                request.getEmail(),
+                request.getPassword(),
+                request.isRememberMe()
         );
 
         setCookie(response, "accessToken", jwtToken.getAccessToken(),
-                memberDto.isRememberMe() ? 60 * 60 * 24 * 7 : -1);
+                request.isRememberMe() ? 60 * 60 * 24 * 7 : -1);
         setCookie(response, "refreshToken", jwtToken.getRefreshToken(),
-                memberDto.isRememberMe() ? 60 * 60 * 24 * 14 : -1);
+                request.isRememberMe() ? 60 * 60 * 24 * 14 : -1);
 
         Map<String, String> responseBody = new HashMap<>();
         responseBody.put("message", "로그인 성공");
@@ -53,15 +54,15 @@ public class AuthController {
     }
 
     @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<MemberResponseDto> register(
-            @Valid @RequestBody MemberDto memberDto,
+    public ResponseEntity<MemberResponse> register(
+            @Valid @RequestBody SignUpRequest request,
             BindingResult bindingResult) {
 
         if (bindingResult.hasErrors()) {
             throw new ValidationException(bindingResult.getAllErrors());
         }
 
-        return ResponseEntity.ok(memberSignUpService.signUp(memberDto));
+        return ResponseEntity.ok(memberSignUpService.signUp(request));
     }
 
     @PostMapping("/auth/reissue")
