@@ -2,14 +2,12 @@ package com.example.crud.data.member.service.profile;
 
 import com.example.crud.common.exception.BaseException;
 import com.example.crud.common.exception.ErrorCode;
-import com.example.crud.data.member.dto.MemberDto;
-import com.example.crud.data.member.dto.MemberResponseDto;
+import com.example.crud.data.member.dto.request.UpdateProfileRequest;
+import com.example.crud.data.member.dto.response.MemberResponse;
+import com.example.crud.data.member.service.find.MemberFindService;
 import com.example.crud.entity.Member;
 import com.example.crud.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,40 +21,44 @@ import org.springframework.transaction.annotation.Transactional;
 public class UpdateMemberProfileService {
 
     private final MemberRepository memberRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final MemberFindService memberFindService;
 
     @Transactional
-    public MemberResponseDto updateMember(MemberDto memberDto) {
-        Member member = getCurrentMember();
-        validateMemberUpdate(member, memberDto);
+    public MemberResponse updateMember(UpdateProfileRequest request) {
+        Member member = memberFindService.getCurrentMemberEntity();
 
-        member.update(memberDto, passwordEncoder);
-        Member saveMember = memberRepository.save(member);
+        validateNicknameUniqueness(member, request);
 
-        return MemberResponseDto.builder()
-                .number(saveMember.getNumber())
-                .email(saveMember.getEmail())
-                .name(saveMember.getName())
-                .nickname(saveMember.getNickname())
-                .address(saveMember.getAddress())
-                .phoneNumber(saveMember.getPhoneNumber())
-                .introduction(saveMember.getIntroduction())
-                .build();
+        member.updateProfile(
+            request.getName(),
+            request.getNickname(),
+            request.getPhoneNumber(),
+            request.getAddress(),
+            request.getIntroduction()
+        );
+
+        Member savedMember = memberRepository.save(member);
+
+        return convertToResponse(savedMember);
     }
 
-    private Member getCurrentMember() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return memberRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new BaseException(ErrorCode.MEMBER_NOT_FOUND));
-    }
-
-    private void validateMemberUpdate(Member member, MemberDto memberDto) {
-        if (!member.getEmail().equals(memberDto.getEmail()) && memberRepository.existsByEmail(memberDto.getEmail())) {
-            throw new BaseException(ErrorCode.DUPLICATE_EMAIL);
-        }
-
-        if (!member.getNickname().equals(memberDto.getNickname()) && memberRepository.existsByNickname(memberDto.getNickname())) {
+    private void validateNicknameUniqueness(Member member, UpdateProfileRequest request) {
+        if (request.getNickname() != null
+            && !member.getNickname().equals(request.getNickname())
+            && memberRepository.existsByNickname(request.getNickname())) {
             throw new BaseException(ErrorCode.DUPLICATE_NICKNAME);
         }
+    }
+
+    private MemberResponse convertToResponse(Member member) {
+        return MemberResponse.builder()
+                .number(member.getNumber())
+                .email(member.getEmail())
+                .name(member.getName())
+                .nickname(member.getNickname())
+                .address(member.getAddress())
+                .phoneNumber(member.getPhoneNumber())
+                .introduction(member.getIntroduction())
+                .build();
     }
 }
