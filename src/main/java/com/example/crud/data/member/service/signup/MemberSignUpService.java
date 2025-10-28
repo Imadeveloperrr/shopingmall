@@ -1,7 +1,7 @@
 package com.example.crud.data.member.service.signup;
 
-import com.example.crud.data.member.dto.MemberDto;
-import com.example.crud.data.member.dto.MemberResponseDto;
+import com.example.crud.data.member.dto.request.SignUpRequest;
+import com.example.crud.data.member.dto.response.MemberResponse;
 
 /**
  * 회원 가입 서비스 인터페이스
@@ -12,5 +12,5 @@ public interface MemberSignUpService {
     /**
      * 회원가입
      */
-    MemberResponseDto signUp(MemberDto memberDto);
+    MemberResponse signUp(SignUpRequest request);
 }
