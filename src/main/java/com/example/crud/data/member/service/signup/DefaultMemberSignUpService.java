@@ -2,6 +2,7 @@ package com.example.crud.data.member.service.signup;
 
 import com.example.crud.common.exception.BaseException;
 import com.example.crud.common.exception.ErrorCode;
+import com.example.crud.data.member.converter.MemberConverter;
 import com.example.crud.data.member.dto.request.SignUpRequest;
 import com.example.crud.data.member.dto.response.MemberResponse;
 import com.example.crud.entity.Member;
@@ -11,12 +12,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 기본 회원 가입 서비스 구현체
+ * 기본 회원 가입 서비스
  */
 @Service
 @RequiredArgsConstructor
@@ -25,38 +25,36 @@ public class DefaultMemberSignUpService implements MemberSignUpService {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MemberConverter memberConverter;
 
     @Transactional
     @Override
     public MemberResponse signUp(SignUpRequest request) {
-        if (memberRepository.existsByEmail(request.getEmail())) {
+        // 중복 검증
+        if (memberRepository.existsByEmail(request.email())) {
             throw new BaseException(ErrorCode.DUPLICATE_EMAIL);
         }
 
-        if (memberRepository.existsByNickname(request.getNickname())) {
+        if (memberRepository.existsByNickname(request.nickname())) {
             throw new BaseException(ErrorCode.DUPLICATE_NICKNAME);
         }
 
+        // 가변 리스트 생성
         List<String> roles = new ArrayList<>();
         roles.add("ROLE_USER");
 
+        // Entity 생성 (타임스탬프는 @PrePersist에서 자동 설정)
         Member member = Member.builder()
-                .email(request.getEmail())
-                .name(request.getName())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .nickname(request.getNickname())
+                .email(request.email())
+                .name(request.name())
+                .nickname(request.nickname())
+                .password(passwordEncoder.encode(request.password()))
                 .roles(roles)
                 .build();
 
         Member savedMember = memberRepository.save(member);
 
-        return MemberResponse.builder()
-                .number(savedMember.getNumber())
-                .email(savedMember.getEmail())
-                .name(savedMember.getName())
-                .nickname(savedMember.getNickname())
-                .build();
+        // Converter로 통일
+        return memberConverter.toResponse(savedMember);
     }
 }
