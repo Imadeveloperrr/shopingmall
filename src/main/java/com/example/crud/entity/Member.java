@@ -57,6 +57,50 @@ public class Member {
     @Builder.Default
     private List<String> roles = new ArrayList<>();
 
+    /**
+     * 프로필 수정 (부분 갱신 지원)
+     *
+     * @param name 이름 (null이면 변경 안 함)
+     * @param nickname 닉네임 (null이면 변경 안 함)
+     * @param phoneNumber 전화번호 (null이면 변경 안 함)
+     * @param address 주소 (null이면 변경 안 함)
+     * @param introduction 소개 (null이면 변경 안 함)
+     */
+    public void updateProfile(String name, String nickname, String phoneNumber,
+                             String address, String introduction) {
+        if (name != null) {
+            this.name = name;
+        }
+        if (nickname != null) {
+            this.nickname = nickname;
+        }
+        if (phoneNumber != null) {
+            this.phoneNumber = phoneNumber;
+        }
+        if (address != null) {
+            this.address = address;
+        }
+        if (introduction != null) {
+            this.introduction = introduction;
+        }
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 비밀번호 변경
+     *
+     * @param newPassword 새 비밀번호 (평문)
+     * @param passwordEncoder 암호화 도구
+     */
+    public void changePassword(String newPassword, PasswordEncoder passwordEncoder) {
+        this.password = passwordEncoder.encode(newPassword);
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * @deprecated DTO 의존성 제거를 위해 updateProfile 사용 권장
+     */
+    @Deprecated
     public void update(MemberDto memberDto, PasswordEncoder passwordEncoder) {
         this.updatedAt = LocalDateTime.now();
         this.name = memberDto.getName();
