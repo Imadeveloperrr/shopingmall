@@ -35,15 +35,15 @@ public class AuthController {
             HttpServletResponse response) {
 
         JwtToken jwtToken = memberAuthService.signIn(
-                request.getEmail(),
-                request.getPassword(),
-                request.isRememberMe()
+                request.email(),
+                request.password(),
+                request.rememberMe()
         );
 
         setCookie(response, "accessToken", jwtToken.getAccessToken(),
-                request.isRememberMe() ? 60 * 60 * 24 * 7 : -1);
+                request.rememberMe() ? 60 * 60 * 24 * 7 : -1);
         setCookie(response, "refreshToken", jwtToken.getRefreshToken(),
-                request.isRememberMe() ? 60 * 60 * 24 * 14 : -1);
+                request.rememberMe() ? 60 * 60 * 24 * 14 : -1);
 
         Map<String, String> responseBody = new HashMap<>();
         responseBody.put("message", "로그인 성공");
