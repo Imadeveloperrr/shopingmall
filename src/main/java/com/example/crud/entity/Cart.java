@@ -27,27 +27,52 @@ public class Cart {
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CartItem> cartItems = new ArrayList<>();
 
-    public void addCartItem(CartItem cartItem) {
-        Optional<CartItem> existingItem = cartItems.stream()
-                .filter(item -> item.getProduct().equals(cartItem.getProduct())
-                        && item.getProductOption().equals(cartItem.getProductOption())) // ProductSize -> ProductOption
-                .findFirst();
-
-        if (existingItem.isPresent()) {
-            existingItem.get().setQuantity(existingItem.get().getQuantity() + cartItem.getQuantity());
-        } else {
-            cartItems.add(cartItem);
-            cartItem.setCart(this);
-        }
+    /**
+     * 장바구니에 아이템 추가
+     * - 동일 상품/옵션이면 수량 증가
+     * - 신규 상품이면 리스트에 추가
+     */
+    public void addItem(CartItem cartItem) {
+        findExistingItemByIds(cartItem.getProduct().getNumber(), cartItem.getProductOption().getId())
+            .ifPresentOrElse(
+                existing -> existing.increaseQuantity(cartItem.getQuantity()),
+                () -> {
+                    cartItems.add(cartItem);
+                    cartItem.assignCart(this);
+                }
+            );
     }
 
-    public void removeCartItem(CartItem cartItem) {
+    /**
+     * 장바구니 아이템 제거
+     */
+    public void removeItem(CartItem cartItem) {
         cartItems.remove(cartItem);
-        cartItem.setCart(null);
+        cartItem.clearCart();
     }
 
+    /**
+     * 동일 상품/옵션 찾기 (ID 기반 - JPA 프록시 안전)
+     */
+    private Optional<CartItem> findExistingItemByIds(Long productId, Long productOptionId) {
+        return cartItems.stream()
+            .filter(item -> item.isSameProductAndOptionById(productId, productOptionId))
+            .findFirst();
+    }
+
+    /**
+     * 특정 CartItem이 이 장바구니에 속하는지 확인
+     */
+    public boolean containsItem(Long cartItemId) {
+        return cartItems.stream()
+            .anyMatch(item -> item.getId().equals(cartItemId));
+    }
+
+    /**
+     * 장바구니 비우기
+     */
     public void clearItems() {
-        cartItems.forEach(item -> item.setCart(null));
+        cartItems.forEach(CartItem::clearCart);
         cartItems.clear();
     }
 }
