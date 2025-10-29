@@ -24,7 +24,7 @@ public class PasswordReencoderService {
             // 비밀번호가 평문인지 아닌지 확인.
             if (plainPassword != null && !plainPassword.startsWith("{bcrypt}") && !plainPassword.startsWith("$2a$")) {
                 String encodedPassword = passwordEncoder.encode(plainPassword);
-                member.setPassword(encodedPassword);
+                member.changePassword(encodedPassword);
 
                 memberMapper.updateMember(member);
                 System.out.println("비밀번호 재 인코딩: " + member.getEmail());
