@@ -1,7 +1,14 @@
 package com.example.crud.controller;
 
 import com.example.crud.data.cart.dto.*;
-import com.example.crud.data.cart.service.CartService;
+import com.example.crud.data.cart.dto.request.AddCartItemRequest;
+import com.example.crud.data.cart.dto.request.UpdateCartItemOptionRequest;
+import com.example.crud.data.cart.dto.request.UpdateCartItemQuantityRequest;
+import com.example.crud.data.cart.service.add.AddCartItemService;
+import com.example.crud.data.cart.service.clear.ClearCartService;
+import com.example.crud.data.cart.service.find.CartFindService;
+import com.example.crud.data.cart.service.remove.RemoveCartItemService;
+import com.example.crud.data.cart.service.update.UpdateCartItemService;
 import com.example.crud.data.product.dto.ProductOptionDto;
 import com.example.crud.data.product.service.ProductService;
 import jakarta.validation.Valid;
@@ -21,12 +28,16 @@ import java.util.List;
 public class CartController {
 
     private static final Logger log = LoggerFactory.getLogger(CartController.class);
-    private final CartService cartService;
+    private final CartFindService cartFindService;
+    private final AddCartItemService addCartItemService;
+    private final RemoveCartItemService removeCartItemService;
+    private final UpdateCartItemService updateCartItemService;
+    private final ClearCartService clearCartService;
     private final ProductService productService;
 
     @GetMapping
     public String cart(Model model) {
-        CartDto cartDto = cartService.getCartByAuthenticateMember();
+        CartDto cartDto = cartFindService.getCartByAuthenticateMember();
         model.addAttribute("cart", cartDto);
         return "fragments/productCart";
     }
@@ -35,11 +46,11 @@ public class CartController {
     @ResponseBody
     public ResponseEntity<String> addToCart(@Valid @RequestBody AddCartItemRequest request) {
         try {
-            cartService.addCartItem(
-                    request.getProductId(),
-                    request.getColor(),
-                    request.getSize(),
-                    request.getQuantity()
+            addCartItemService.addCartItem(
+                    request.productId(),
+                    request.color(),
+                    request.size(),
+                    request.quantity()
             );
             return ResponseEntity.ok("장바구니에 추가되었습니다.");
         } catch (Exception e) {
@@ -55,7 +66,7 @@ public class CartController {
             @Valid @RequestBody UpdateCartItemQuantityRequest request
     ) {
         try {
-            cartService.updateCartItemQuantity(itemId, request.getQuantity());
+            updateCartItemService.updateQuantity(itemId, request.quantity());
             return ResponseEntity.ok("수량이 변경되었습니다.");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -66,7 +77,7 @@ public class CartController {
     @ResponseBody
     public ResponseEntity<String> removeCartItem(@PathVariable Long itemId) {
         try {
-            cartService.removeCartItem(itemId);
+            removeCartItemService.removeCartItem(itemId);
             return ResponseEntity.ok("상품이 삭제되었습니다.");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -80,8 +91,19 @@ public class CartController {
             @Valid @RequestBody UpdateCartItemOptionRequest request
     ) {
         try {
-            cartService.updateCartItemOption(itemId, request.getColor(), request.getSize());
+            updateCartItemService.updateOption(itemId, request.color(), request.size());
             return ResponseEntity.ok("옵션이 변경되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/clear")
+    @ResponseBody
+    public ResponseEntity<String> clearCart() {
+        try {
+            clearCartService.clearCart();
+            return ResponseEntity.ok("장바구니가 비워졌습니다.");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
