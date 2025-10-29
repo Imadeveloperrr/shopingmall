@@ -1,7 +1,7 @@
 package com.example.crud.data.order.service.impl;
 
 import com.example.crud.data.cart.dto.CartItemDto;
-import com.example.crud.data.cart.service.CartService;
+import com.example.crud.data.cart.service.find.CartFindService;
 import com.example.crud.common.exception.BaseException;
 import com.example.crud.common.exception.ErrorCode;
 import com.example.crud.data.order.dto.OrderDto;
@@ -33,7 +33,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
-    private final CartService cartService;
+    private final CartFindService cartFindService;
     private final ProductOptionRepository productOptionRepository;
 
     /**
@@ -143,7 +143,7 @@ public class OrderServiceImpl implements OrderService {
      */
     private void createOrderItemsFromCart(Orders order, List<Long> cartItemIds) {
         cartItemIds.forEach(cartItemId -> {
-            CartItem cartItem = cartService.getCartItem(cartItemId);
+            CartItem cartItem = cartFindService.getCartItem(cartItemId);
             ProductOption productOption = cartItem.getProductOption();
 
             // 재고 검증 단순화
