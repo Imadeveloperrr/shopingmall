@@ -1,7 +1,8 @@
 package com.example.crud.controller;
 
 import com.example.crud.data.cart.dto.CartDto;
-import com.example.crud.data.cart.service.CartService;
+import com.example.crud.data.cart.service.find.CartFindService;
+import com.example.crud.data.cart.service.remove.RemoveCartItemService;
 import com.example.crud.data.order.dto.OrderDto;
 import com.example.crud.data.order.dto.OrderItemDto;
 import com.example.crud.data.order.dto.OrderPreparationDto;
@@ -32,7 +33,8 @@ import java.util.Map;
 public class OrderController {
 
     private final OrderService orderService;
-    private final CartService cartService;
+    private final CartFindService cartFindService;
+    private final RemoveCartItemService removeCartItemService;
     private final ProductService productService;
     private final ProductOptionRepository productOptionRepository;
 
@@ -44,7 +46,8 @@ public class OrderController {
         }
 
         // 선택된 장바구니 아이템만 조회
-        CartDto selectedCart = cartService.getCartItems(cartItemIds);
+        CartDto allCart = cartFindService.getCartByAuthenticateMember();
+        CartDto selectedCart = filterSelectedItems(allCart, cartItemIds);
         List<OrderItemDto> orderItems = orderService.prepareOrderItems(selectedCart.getCartItems());
         OrderPreparationDto orderPrep = orderService.prepareOrder(orderItems);
 
@@ -86,7 +89,7 @@ public class OrderController {
 
         // 장바구니 주문인 경우 장바구니에서 제거
         if (orderDto.getOrderType() == OrderType.CART) {
-            cartService.removeOrderedItems(orderDto.getCartItemIds());
+            removeCartItemService.removeOrderedItems(orderDto.getCartItemIds());
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -102,6 +105,25 @@ public class OrderController {
         Orders order = orderService.getOrder(orderId);
         model.addAttribute("order", order);
         return "fragments/orderComplete";
+    }
+
+    /**
+     * 선택된 장바구니 아이템만 필터링
+     */
+    private CartDto filterSelectedItems(CartDto cartDto, List<Long> selectedIds) {
+        List<com.example.crud.data.cart.dto.CartItemDto> selectedItems = cartDto.getCartItems().stream()
+                .filter(item -> selectedIds.contains(item.getId()))
+                .collect(java.util.stream.Collectors.toList());
+
+        int totalPrice = selectedItems.stream()
+                .mapToInt(item -> item.getPrice() * item.getQuantity())
+                .sum();
+
+        return CartDto.builder()
+                .id(cartDto.getId())
+                .cartItems(selectedItems)
+                .totalPrice(totalPrice)
+                .build();
     }
 
     private void setOrderModelAttributes(Model model, OrderPreparationDto orderPrep, OrderType orderType) {
