@@ -1,6 +1,6 @@
 package com.example.crud.data.order.service.impl;
 
-import com.example.crud.data.cart.dto.CartItemDto;
+import com.example.crud.data.cart.dto.checkout.CartCheckoutItem;
 import com.example.crud.data.cart.service.find.CartFindService;
 import com.example.crud.common.exception.BaseException;
 import com.example.crud.common.exception.ErrorCode;
@@ -36,14 +36,11 @@ public class OrderServiceImpl implements OrderService {
     private final CartFindService cartFindService;
     private final ProductOptionRepository productOptionRepository;
 
-    /**
-     * 장바구니 상품들을 주문 가능한 형태(OrderItemDto)로 변환
-     */
     @Override
-    public List<OrderItemDto> prepareOrderItems(List<CartItemDto> cartItems) {
-        return cartItems.stream()
-                .map(this::convertToOrderItemDto)
-                .collect(Collectors.toList());
+    public List<OrderItemDto> prepareOrderItems(List<CartCheckoutItem> checkoutItems) {
+        return checkoutItems.stream()
+            .map(this::convertToOrderItemDto)
+            .collect(Collectors.toList());
     }
 
     /**
@@ -291,17 +288,19 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * CartItem을 OrderItemDto로 변환하는 유틸리티 메서드
+     * Cart → Order 변환용 DTO를 OrderItemDto로 변환.
      */
-    private OrderItemDto convertToOrderItemDto(CartItemDto cartItem) {
+    private OrderItemDto convertToOrderItemDto(CartCheckoutItem cartItem) {
         return OrderItemDto.builder()
-                .productName(cartItem.getProductName())
-                .size(cartItem.getProductSize())
-                .price(cartItem.getPrice())
-                .quantity(cartItem.getQuantity())
-                .imageUrl(cartItem.getImageUrl())
-                .stockAvailable(true)
-                .build();
+            .productId(cartItem.productId())
+            .productName(cartItem.productName())
+            .color(cartItem.color())
+            .size(cartItem.size())
+            .price(cartItem.price())
+            .quantity(cartItem.quantity())
+            .imageUrl(cartItem.imageUrl())
+            .stockAvailable(true)
+            .build();
     }
 
     /**
