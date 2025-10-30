@@ -1,9 +1,9 @@
 package com.example.crud.controller;
 
-import com.example.crud.data.cart.dto.*;
 import com.example.crud.data.cart.dto.request.AddCartItemRequest;
 import com.example.crud.data.cart.dto.request.UpdateCartItemOptionRequest;
 import com.example.crud.data.cart.dto.request.UpdateCartItemQuantityRequest;
+import com.example.crud.data.cart.dto.response.CartResponse;
 import com.example.crud.data.cart.service.add.AddCartItemService;
 import com.example.crud.data.cart.service.clear.ClearCartService;
 import com.example.crud.data.cart.service.find.CartFindService;
@@ -12,15 +12,20 @@ import com.example.crud.data.cart.service.update.UpdateCartItemService;
 import com.example.crud.data.product.dto.ProductOptionDto;
 import com.example.crud.data.product.service.ProductService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 @RequiredArgsConstructor
@@ -37,8 +42,8 @@ public class CartController {
 
     @GetMapping
     public String cart(Model model) {
-        CartDto cartDto = cartFindService.getCartByAuthenticateMember();
-        model.addAttribute("cart", cartDto);
+        CartResponse cart = cartFindService.getCart();
+        model.addAttribute("cart", cart);
         return "fragments/productCart";
     }
 
@@ -47,10 +52,10 @@ public class CartController {
     public ResponseEntity<String> addToCart(@Valid @RequestBody AddCartItemRequest request) {
         try {
             addCartItemService.addCartItem(
-                    request.productId(),
-                    request.color(),
-                    request.size(),
-                    request.quantity()
+                request.productId(),
+                request.color(),
+                request.size(),
+                request.quantity()
             );
             return ResponseEntity.ok("장바구니에 추가되었습니다.");
         } catch (Exception e) {
@@ -62,8 +67,8 @@ public class CartController {
     @PostMapping("/update/{itemId}")
     @ResponseBody
     public ResponseEntity<String> updateCartItem(
-            @PathVariable Long itemId,
-            @Valid @RequestBody UpdateCartItemQuantityRequest request
+        @PathVariable Long itemId,
+        @Valid @RequestBody UpdateCartItemQuantityRequest request
     ) {
         try {
             updateCartItemService.updateQuantity(itemId, request.quantity());
@@ -87,8 +92,8 @@ public class CartController {
     @PostMapping("/update-option/{itemId}")
     @ResponseBody
     public ResponseEntity<String> updateCartItemOption(
-            @PathVariable Long itemId,
-            @Valid @RequestBody UpdateCartItemOptionRequest request
+        @PathVariable Long itemId,
+        @Valid @RequestBody UpdateCartItemOptionRequest request
     ) {
         try {
             updateCartItemService.updateOption(itemId, request.color(), request.size());
