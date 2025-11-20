@@ -4,6 +4,8 @@ import com.example.crud.ai.conversation.domain.entity.Conversation;
 import com.example.crud.ai.conversation.domain.entity.ConversationMessage;
 import com.example.crud.ai.conversation.domain.event.MessageCreatedEvent;
 import com.example.crud.ai.conversation.domain.repository.ConversationRepository;
+import com.example.crud.common.exception.BaseException;
+import com.example.crud.common.exception.ErrorCode;
 import com.example.crud.enums.MessageType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +25,7 @@ public class ConversationCommandService {
     public void addMessage(long convId, MessageType type, String content) {
 
         Conversation conv = convRepo.findByIdWithLock(convId)
-                .orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
+                .orElseThrow(() -> new BaseException(ErrorCode.CONVERSATION_NOT_FOUND));
 
         ConversationMessage msg = conv.addMessage(type, content);
         convRepo.save(conv);            // Optimistic Lock 버전 증가
