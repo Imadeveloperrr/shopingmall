@@ -3,6 +3,8 @@ package com.example.crud.ai.embedding.application;
 import com.example.crud.ai.common.VectorFormatter;
 import com.example.crud.ai.embedding.EmbeddingApiClient;
 import com.example.crud.ai.embedding.domain.ProductTextBuilder;
+import com.example.crud.common.exception.BaseException;
+import com.example.crud.common.exception.ErrorCode;
 import com.example.crud.entity.Product;
 import com.example.crud.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -58,13 +60,16 @@ public class ProductEmbeddingCommandService {
         } catch (CompletionException completionException) {
             Throwable cause = completionException.getCause() != null ? completionException.getCause() : completionException;
             log.error("임베딩 생성 실패: productId={}", productId, cause);
-            throw new RuntimeException("임베딩 생성 실패: " + cause.getMessage(), cause);
+            if (cause instanceof BaseException baseException) {
+                throw baseException;
+            }
+            throw new BaseException(ErrorCode.EMBEDDING_GENERATION_FAILED, cause.getMessage());
         } catch (IllegalArgumentException e) {
             log.error("임베딩 생성 실패: productId={}", productId, e);
-            throw e;
+            throw new BaseException(ErrorCode.PRODUCT_NOT_FOUND, e.getMessage());
         } catch (Exception e) {
             log.error("임베딩 생성 실패: productId={}", productId, e);
-            throw new RuntimeException("임베딩 생성 실패: " + e.getMessage(), e);
+            throw new BaseException(ErrorCode.EMBEDDING_GENERATION_FAILED, e.getMessage());
         }
     }
 }
