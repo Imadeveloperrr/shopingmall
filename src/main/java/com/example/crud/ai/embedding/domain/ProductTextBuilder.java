@@ -24,9 +24,14 @@ public class ProductTextBuilder {
             text.append(product.getName()).append(" ");
         }
 
-        // 2. 카테고리
+        // 2. 카테고리 + 연관 키워드 (한국어 포함)
         if (product.getCategory() != null) {
             text.append(product.getCategory().name()).append(" ");
+            text.append(product.getCategory().getGroupName()).append(" ");
+            if (product.getSubCategory() != null && !product.getSubCategory().isBlank()) {
+                text.append(product.getSubCategory()).append(" ");
+            }
+            text.append(categoryKeywords(product.getCategory()));
         }
 
         // 3. 상품 설명 (원본 사용)
@@ -46,6 +51,21 @@ public class ProductTextBuilder {
         }
 
         return text.toString().trim();
+    }
+
+    /**
+     * 카테고리별로 의미 있는 한국어/도메인 키워드를 추가해 임베딩 분리도를 높임
+     */
+    private String categoryKeywords(com.example.crud.enums.Category category) {
+        return switch (category) {
+            case OUTER -> "옷 의류 아우터 겨울용 코트 패딩 자켓 따뜻한 보온 보온성";
+            case TOP -> "옷 의류 상의 티셔츠 니트 스웨터 후드 맨투맨 셔츠";
+            case BOTTOM -> "옷 의류 하의 청바지 슬랙스 면바지 바지";
+            case DRESS -> "옷 의류 원피스 드레스 스커트 데일리룩";
+            case SHOES -> "신발 운동화 부츠 구두 러닝화 워킹화";
+            case BAG -> "패션잡화 가방 백 백팩 크로스백 숄더백 토트백 액세서리";
+            case ACCESSORY -> "패션잡화 악세서리 액세서리 목걸이 반지 귀걸이 팔찌";
+        };
     }
 
     private String getPriceRange(Integer price) {
