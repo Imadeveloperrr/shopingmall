@@ -28,7 +28,6 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException, ServletException {
         String requestURI = request.getRequestURI();
-
         // API 요청 또는 AJAX 요청인 경우: JSON 에러 응답
         if (requestURI.startsWith("/api/") ||
             requestURI.startsWith("/actuator/") ||
