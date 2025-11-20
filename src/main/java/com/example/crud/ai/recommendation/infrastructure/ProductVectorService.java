@@ -1,14 +1,18 @@
 package com.example.crud.ai.recommendation.infrastructure;
 
+import com.example.crud.ai.common.VectorFormatter;
 import com.example.crud.ai.embedding.EmbeddingApiClient;
+import com.example.crud.common.exception.BaseException;
+import com.example.crud.common.exception.ErrorCode;
 import com.example.crud.entity.Product;
 import com.example.crud.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import com.example.crud.ai.common.VectorFormatter;
+
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 
 import static com.example.crud.common.utility.NativeQueryResultExtractor.*;
@@ -40,9 +44,8 @@ public class ProductVectorService {
                 })
                 .thenApplyAsync(vectorString -> {
                     // 인덱스 사용으로 0.3 고정시키고 쿼리문 한번만 날림
-                    List<Object[]> results = productRepository.findSimilarProductsByVector(
+                    return productRepository.findSimilarProductsByVector(
                             vectorString, 0.3, limit);
-                    return results;
                 }, dbTaskExecutor)
                 .thenApply(results -> {
                     List<ProductSimilarity> similarities = new ArrayList<>();
@@ -76,10 +79,20 @@ public class ProductVectorService {
                     }
                     return similarities;
                 })
-                .exceptionally(e -> {
-                    log.error("추천 생성 실패: {}", e.getMessage(), e);
-                    return List.of();  // 빈 리스트 반환
+                .exceptionally(ex -> {
+                    throw mapToBaseException(ex, queryText, limit);
                 });
+    }
+
+    private RuntimeException mapToBaseException(Throwable throwable, String queryText, int limit) {
+        Throwable cause = throwable instanceof CompletionException && throwable.getCause() != null
+                ? throwable.getCause()
+                : throwable;
+        if (cause instanceof BaseException baseException) {
+            return baseException;
+        }
+        log.error("추천 생성 실패: query='{}', limit={}", queryText, limit, cause);
+        return new BaseException(ErrorCode.AI_SERVICE_UNAVAILABLE);
     }
 
     public List<ProductSimilarity> findSimilarProductsByProduct(Long productId, int limit) {
