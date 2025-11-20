@@ -1,17 +1,16 @@
 package com.example.crud.ai.recommendation.application;
 
-import java.util.*;
-
 import com.example.crud.ai.conversation.application.command.ConversationCommandService;
 import com.example.crud.ai.recommendation.domain.converter.ProductResponseDtoConverter;
 import com.example.crud.ai.recommendation.domain.dto.ProductMatch;
 import com.example.crud.ai.recommendation.domain.dto.RecommendationResponseDto;
-import com.example.crud.ai.recommendation.domain.dto.UserMessageRequestDto;
 import com.example.crud.data.product.dto.ProductResponseDto;
 import com.example.crud.enums.MessageType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 /*
  응답 메시지도 저장하는 이유.
@@ -56,56 +55,31 @@ public class ConversationalRecommendationService {
     private final ProductResponseDtoConverter productResponseDtoConverter;
 
     public CompletableFuture<RecommendationResponseDto> processUserMessage(Long id, String message) {
-        try {
-            // ★ 유저 매시지 저장과, AI 응답 메시지 저장이 서로 동기임. 비동기로 최적화 가능.
+        CompletableFuture.runAsync(() -> commandService.addMessage(id, MessageType.USER, message))
+                .exceptionally(ex -> {
+                    log.error("사용자 메시지 저장 실패: conversationId={}", id, ex);
+                    return null;
+                });
 
-            // 유저 대화 저장 (비동기, fire-and-forget)
-            CompletableFuture.runAsync(() ->
-                    commandService.addMessage(id, MessageType.USER, message));
+        return recommendationEngine.getRecommendations(message, 5)
+                .thenApply(recommendations -> {
+                    List<ProductResponseDto> productResponseDtos = productResponseDtoConverter.convertToProductResponseDtos(recommendations);
+                    String aiResponse = generateAIResponse(recommendations);
 
-            // 상품 추천 (비동기)
-            return recommendationEngine.getRecommendations(message, 5)
-                    .thenApply(recommendations -> {
-                        // ProductMatch를 ProductResponseDto로 변환 (Converter 사용)
-                        List<ProductResponseDto> productResponseDtos = productResponseDtoConverter.convertToProductResponseDtos(recommendations);
+                    CompletableFuture.runAsync(() -> commandService.addMessage(id, MessageType.ASSISTANT, aiResponse))
+                            .exceptionally(ex -> {
+                                log.error("AI 응답 메시지 저장 실패: conversationId={}", id, ex);
+                                return null;
+                            });
 
-                        // AI 응답 메시지
-                        String AiResponse = generateAIResponse(recommendations);
-
-                        // 응답 메시지도 저장. (비동기, fire-and-forget)
-                        CompletableFuture.runAsync(() ->
-                                commandService.addMessage(id, MessageType.ASSISTANT, AiResponse));
-
-                        return RecommendationResponseDto.builder()
-                                .conversationId(id)
-                                .aiResponse(AiResponse)
-                                .recommendations(recommendations)
-                                .recommendedProducts(productResponseDtos)
-                                .totalRecommendations(recommendations.size())
-                                .build();
-
-                    })
-                    .exceptionally(e -> {
-                        log.error("대화형 추천 처리 실패: conversationId={}, message={}, exception={}", id, message, e.getMessage());
-                        return RecommendationResponseDto.builder()
-                                .conversationId(id)
-                                .aiResponse("죄송합니다. 추천을 생성하는 중에 문제가 발생했습니다.")
-                                .recommendations(List.of())
-                                .totalRecommendations(0)
-                                .build();
-                    });
-        } catch (Exception e) {
-            log.error("예상치 못한 오류", e);
-            return CompletableFuture.completedFuture(
-                    RecommendationResponseDto.builder()
+                    return RecommendationResponseDto.builder()
                             .conversationId(id)
-                            .aiResponse("시스템 오류가 발생했습니다.")
-                            .recommendations(List.of())
-                            .totalRecommendations(0)
-                            .build()
-            );
-        }
-
+                            .aiResponse(aiResponse)
+                            .recommendations(recommendations)
+                            .recommendedProducts(productResponseDtos)
+                            .totalRecommendations(recommendations.size())
+                            .build();
+                });
     }
 
     public String generateAIResponse(List<ProductMatch> recommendations) {
