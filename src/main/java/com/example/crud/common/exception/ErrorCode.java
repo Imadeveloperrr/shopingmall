@@ -68,7 +68,16 @@ public enum ErrorCode {
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "validation.invalid.input"),
 
     // Server Errors
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "server.error.internal");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "server.error.internal"),
+
+    // AI & Recommendation Errors
+    CONVERSATION_NOT_FOUND(HttpStatus.NOT_FOUND, "conversation.not.found"),
+    CONVERSATION_UNAUTHORIZED(HttpStatus.FORBIDDEN, "conversation.unauthorized"),
+    CONVERSATION_INACTIVE(HttpStatus.BAD_REQUEST, "conversation.inactive"),
+    AI_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "ai.service.unavailable"),
+    EMBEDDING_GENERATION_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "ai.embedding.failed"),
+    INVALID_MESSAGE_INPUT(HttpStatus.BAD_REQUEST, "ai.invalid.message");
+
 
     private final HttpStatus status;
     private final String messageKey;
