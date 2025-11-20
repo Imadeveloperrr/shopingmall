@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletionException;
 
 @Slf4j
 @RestControllerAdvice
@@ -73,6 +74,22 @@ public class GlobalExceptionHandler {
                 .build();
 
         return ResponseEntity.status(status).body(body);
+    }
+
+    @ExceptionHandler(CompletionException.class)
+    public ResponseEntity<ErrorResponse> handleCompletionException(CompletionException ex, HttpServletRequest request) {
+        Throwable cause = ex.getCause();
+        if (cause instanceof BaseException baseException) {
+            return handleBaseException(baseException, request);
+        }
+        if (cause instanceof MethodArgumentNotValidException || cause instanceof BindException) {
+            return handleValidationException((Exception) cause, request);
+        }
+        if (cause instanceof Exception exception) {
+            return handleGenericException(exception, request);
+        }
+        ErrorResponse body = ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR, request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 
     @ExceptionHandler(Exception.class)
