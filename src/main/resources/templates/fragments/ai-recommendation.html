@@ -104,9 +104,9 @@
                     const response = await fetch('/api/conversation/start', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${this.getJwtToken()}`
-                        }
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include'
                     });
 
                     if (response.ok) {
@@ -147,9 +147,9 @@
                     const response = await fetch(`/api/conversation/${this.conversationId}/message`, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${this.getJwtToken()}`
+                            'Content-Type': 'application/json'
                         },
+                        credentials: 'include',
                         body: JSON.stringify({ message: message })
                     });
 
@@ -159,7 +159,7 @@
                     } else {
                         throw new Error('메시지 전송 실패');
                     }
-                } catch (error) {
+                } catch (error) { // 예외 발생 시점은 1. 네트워크 레벨 오류와 2. HTTP 응답 에러.
                     console.error('메시지 전송 오류:', error);
                     this.showError('메시지 전송 중 오류가 발생했습니다.');
                 } finally {
@@ -304,17 +304,6 @@
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
 
-            getJwtToken() {
-                // 쿠키에서 JWT 토큰 가져오기
-                const cookies = document.cookie.split(';');
-                for (let cookie of cookies) {
-                    const [name, value] = cookie.trim().split('=');
-                    if (name === 'accessToken') {
-                        return value;
-                    }
-                }
-                return localStorage.getItem('jwt') || sessionStorage.getItem('jwt') || '';
-            }
         }
 
         // Quick message function for suggestion buttons
