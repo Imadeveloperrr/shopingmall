@@ -52,16 +52,16 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class RedisConfig {
 
-    @Value("${spring.redis.host:redis}")
+    @Value("${spring.data.redis.host:redis}")
     private String redisHost;
 
-    @Value("${spring.redis.port:6379}")
+    @Value("${spring.data.redis.port:6379}")
     private int redisPort;
 
-    @Value("${spring.redis.timeout:2000}")
-    private int timeout;
+    @Value("${spring.data.redis.timeout:2000ms}")
+    private Duration timeout;
 
-    @Value("${spring.redis.database:0}")
+    @Value("${spring.data.redis.database:0}")
     private int database;
 
     /**
@@ -95,7 +95,7 @@ public class RedisConfig {
         poolConfig.setTestOnBorrow(true);
         poolConfig.setTestOnReturn(true);
         poolConfig.setTestWhileIdle(true);
-        poolConfig.setMaxWait(Duration.ofMillis(2000));
+        poolConfig.setMaxWait(timeout);
 
         // Lettuce 클라이언트 구성
         /**
@@ -104,7 +104,7 @@ public class RedisConfig {
          * Connection Pool : 자동 관리.
          */
         LettuceClientConfiguration clientConfig = LettucePoolingClientConfiguration.builder()
-                .commandTimeout(Duration.ofMillis(timeout))
+                .commandTimeout(timeout)
                 .poolConfig(poolConfig)
                 .build();
 
