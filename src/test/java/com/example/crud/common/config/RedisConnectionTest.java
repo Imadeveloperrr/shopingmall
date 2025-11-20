@@ -37,10 +37,10 @@ public class RedisConnectionTest {
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
         // Redis 설정
-        registry.add("spring.redis.host", redis::getHost);
-        registry.add("spring.redis.port", redis::getFirstMappedPort);
-        registry.add("spring.redis.database", () -> "0");
-        registry.add("spring.redis.timeout", () -> "2000");
+        registry.add("spring.data.redis.host", redis::getHost);
+        registry.add("spring.data.redis.port", redis::getFirstMappedPort);
+        registry.add("spring.data.redis.database", () -> "0");
+        registry.add("spring.data.redis.timeout", () -> "2000ms");
 
         // PostgreSQL 설정
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
