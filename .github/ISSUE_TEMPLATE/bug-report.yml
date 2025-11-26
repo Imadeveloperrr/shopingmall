@@ -1,0 +1,98 @@
+name: "Bug Report"
+description: "버그를 신고하고 필요한 정보를 공유해 주세요."
+title: "Bug: "
+labels:
+  - "type: bug"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        문제 상황을 빠르게 이해할 수 있도록 아래 항목을 채워주세요.
+  - type: input
+    id: summary
+    attributes:
+      label: "요약"
+      description: "한 줄로 문제가 무엇인지 설명해 주세요."
+      placeholder: "예) 장바구니 추가 시 500 에러 발생"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: "area 라벨 (1개 선택)"
+      description: "해당 영역을 선택하고 동일한 GitHub 라벨(area: *)을 추가해 주세요."
+      options:
+        - label: "area: ai-platform — 추천·대화·임베딩 등 AI 전반"
+        - label: "area: catalog — 상품/카테고리/검색·필터"
+        - label: "area: cart-order — 장바구니/주문/배송"
+        - label: "area: payment — 결제/취소/PG 연동"
+        - label: "area: user-auth — 회원/로그인/토큰/보안"
+        - label: "area: infra — Gradle/Docker/CI/보안 설정"
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "priority 라벨 (1개 선택)"
+      description: "긴급도를 선택하고 동일한 GitHub 라벨(priority: *)을 추가해 주세요."
+      options:
+        - label: "priority: high — 즉시 대응이 필요한 이슈"
+        - label: "priority: low — 나중에 처리할 개선"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: "재현 절차"
+      description: "가능한 한 구체적으로 단계별로 적어주세요."
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: "예상 동작"
+      placeholder: "예) 정상적으로 상품이 장바구니에 담긴다."
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: "실제 결과"
+      placeholder: "예) 500 Internal Server Error 반환"
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: "심각도"
+      options:
+        - blocker (서비스 중단)
+        - critical (주요 기능 불가)
+        - major (핵심 플로우 영향)
+        - minor (경미한 영향)
+        - trivial (사소한 문제)
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: "환경 정보"
+      description: "OS, 브라우저/앱 버전, 브랜치, DB/Redis 여부 등"
+      placeholder: "예) macOS 14 / Chrome 123 / develop / 로컬 Docker 실행"
+  - type: textarea
+    id: logs
+    attributes:
+      label: "로그 / 스크린샷"
+      description: "관련 스택트레이스, API 응답, 스크린샷을 첨부해 주세요."
+  - type: checkboxes
+    id: labels-check
+    attributes:
+      label: "라벨 적용 확인"
+      description: "type/area/priority 라벨을 각각 1개씩만 선택해 적용해 주세요."
+      options:
+        - label: "선택한 area/priority 라벨을 실제 이슈 라벨에 추가했습니다."
+          required: true
