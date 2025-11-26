@@ -1,0 +1,68 @@
+name: "Question / Help (Docs/FAQ)"
+description: "사용법, 설계 의도, 환경 구성 등 질문을 남기고 문서/FAQ 개선이 필요할 때 사용해 주세요."
+title: "Question: "
+labels:
+  - "type: docs"
+body:
+  - type: markdown
+    attributes:
+      value: "궁금한 점을 명확히 작성하고, 선택한 라벨(type/area/priority)을 적용해 주세요."
+  - type: dropdown
+    id: area
+    attributes:
+      label: "area 라벨 (1개 선택)"
+      description: "해당 영역을 선택하고 동일한 GitHub 라벨(area: *)을 추가해 주세요."
+      options:
+        - label: "area: ai-platform — 추천·대화·임베딩 등 AI 전반"
+        - label: "area: catalog — 상품/카테고리/검색·필터"
+        - label: "area: cart-order — 장바구니/주문/배송"
+        - label: "area: payment — 결제/취소/PG 연동"
+        - label: "area: user-auth — 회원/로그인/토큰/보안"
+        - label: "area: infra — Gradle/Docker/CI/보안 설정"
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "priority 라벨 (1개 선택)"
+      description: "긴급도를 선택하고 동일한 GitHub 라벨(priority: *)을 추가해 주세요."
+      options:
+        - label: "priority: high — 즉시 대응이 필요한 이슈"
+        - label: "priority: low — 나중에 처리할 개선"
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: "상황 설명"
+      description: "무엇을 하려고 했고 어떤 결과를 봤는지 적어주세요."
+      placeholder: "- 실행한 명령, 요청한 API, 사용한 브랜치/프로필"
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: "질문"
+      description: "구체적으로 궁금한 내용을 적어주세요."
+      placeholder: "예) Redis 캐시 키 전략이 어디에서 정의되나요?"
+    validations:
+      required: true
+  - type: textarea
+    id: attempts
+    attributes:
+      label: "시도한 것"
+      description: "이미 확인한 문서/코드/명령 등을 적어주세요."
+      placeholder: "- START.md 참고\n- ai/recommendation/* 코드 확인"
+  - type: textarea
+    id: references
+    attributes:
+      label: "관련 링크 / 로그"
+      description: "에러 메시지, 스크린샷, 참고 링크 등을 첨부해 주세요."
+  - type: checkboxes
+    id: labels-check
+    attributes:
+      label: "라벨 적용 확인"
+      description: "type/area/priority 라벨을 각각 1개씩만 선택해 적용해 주세요."
+      options:
+        - label: "선택한 area/priority 라벨을 실제 이슈 라벨에 추가했습니다."
+          required: true
