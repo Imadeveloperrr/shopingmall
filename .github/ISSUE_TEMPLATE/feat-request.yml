@@ -1,0 +1,95 @@
+name: "Feature Request"
+description: "새 기능을 제안해 주세요. 제목은 Feature: 로 시작합니다."
+title: "Feature: "
+labels:
+  - "type: feature"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        기능 의도와 완료 기준을 짧고 명확하게 적어주세요. (라벨: type 1개, area 1개, priority 1개)
+  - type: input
+    id: summary
+    attributes:
+      label: "요약"
+      description: "한 줄로 원하는 기능을 설명해 주세요."
+      placeholder: "예) 추천 결과에 사용자 취향 태그 표시"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: "area 라벨 (1개 선택)"
+      description: "해당 영역을 선택하고 동일한 GitHub 라벨(area: *)을 추가해 주세요."
+      options:
+        - label: "area: ai-platform — 추천·대화·임베딩 등 AI 전반"
+        - label: "area: catalog — 상품/카테고리/검색·필터"
+        - label: "area: cart-order — 장바구니/주문/배송"
+        - label: "area: payment — 결제/취소/PG 연동"
+        - label: "area: user-auth — 회원/로그인/토큰/보안"
+        - label: "area: infra — Gradle/Docker/CI/보안 설정"
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "priority 라벨 (1개 선택)"
+      description: "긴급도를 선택하고 동일한 GitHub 라벨(priority: *)을 추가해 주세요."
+      options:
+        - label: "priority: high — 즉시 대응이 필요한 이슈"
+        - label: "priority: low — 나중에 처리할 개선"
+    validations:
+      required: true
+  - type: textarea
+    id: background
+    attributes:
+      label: "배경 / 문제 정의"
+      description: "왜 필요한지, 해결하려는 사용자/비즈니스 문제는 무엇인가요?"
+      placeholder: "예) 대화형 추천 결과에 맥락 부족으로 클릭률 저하"
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: "주요 요구사항"
+      description: "핵심 플로우, API, UI 변화 등 꼭 포함돼야 하는 내용을 적어주세요."
+      placeholder: "- 사용자 스토리, API 스펙, 상태 전환 등"
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: "완료 기준"
+      description: "Given-When-Then 형태나 체크리스트로 정의해 주세요."
+      placeholder: |
+        - Given ...
+        - When ...
+        - Then ...
+    validations:
+      required: true
+  - type: checkboxes
+    id: impact
+    attributes:
+      label: "영향 영역"
+      description: "해당되는 항목을 선택하세요."
+      options:
+        - label: "Backend (Spring, JPA, QueryDSL)"
+        - label: "AI/추천 로직"
+        - label: "API 계약 변경"
+        - label: "UI/템플릿 변경"
+        - label: "인프라 (Docker, DB, Redis)"
+        - label: "테스트 추가/수정 필요 (./gradlew test)"
+        - label: "문서 업데이트 필요 (README 제외)"
+  - type: textarea
+    id: references
+    attributes:
+      label: "관련 이슈 / 참고 자료"
+      description: "연관 이슈 번호, 문서 링크 등을 남겨주세요."
+  - type: checkboxes
+    id: labels-check
+    attributes:
+      label: "라벨 적용 확인"
+      description: "type/area/priority 라벨을 각각 1개씩만 선택해 적용해 주세요."
+      options:
+        - label: "선택한 area/priority 라벨을 실제 이슈 라벨에 추가했습니다."
+          required: true
