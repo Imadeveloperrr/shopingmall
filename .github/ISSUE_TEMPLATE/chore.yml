@@ -1,0 +1,74 @@
+name: "Chore"
+description: "운영/청소 작업, 설정 변경, 빌드/CI 정리를 제안해 주세요."
+title: "Chore: "
+labels:
+  - "type: chore"
+body:
+  - type: markdown
+    attributes:
+      value: "작업 목적과 완료 조건을 짧게 적어주세요. (라벨: type 1개, area 1개, priority 1개)"
+  - type: input
+    id: summary
+    attributes:
+      label: "요약"
+      placeholder: "예) Redis 캐시 TTL 설정 점검"
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: "작업 범위"
+      description: "수정/정리할 설정, 스크립트, CI, 인프라 항목을 적어주세요."
+      placeholder: "- build.gradle 플러그인 버전 조정\n- docker-compose 환경 변수 점검"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: "area 라벨 (1개 선택)"
+      description: "해당 영역을 선택하고 동일한 GitHub 라벨(area: *)을 추가해 주세요."
+      options:
+        - label: "area: ai-platform — 추천·대화·임베딩 등 AI 전반"
+        - label: "area: catalog — 상품/카테고리/검색·필터"
+        - label: "area: cart-order — 장바구니/주문/배송"
+        - label: "area: payment — 결제/취소/PG 연동"
+        - label: "area: user-auth — 회원/로그인/토큰/보안"
+        - label: "area: infra — Gradle/Docker/CI/보안 설정"
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "priority 라벨 (1개 선택)"
+      description: "긴급도를 선택하고 동일한 GitHub 라벨(priority: *)을 추가해 주세요."
+      options:
+        - label: "priority: high — 즉시 대응이 필요한 이슈"
+        - label: "priority: low — 나중에 처리할 개선"
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: "완료 기준"
+      description: "검증 방법이나 체크리스트를 남겨주세요."
+      placeholder: "- CI 통과 확인\n- ./gradlew build 성공"
+    validations:
+      required: true
+  - type: checkboxes
+    id: impact
+    attributes:
+      label: "영향도"
+      options:
+        - label: "빌드/CI"
+        - label: "인프라 (Docker, DB, Redis)"
+        - label: "보안/비밀키 관리"
+        - label: "문서/가이드 업데이트 필요 (README 제외)"
+        - label: "테스트 필요 (`./gradlew test`)"
+  - type: checkboxes
+    id: labels-check
+    attributes:
+      label: "라벨 적용 확인"
+      description: "type/area/priority 라벨을 각각 1개씩만 선택해 적용해 주세요."
+      options:
+        - label: "선택한 area/priority 라벨을 실제 이슈 라벨에 추가했습니다."
+          required: true
