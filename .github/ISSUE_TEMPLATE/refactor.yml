@@ -1,0 +1,72 @@
+name: "Improvement / Refactor"
+description: "리팩토링, 성능 개선, 구조 개선 등 기존 기능 개선에 사용해 주세요."
+title: "Improvement: "
+labels:
+  - "type: improvement"
+body:
+  - type: markdown
+    attributes:
+      value: "리팩터링/성능/구조 개선 목표와 리스크를 짧게 정리해주세요. (라벨: type 1개, area 1개, priority 1개)"
+  - type: input
+    id: summary
+    attributes:
+      label: "요약"
+      placeholder: "예) 추천 서비스 비동기 실행부 모듈화"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: "area 라벨 (1개 선택)"
+      description: "해당 영역을 선택하고 동일한 GitHub 라벨(area: *)을 추가해 주세요."
+      options:
+        - label: "area: ai-platform — 추천·대화·임베딩 등 AI 전반"
+        - label: "area: catalog — 상품/카테고리/검색·필터"
+        - label: "area: cart-order — 장바구니/주문/배송"
+        - label: "area: payment — 결제/취소/PG 연동"
+        - label: "area: user-auth — 회원/로그인/토큰/보안"
+        - label: "area: infra — Gradle/Docker/CI/보안 설정"
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "priority 라벨 (1개 선택)"
+      description: "긴급도를 선택하고 동일한 GitHub 라벨(priority: *)을 추가해 주세요."
+      options:
+        - label: "priority: high — 즉시 대응이 필요한 이슈"
+        - label: "priority: low — 나중에 처리할 개선"
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: "배경 / 문제"
+      description: "현재 문제점이나 개선 동기를 적어주세요."
+      placeholder: "- 결합도가 높아 테스트 어려움\n- 동일 로직 중복"
+    validations:
+      required: true
+  - type: textarea
+    id: plan
+    attributes:
+      label: "접근 방법"
+      description: "주요 변경 아이디어, 영향받는 패키지나 클래스, 테스트 계획을 적어주세요."
+      placeholder: "- ai/recommendation/application 분리\n- 단위 테스트 추가"
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: "완료 기준"
+      description: "성능/복잡도/테스트 결과 등 검증 기준을 작성하세요."
+      placeholder: "- ./gradlew test 통과\n- 복잡도 감소 (클래스/라인 수 정리)"
+    validations:
+      required: true
+  - type: checkboxes
+    id: labels-check
+    attributes:
+      label: "라벨 적용 확인"
+      description: "type/area/priority 라벨을 각각 1개씩만 선택해 적용해 주세요."
+      options:
+        - label: "선택한 area/priority 라벨을 실제 이슈 라벨에 추가했습니다."
+          required: true
